@@ -26,6 +26,7 @@
 from types import InstanceType, ClassType
 from re import compile
 
+
 class CallTrace:
     def __init__(self, name="CallTrace", verbose=False, returnValues=None, ignoredAttributes=[], methods=None, onlySpecifiedMethods=False):
         self.calledMethods = CalledMethods()
@@ -44,7 +45,7 @@ class CallTrace:
             raise AttributeError("'CallTrace' is instructed to not have an attribute called '%s'" % attrname)
         if self.onlySpecifiedMethods and not attrname in (self.returnValues.keys() + self.methods.keys()):
             raise AttributeError("'CallTrace' does not support '%s' as it is instructed to only allow specified methods." % attrname) 
-        return TracedCall(attrname, self)
+        return CallTraceMethod(attrname, self)
 
     def __calltrace__(self):
         return map(str, self.calledMethods)
@@ -59,6 +60,19 @@ class CallTrace:
     def __str__(self):
         #TODO: __str__ ook terug laten komen in calltrace
         return self.__repr__()
+
+
+class CallTraceMethod:
+    def __init__(self, methodName, callTrace):
+        self.name = methodName
+        self._callTrace = callTrace
+
+    def __call__(self, *args, **kwargs):
+        return TracedCall(self.name, self._callTrace)(*args, **kwargs)
+
+    def __repr__(self):
+        return "<bound method %s of %s>" % (self.name, self._callTrace)
+            
 
 class TracedCall:
     def __init__(self, methodName, callTrace):
@@ -124,7 +138,9 @@ class TracedCall:
     def __repr__(self):
         return '%s(%s)' % (self.name, ", ".join(map(self.represent, self.args)+['%s=%s' % (key, self.represent(value)) for key, value in self.kwargs.items()]))
 
+
 class CalledMethods(list):
     def reset(self):
         del self[:]
         return self
+

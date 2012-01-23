@@ -27,8 +27,8 @@ from unittest import TestCase
 from seecr.test import CallTrace
 from seecr.test.calltrace import TracedCall
 
-class CallTraceTest(TestCase):
 
+class CallTraceTest(TestCase):
     def testSimpleCall(self):
         callTrace = CallTrace()
         callTrace.simpleCall()
@@ -167,4 +167,9 @@ class CallTraceTest(TestCase):
         self.assertEquals(0, len(callTrace.calledMethods))
         callTrace.simpleCall()
         self.assertEquals(1, len(callTrace.calledMethods))
+
+    def testTracedMethodStr(self):
+        myObject = CallTrace('myObject')
+        myMethod = myObject.myMethod
+        self.assertEquals("<bound method myMethod of <CallTrace: myObject>>", str(myMethod))
 
