@@ -24,6 +24,7 @@
 ## end license ##
 
 from unittest import TestCase
+from types import GeneratorType
 from seecr.test import CallTrace
 from seecr.test.calltrace import TracedCall
 
@@ -173,3 +174,9 @@ class CallTraceTest(TestCase):
         myMethod = myObject.myMethod
         self.assertEquals("<bound method myMethod of <CallTrace: myObject>>", str(myMethod))
 
+    def testEmptyGeneratorMethods(self):
+        calltrace = CallTrace(emptyGeneratorMethods=['emptyGen'])
+        result = calltrace.emptyGen()
+        self.assertEquals(GeneratorType, type(result))
+        self.assertEquals([], list(result))
+        self.assertEquals(1, len(calltrace.calledMethods))

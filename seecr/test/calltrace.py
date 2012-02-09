@@ -26,9 +26,12 @@
 from types import InstanceType, ClassType
 from re import compile
 
+def emptyGenerator():
+    return
+    yield
 
 class CallTrace:
-    def __init__(self, name="CallTrace", verbose=False, returnValues=None, ignoredAttributes=[], methods=None, onlySpecifiedMethods=False):
+    def __init__(self, name="CallTrace", verbose=False, returnValues=None, ignoredAttributes=[], methods=None, onlySpecifiedMethods=False, emptyGeneratorMethods=[]):
         self.calledMethods = CalledMethods()
         self.returnValues = returnValues or {}
         self.methods = methods or {}
@@ -37,6 +40,7 @@ class CallTrace:
         self._name = name
         self.ignoredAttributes = ignoredAttributes or []
         self.onlySpecifiedMethods = onlySpecifiedMethods
+        self.emptyGeneratorMethods = emptyGeneratorMethods
 
     def __getattr__(self, attrname):
         if attrname.startswith('__') and attrname.endswith('__') and not attrname in self.returnValues:
@@ -99,7 +103,10 @@ class TracedCall:
         if self.name in self._callTrace.returnValues:
             returnValue = self._callTrace.returnValues.get(self.name)
         elif self.name in self._callTrace.methods:
-            returnValue = self._callTrace.methods.get(self.name)(*args, **kwargs)            
+            returnValue = self._callTrace.methods.get(self.name)(*args, **kwargs)
+        elif self.name in self._callTrace.emptyGeneratorMethods:
+            returnValue = emptyGenerator()
+
         return returnValue
 
     def represent(self, something):
