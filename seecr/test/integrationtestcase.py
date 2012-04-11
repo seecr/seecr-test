@@ -13,39 +13,40 @@ from signal import SIGTERM
 from urllib import urlopen, urlencode
 from lxml.etree import XMLSyntaxError, parse
 
-from utils import getRequest, postRequest, postMultipartForm 
-
 from seecrtestcase import SeecrTestCase
 
-mydir = dirname(abspath(__file__))
-projectDir = dirname(dirname(mydir))
-binDir = join(projectDir, 'bin')
-if not isdir(binDir):
-    binDir = '/usr/bin'
-
 class IntegrationTestCase(SeecrTestCase):
-    def setUp(self):
-        SeecrTestCase.setUp(self)
-        self.state = state
-
     def __getattr__(self, name):
         if name.startswith('_'):
             raise AttributeError(name)
         return getattr(self.state, name)
 
+    def run(self, result=None, state=None):
+        self.state = state
+        SeecrTestCase.run(self, result=result)
 
 class IntegrationState(object):
-    def __init__(self, stateName, fastMode):
+    def __init__(self, stateName, tests=None, fastMode=False):
         self.stateName = stateName
+        self.__tests = tests
+        self.fastMode = fastMode
         self.pids = {}
         self.integrationTempdir = '/tmp/integrationtest-%s' % stateName 
-        self.testdataDir = join(dirname(mydir), 'data/integration')
-        self.fastMode = fastMode
-        if not fastMode:
+        if not self.fastMode:
             system('rm -rf ' + self.integrationTempdir)
             system('mkdir --parents '+ self.integrationTempdir)
 
-    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=binDir, redirect=True, **kwargs):
+    def addToTestRunner(self, testRunner):
+        testRunner.addGroup(
+            self.stateName, 
+            self.__tests,
+            state=self)
+    
+    def binDir(self):
+        raise ValueError("Needs implementation")
+
+
+    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
         stdouterrlog = open(stdoutfile, 'w')
         args = [executable]
@@ -56,7 +57,7 @@ class IntegrationState(object):
         serverProcess = Popen(
             executable=executable,
             args=args,
-            cwd=cwd,
+            cwd=cwd if cwd else self.binDir(),
             stdout=fileno,
             stderr=fileno
         )

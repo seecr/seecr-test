@@ -1,7 +1,8 @@
 from sys import stdout, stderr
 from time import time
 from traceback import print_exc
-from unittest import TestSuite as UnitTestTestSuite, TestLoader, TestResult as UnitTestResult
+from unittest import TestSuite as UnitTestTestSuite, TestLoader as UnitTestTestLoader, TestResult as UnitTestResult
+
 
 class TestResult(UnitTestResult):
     def __init__(self, stream=stdout, errStream=stderr, verbosity=1):
@@ -77,14 +78,15 @@ class TestResult(UnitTestResult):
 
 
 class TestGroup(object):
-    def __init__(self, name, classnames=None, groupSetUp=lambda:None, groupTearDown=lambda:None):
+    def __init__(self, name, classnames=None, state=None):
         self.name = name
         self._classes = {}
         for classname in (classnames or []):
             self._loadClass(classname)
         self._loader = TestLoader()
-        self.setUp = groupSetUp
-        self.tearDown = groupTearDown
+        self.setUp = state.setUp
+        self.tearDown = state.tearDown
+        self.state = state
 
     def _loadClass(self, classname):
         moduleName, className = classname.rsplit('.', 1)
@@ -127,7 +129,7 @@ class TestRunner(object):
                 continue
             try:
                 group.setUp() 
-                suite.run(testResult)
+                suite.run(result=testResult, state=group.state)
             except:
                 print_exc()
                 break
@@ -137,12 +139,19 @@ class TestRunner(object):
         testResult.printResult(timeTaken)
 
 class TestSuite(UnitTestTestSuite):
+
+    def __call__(self, *args, **kwargs):
+        return self.run(*args, **kwargs)
+
     def run(self, result=None, state=None):
         for test in self._tests:
             if result.shouldStop:
                 break
             test(result=result, state=state)
         return result
+
+class TestLoader(UnitTestTestLoader):
+    suiteClass = TestSuite
 
 sep1 = '=' * 70 + '\n'
 sep2 = '-' * 70 + '\n'
