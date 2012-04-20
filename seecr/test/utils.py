@@ -105,7 +105,7 @@ def _socket(port, timeOutInSeconds):
     return sok
 
 def createReturnValue(header, body, parse):
-    if parse == True:
+    if parse and body.strip() != '':
         body = parse_xml(StringIO(body))
     return header, body
 
