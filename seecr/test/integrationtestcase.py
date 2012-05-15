@@ -69,11 +69,14 @@ class IntegrationState(object):
         raise ValueError("Needs implementation")
 
 
-    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, **kwargs):
+    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
         stdouterrlog = open(stdoutfile, 'w')
         args = [executable]
         fileno = stdouterrlog.fileno() if redirect else None
+        flagOptions = flagOptions if flagOptions else []
+        for flag in flagOptions:
+            args.append("--%s" % flag)
         for k,v in kwargs.items():
             args.append("--%s" % k)
             args.append(str(v))
