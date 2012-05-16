@@ -22,10 +22,11 @@
 # 
 ## end license ##
 
+import types
 from sys import stdout, stderr
 from time import time
 from traceback import print_exc
-from unittest import TestSuite as UnitTestTestSuite, TestLoader as UnitTestTestLoader, TestResult as UnitTestResult
+from unittest import TestSuite as UnitTestTestSuite, TestLoader as UnitTestTestLoader, TestResult as UnitTestResult, TestCase
 
 
 class TestResult(UnitTestResult):
@@ -176,6 +177,54 @@ class TestSuite(UnitTestTestSuite):
 
 class TestLoader(UnitTestTestLoader):
     suiteClass = TestSuite
+
+    def loadTestsFromName(self, name, module=None):
+        """Return a suite of all tests cases given a string specifier.
+
+        The name may resolve either to a module, a test case class, a
+        test method within a test case class, or a callable object which
+        returns a TestCase or TestSuite instance.
+
+        The method optionally resolves the names relative to a given module.
+        """
+        parts = name.split('.')
+        if module is None:
+            parts_copy = parts[:]
+            while parts_copy:
+                try:
+                    module = __import__('.'.join(parts_copy))
+                    break
+                except ImportError:
+                    del parts_copy[-1]
+                    if not parts_copy: raise
+            parts = parts[1:]
+        obj = module
+        for part in parts:
+            parent, obj = obj, getattr(obj, part)
+
+        if type(obj) == types.ModuleType:
+            return self.loadTestsFromModule(obj)
+        elif (isinstance(obj, (type, types.ClassType)) and 
+              issubclass(obj, TestCase)):
+            return self.loadTestsFromTestCase(obj)
+        elif (type(obj) == types.UnboundMethodType and 
+              isinstance(parent, (type, types.ClassType)) and 
+              issubclass(parent, TestCase)):
+            return TestSuite([parent(obj.__name__)])
+        elif isinstance(obj, TestSuite):
+            return obj 
+        elif hasattr(obj, '__call__'):
+            test = obj()
+            if isinstance(test, TestSuite):
+                return test
+            elif isinstance(test, TestCase):
+                return TestSuite([test])
+            else:
+                raise TypeError("calling %s returned %s, not a test" %
+                                (obj, test))
+        else:
+            raise TypeError("don't know how to make test from: %s" % obj)
+
 
 sep1 = '=' * 70 + '\n'
 sep2 = '-' * 70 + '\n'
