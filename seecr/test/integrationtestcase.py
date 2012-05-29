@@ -78,7 +78,7 @@ class IntegrationState(object):
         for flag in flagOptions:
             args.append("--%s" % flag)
         for k,v in kwargs.items():
-            args.append("--%s=%s" % (k, str(v))
+            args.append("--%s=%s" % (k, str(v)))
         serverProcess = Popen(
             executable=executable,
             args=args,
