@@ -1,0 +1,24 @@
+function runtests() {
+    tests_to_run=$1
+    if [ -z $tests_to_run ]; then
+        tests_to_run=$(ls test/*.sh)
+    else
+        shift
+    fi
+
+    echo "Will now run the tests:"
+    for test_to_run in $tests_to_run; do
+        echo " - $test_to_run"
+    done
+    echo "Press [ENTER] to continue"
+    read
+
+    for test_to_run in $tests_to_run; do
+        (   
+            cd tmp/test
+            ./$test_to_run "$@"
+        )   
+        echo "Finished $test_to_run. Press [ENTER] to continue"
+        read
+    done
+}
