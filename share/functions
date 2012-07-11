@@ -1,7 +1,7 @@
 function runtests() {
     tests_to_run=$1
     if [ -z $tests_to_run ]; then
-        tests_to_run=$(ls test/*.sh)
+        tests_to_run=$(cd test; ls *.sh)
     else
         shift
     fi
