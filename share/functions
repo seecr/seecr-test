@@ -22,3 +22,30 @@ function runtests() {
         read
     done
 }
+
+function removeDoNotDistribute() {
+    tmpDir=$1
+    find $tmpDir -type f -exec sed -e \
+        "/DO_NOT_DISTRIBUTE/d;" -i {} \;
+}
+
+function definePythonVars() {
+    if distro_is_debian_lenny {
+        export PYTHON=python2.5
+        export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.5/site-packages
+    } elif distro_is_debian_squeeze {
+        export PYTHON=python2.6
+        export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.6/dist-packages
+    } elif distro_is_centos_5 {
+        export PYTHON=python2.5
+        export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.5/site-packages
+    } elif distro_is_centos_6 {
+        export PYTHON=python2.6
+        export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.6/site-packages
+    } else {
+        echo "This distro is not supported."
+        exit 1
+    }
+
+    export PYTHONPATH=${SITEPACKAGES}:${PYTHONPATH}
+}
