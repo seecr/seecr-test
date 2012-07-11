@@ -1,3 +1,5 @@
+source /usr/share/seecr-tools/functions.d/distro
+
 function runtests() {
     tests_to_run=$1
     if [ -z $tests_to_run ]; then
