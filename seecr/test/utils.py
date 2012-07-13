@@ -198,7 +198,7 @@ def splitHttpHeaderBody(response):
     try:
         header, body = response.split('\r\n\r\n', 1)
     except ValueError, e:
-        raise ValueError("'%s' can not be split into a header and body" % response)
+        raise ValueError("%s can not be split into a header and body" % repr(response))
     else:
         return header, body
 
