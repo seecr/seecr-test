@@ -130,8 +130,7 @@ def postRequest(port, path, data, contentType='text/xml; charset="utf-8"', parse
         while totalBytesSent != len(sendBuffer):
             bytesSent = sok.send(sendBuffer[totalBytesSent:])
             totalBytesSent += bytesSent
-
-        header, body = receiveFromSocket(sok)
+        header, body = splitHttpHeaderBody(receiveFromSocket(sok))
         return createReturnValue(header, body, parse)
     finally:
         sok.close()
@@ -164,7 +163,6 @@ def createPostMultipartForm(boundary, formValues):
         strm.write(valueDict['value'])
         strm.write('\r\n')
     strm.write('--' + boundary + '--\r\n')
-
     return strm.getvalue()
 
 def getRequest(port, path, arguments=None, parse=True, timeOutInSeconds=None, host=None, additionalHeaders=None):
@@ -182,7 +180,7 @@ def getRequest(port, path, arguments=None, parse=True, timeOutInSeconds=None, ho
                 request += '%s: %s\r\n' % header
         request += '\r\n'
         sok.send(request)
-        header, body = receiveFromSocket(sok)
+        header, body = splitHttpHeaderBody(receiveFromSocket(sok))
         return createReturnValue(header, body, parse)
     finally:
         sok.close()
@@ -196,7 +194,15 @@ def receiveFromSocket(sok):
         if not part:
             break
         response += part
-    return response.split('\r\n\r\n', 1)
+    return response
+
+def splitHttpHeaderBody(response):
+    try:
+        header, body = response.split('\r\n\r\n', 1)
+    except ValueError, e:
+        raise ValueError("%s can not be split into a header and body" % repr(response))
+    else:
+        return header, body
 
 def headerToDict(header):
    return dict(

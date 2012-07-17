@@ -1,0 +1,53 @@
+source /usr/share/seecr-tools/functions.d/distro
+
+function runtests() {
+    tests_to_run=$1
+    if [ -z $tests_to_run ]; then
+        tests_to_run=$(cd test; ls *.sh)
+    else
+        shift
+    fi
+
+    echo "Will now run the tests:"
+    for test_to_run in $tests_to_run; do
+        echo " - $test_to_run"
+    done
+    echo "Press [ENTER] to continue"
+    read
+
+    for test_to_run in $tests_to_run; do
+        (   
+            cd tmp/test
+            ./$test_to_run "$@"
+        )   
+        echo "Finished $test_to_run. Press [ENTER] to continue"
+        read
+    done
+}
+
+function removeDoNotDistribute() {
+    tmpDir=$1
+    find $tmpDir -type f -exec sed -e \
+        "/DO_NOT_DISTRIBUTE/d;" -i {} \;
+}
+
+function definePythonVars() {
+    if distro_is_debian_lenny; then
+        export PYTHON=python2.5
+        export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.5/site-packages
+    elif distro_is_debian_squeeze; then 
+        export PYTHON=python2.6
+        export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.6/dist-packages
+    elif distro_is_centos_5; then
+        export PYTHON=python2.5
+        export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.5/site-packages
+    elif distro_is_centos_6; then 
+        export PYTHON=python2.6
+        export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.6/site-packages
+    else
+        echo "This distro is not supported."
+        exit 1
+    fi 
+
+    export PYTHONPATH=${SITEPACKAGES}:${PYTHONPATH}
+}
