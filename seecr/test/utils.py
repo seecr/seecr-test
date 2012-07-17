@@ -28,7 +28,7 @@ from StringIO import StringIO
 from lxml.etree import parse as parse_xml
 from socket import socket
 from urllib import urlencode
-from sys import stdout
+from sys import stdout, getdefaultencoding
 
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
 _entities = {
@@ -112,6 +112,8 @@ def createReturnValue(header, body, parse):
 
 def postRequest(port, path, data, contentType='text/xml; charset="utf-8"', parse=True, timeOutInSeconds=None, additionalHeaders=None):
     additionalHeaders = additionalHeaders or {}
+    if type(data) is unicode:
+        data = data.encode(getdefaultencoding())
     sok = _socket(port, timeOutInSeconds)
     try:
         contentLength = len(data)
