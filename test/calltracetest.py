@@ -180,3 +180,9 @@ class CallTraceTest(TestCase):
         self.assertEquals(GeneratorType, type(result))
         self.assertEquals([], list(result))
         self.assertEquals(1, len(calltrace.calledMethods))
+
+    def testCalledMethodNames(self):
+        calltrace = CallTrace('name')
+        calltrace.methodOne('aap')
+        calltrace.methodTwo('aap')
+        self.assertEquals(['methodOne', 'methodTwo'], calltrace.calledMethodNames())
