@@ -35,8 +35,12 @@ from subprocess import Popen
 from signal import SIGTERM
 from urllib import urlopen, urlencode
 from lxml.etree import XMLSyntaxError, parse
+from string import ascii_letters
+from time import time
 
 from seecrtestcase import SeecrTestCase
+
+randomString = lambda n=4: ''.join(choice(ascii_letters) for i in xrange(n))
 
 class IntegrationTestCase(SeecrTestCase):
     def __getattr__(self, name):
@@ -105,6 +109,47 @@ class IntegrationState(object):
     def _stopServer(self, serviceName):
         kill(self.pids[serviceName], SIGTERM)
         waitpid(self.pids[serviceName], WNOHANG)
+
+    def _runExecutable(self, executable, processName=None, cwd=None, redirect=True, flagOptions=None, timeoutInSeconds=15, expectedReturnCode=0, **kwargs):
+        processName = randomString() if processName is None else processName
+        stdoutfile = join(self.integrationTempdir, "stdouterr-%s-%s.log" % (basename(executable), processName))
+        stdouterrlog = open(stdoutfile, 'w')
+        args = [executable]
+        fileno = stdouterrlog.fileno() if redirect else None
+        flagOptions = flagOptions if flagOptions else []
+        for flag in flagOptions:
+            args.append("--%s" % flag)
+        for k,v in kwargs.items():
+            args.append("--%s=%s" % (k, str(v)))
+        process = Popen(
+            executable=executable,
+            args=args,
+            cwd=cwd if cwd else self.binDir(),
+            stdout=fileno,
+            stderr=fileno
+        )
+
+        self._stdoutWrite("Running '%s', for state '%s' : v" % (basename(executable), self.stateName))
+        result = 0
+        t0 = time()
+        keepRunning = True
+        while keepRunning:
+            self._stdoutWrite('r')
+            sleep(0.1)
+            result = process.poll()
+            keepRunning = result is None
+            if time() - t0 > timeoutInSeconds:
+                process.terminate()
+                exit('Executable "%s" took more than %s seconds, check "%s"' % (basename(executable), timeoutInSeconds, stdoutfile))
+
+        if result != expectedReturnCode:
+            exit('Executable "%s" exited with returncode %s, check "%s"' % (basename(executable), result, stdoutfile))
+        self._stdoutWrite('oom!\n')
+        process.wait()
+        stdouterrlog.close()
+        if redirect:
+            return open(stdoutfile).read()
+
 
     def tearDown(self):
         for serviceName in self.pids.keys():
