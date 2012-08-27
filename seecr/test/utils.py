@@ -29,6 +29,7 @@ from lxml.etree import parse as parse_xml
 from socket import socket
 from urllib import urlencode
 from sys import stdout, getdefaultencoding
+from time import sleep
 
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
 _entities = {
@@ -210,4 +211,16 @@ def headerToDict(header):
        for line in header.split('\r\n')
        if ':' in line
    )
+
+def sleepWheel(seconds, callback=None, interval=0.2):
+    parts = ['\\', '|', '/', '-']
+    for i in range(int(seconds/interval)):
+        stdout.write(parts[i%len(parts)])
+        stdout.flush()
+        sleep(interval)
+        stdout.write("\b")
+        stdout.flush()
+        if not callback is None:
+            if callback():
+                break
 
