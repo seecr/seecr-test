@@ -76,7 +76,8 @@ class IntegrationState(object):
     def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
         stdouterrlog = open(stdoutfile, 'w')
-        args = [executable]
+        args = executable if isinstance(executable, list) else [executable]
+        executable = args[0]
         fileno = stdouterrlog.fileno() if redirect else None
         flagOptions = flagOptions if flagOptions else []
         for flag in flagOptions:
