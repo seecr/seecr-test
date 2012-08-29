@@ -26,7 +26,7 @@
 from __future__ import with_statement
 
 from os.path import isdir, join, abspath, dirname, basename
-from os import system, listdir, makedirs, waitpid, kill, WNOHANG
+from os import system, listdir, makedirs, waitpid, kill, WNOHANG, getenv
 from sys import stdout
 from random import randint, choice
 from time import sleep
@@ -52,13 +52,16 @@ class IntegrationTestCase(SeecrTestCase):
         self.state = state
         SeecrTestCase.run(self, result=result)
 
+INTEGRATION_TEMPDIR_BASE = getenv('INTEGRATION_TEMPDIR_BASE', '/tmp/integrationtest')
+
+
 class IntegrationState(object):
     def __init__(self, stateName, tests=None, fastMode=False):
         self.stateName = stateName
         self.__tests = tests
         self.fastMode = fastMode
         self.pids = {}
-        self.integrationTempdir = '/tmp/integrationtest-%s' % stateName 
+        self.integrationTempdir = '%s-%s' % (INTEGRATION_TEMPDIR_BASE, stateName)
         if not self.fastMode:
             system('rm -rf ' + self.integrationTempdir)
             system('mkdir --parents '+ self.integrationTempdir)
@@ -84,6 +87,7 @@ class IntegrationState(object):
             args.append("--%s" % flag)
         for k,v in kwargs.items():
             args.append("--%s=%s" % (k, str(v)))
+        print executable, args, self.binDir()
         serverProcess = Popen(
             executable=executable,
             args=args,
@@ -110,6 +114,7 @@ class IntegrationState(object):
     def _stopServer(self, serviceName):
         kill(self.pids[serviceName], SIGTERM)
         waitpid(self.pids[serviceName], WNOHANG)
+        del self.pids[serviceName]
 
     def _runExecutable(self, executable, processName=None, cwd=None, redirect=True, flagOptions=None, timeoutInSeconds=15, expectedReturnCode=0, **kwargs):
         processName = randomString() if processName is None else processName
