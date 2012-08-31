@@ -87,7 +87,6 @@ class IntegrationState(object):
             args.append("--%s" % flag)
         for k,v in kwargs.items():
             args.append("--%s=%s" % (k, str(v)))
-        print executable, args, self.binDir()
         serverProcess = Popen(
             executable=executable,
             args=args,
