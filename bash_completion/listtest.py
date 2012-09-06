@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.5
+#!/usr/bin/env python
 ## begin license ##
 #
 #   Copyright (C) 2010-2011 Seek You Too (CQ2) http://www.cq2.nl
