@@ -9,9 +9,9 @@ _alltests() {
     local cur tests
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
-    tests=$(/usr/share/seecr-test/listtest.py ${COMP_WORDS[0]} | grep "\.")
+    tests=$(/usr/share/python-seecr-test/listtest.py ${COMP_WORDS[0]} | grep "\.")
     if [[ $cur == "" || $cur != *.* && ! $(echo $tests | grep "$cur\.") ]]; then
-        tests=$(/usr/share/seecr-test/listtest.py ${COMP_WORDS[0]} | grep -v "\.")
+        tests=$(/usr/share/python-seecr-test/listtest.py ${COMP_WORDS[0]} | grep -v "\.")
     fi
     COMPREPLY=( $(compgen -W "${tests}" -- ${cur}) )
     return 0
