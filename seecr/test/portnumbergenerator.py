@@ -22,12 +22,26 @@
 # 
 ## end license ##
 
-from random import randint
+from socket import socket, SO_LINGER, SOL_SOCKET
+from struct import pack
+from time import sleep
 
 class PortNumberGenerator(object):
-    startNumber = randint(50000, 60000)
+    _ephemeralPortLow, _ephemeralPortHigh = [int(p) for p in open('/proc/sys/net/ipv4/ip_local_port_range', 'r').read().strip().split('\t', 1)]  # low\thigh
+    _maxTries = (_ephemeralPortHigh - _ephemeralPortLow) / 2
+    _usedPorts = set([])
 
     @classmethod
     def next(cls):
-        cls.startNumber += 1
-        return cls.startNumber
+        for i in xrange(cls._maxTries):
+            sok = socket()
+            sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 1, 1))
+            sok.bind(('127.0.0.1', 0))
+            ignoredHost, port = sok.getsockname()
+            sok.close()
+            if port not in cls._usedPorts:
+                cls._usedPorts.add(port)
+                return port
+
+        raise RuntimeError('Not been able to get an new uniqe free port within a reasonable amount (%s) of tries.' % cls._maxTries)
+
