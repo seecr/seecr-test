@@ -29,8 +29,8 @@ from threading import Thread
 from urlparse import urlsplit
 from cgi import parse_qs
 
-from weightless.http import parseHeaders
-from weightless.http import REGEXP
+# _httpspec is originally from Weightless (http://weightless.io)
+from _httpspec import REGEXP, parseHeaders
 
 
 class MockServer(Thread):
