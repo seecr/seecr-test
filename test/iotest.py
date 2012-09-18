@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 from unittest import TestCase
 
 from traceback import print_exc
