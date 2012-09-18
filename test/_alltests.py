@@ -39,6 +39,7 @@ from unittest import main
 from calltracetest import CallTraceTest
 from seecrtestcasetest import SeecrTestCaseTest
 from portnumbergeneratortest import PortNumberGeneratorTest
+from iotest import IOTest
 
 
 if __name__ == '__main__':
