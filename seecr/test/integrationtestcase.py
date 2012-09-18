@@ -53,6 +53,7 @@ class IntegrationTestCase(SeecrTestCase):
         SeecrTestCase.run(self, result=result)
 
 INTEGRATION_TEMPDIR_BASE = getenv('INTEGRATION_TEMPDIR_BASE', '/tmp/integrationtest')
+REMOTE_USERNAME = getenv('REMOTE_USERNAME', '')
 
 
 class IntegrationState(object):
@@ -62,6 +63,8 @@ class IntegrationState(object):
         self.fastMode = fastMode
         self.pids = {}
         self.integrationTempdir = '%s-%s' % (INTEGRATION_TEMPDIR_BASE, stateName)
+        if REMOTE_USERNAME:
+            self.integrationTempdir += '-%s' % REMOTE_USERNAME
         if not self.fastMode:
             system('rm -rf ' + self.integrationTempdir)
             system('mkdir --parents '+ self.integrationTempdir)
