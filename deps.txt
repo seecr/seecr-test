@@ -1,3 +1,5 @@
 seecr-core (>= 1.0.1)
 seecr-core (<< 1.1)
 bash-completion
+#centos5:python-test
+#centos6:python-test
