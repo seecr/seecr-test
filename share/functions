@@ -1,7 +1,7 @@
 source /usr/share/seecr-test/_distro  # from seecr-tools/share/functions.d/distro
 
 function runtests() {
-    tests_to_run=$1
+    local tests_to_run=$1
     if [ -z $tests_to_run ]; then
         tests_to_run=$(cd test; ls *.sh)
     else
@@ -26,7 +26,7 @@ function runtests() {
 }
 
 function removeDoNotDistribute() {
-    tmpDir=$1
+    local tmpDir=$1; shift 1
     find $tmpDir -type f -exec sed -e \
         "/DO_NOT_DISTRIBUTE/d;" -i {} \;
 }
