@@ -37,9 +37,10 @@ sysPath.insert(0,'..')                            #DO_NOT_DISTRIBUTE
 from unittest import main
 
 from calltracetest import CallTraceTest
-from seecrtestcasetest import SeecrTestCaseTest
-from portnumbergeneratortest import PortNumberGeneratorTest
 from iotest import IOTest
+from portnumbergeneratortest import PortNumberGeneratorTest
+from seecrtestcasetest import SeecrTestCaseTest
+from utilstest import UtilsTest
 
 
 if __name__ == '__main__':

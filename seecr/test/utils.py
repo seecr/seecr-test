@@ -23,7 +23,7 @@
 # 
 ## end license ##
 
-from re import DOTALL, compile
+from re import DOTALL, compile, sub
 from StringIO import StringIO
 from lxml.etree import parse as parse_xml
 from socket import socket
@@ -223,4 +223,7 @@ def sleepWheel(seconds, callback=None, interval=0.2):
         if not callback is None:
             if callback():
                 break
+
+def ignoreLineNumbers(s):
+    return sub("line \d+,", "line [#],", s)
 
