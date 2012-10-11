@@ -27,7 +27,7 @@ from __future__ import with_statement
 
 from os.path import isdir, join, abspath, dirname, basename, isfile, realpath
 from os import system, listdir, makedirs, waitpid, kill, WNOHANG, getenv
-from sys import stdout
+from sys import stdout, path as systemPath
 from random import randint, choice
 from time import sleep
 from StringIO import StringIO
@@ -55,7 +55,6 @@ class IntegrationTestCase(SeecrTestCase):
 INTEGRATION_TEMPDIR_BASE = getenv('INTEGRATION_TEMPDIR_BASE', '/tmp/integrationtest')
 REMOTE_USERNAME = getenv('REMOTE_USERNAME', '')
 
-
 class IntegrationState(object):
     def __init__(self, stateName, tests=None, fastMode=False):
         self.stateName = stateName
@@ -75,20 +74,15 @@ class IntegrationState(object):
             self.__tests,
             state=self)
     
-    def depsdDir(self):
-        raise NotImplementedError()
-
     def binDir(self):
         raise NotImplementedError()
 
     def binPath(self, executable):
-        depsdDir = self.depsdDir()
-        if isdir(depsdDir):
-            for depDir in listdir(depsdDir):
-                depsdBinPath = join(depsdDir, depDir, 'bin', executable)
-                if isfile(depsdBinPath):
-                    return realpath(abspath(depsdBinPath))
-        return join('/usr/bin', executable)
+        for path in systemPath:
+            executablePath = join(path, 'bin', executable)
+            if isfile(executablePath):
+                return realpath(abspath(executablePath))
+        return join(getenv('SEECRTEST_USR_BIN', '/usr/bin'), executable)
 
     def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
@@ -104,7 +98,7 @@ class IntegrationState(object):
         serverProcess = Popen(
             executable=executable,
             args=args,
-            cwd=cwd if cwd else self.binDir(),
+            cwd=cwd if cwd else getenv('SEECRTEST_USR_BIN', self.binDir()),
             stdout=fileno,
             stderr=fileno
         )
@@ -143,7 +137,7 @@ class IntegrationState(object):
         process = Popen(
             executable=executable,
             args=args,
-            cwd=cwd if cwd else self.binDir(),
+            cwd=cwd if cwd else getenv('SEECRTEST_USR_BIN', self.binDir()),
             stdout=fileno,
             stderr=fileno
         )
