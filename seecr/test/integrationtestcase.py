@@ -25,7 +25,7 @@
 
 from __future__ import with_statement
 
-from os.path import isdir, join, abspath, dirname, basename
+from os.path import isdir, join, abspath, dirname, basename, isfile, realpath
 from os import system, listdir, makedirs, waitpid, kill, WNOHANG, getenv
 from sys import stdout
 from random import randint, choice
@@ -75,9 +75,20 @@ class IntegrationState(object):
             self.__tests,
             state=self)
     
-    def binDir(self):
-        raise ValueError("Needs implementation")
+    def depsdDir(self):
+        raise NotImplementedError()
 
+    def binDir(self):
+        raise NotImplementedError()
+
+    def binPath(self, executable):
+        depsdDir = self.depsdDir()
+        if isdir(depsdDir):
+            for depDir in listdir(depsdDir):
+                depsdBinPath = join(depsdDir, depDir, 'bin', executable)
+                if isfile(depsdBinPath):
+                    return realpath(abspath(depsdBinPath))
+        return join('/usr/bin', executable)
 
     def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
