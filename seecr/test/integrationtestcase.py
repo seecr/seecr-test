@@ -78,16 +78,7 @@ class IntegrationState(object):
         raise NotImplementedError()
 
     def binPath(self, executable):
-        allPath = [join(p, 'bin') for p in systemPath]
-        if getenv('SEECRTEST_USR_BIN'):
-            allPath.append(getenv('SEECRTEST_USR_BIN'))
-        allPath.append('/usr/bin')
-        for path in allPath:
-            executablePath = join(path, executable)
-            if isfile(executablePath):
-                return realpath(abspath(executablePath))
-        raise ValueError("No executable found for '%s'" % executable)
-
+        return SeecrTestCase.binPath(executable)
 
     def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)

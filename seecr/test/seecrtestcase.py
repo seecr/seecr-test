@@ -27,8 +27,10 @@ from unittest import TestCase
 from string import whitespace
 from tempfile import mkdtemp, mkstemp
 from shutil import rmtree
-import os
 from timing import T
+from sys import path as systemPath
+from os import getenv, close as osClose, remove, getpid
+from os.path import join, isfile, realpath, abspath
 
 class SeecrTestCase(TestCase):
 
@@ -36,12 +38,12 @@ class SeecrTestCase(TestCase):
         TestCase.setUp(self)
         self.tempdir = mkdtemp()
         fd, self.tempfile = mkstemp()
-        os.close(fd)
+        osClose(fd)
         self.vmsize = self._getVmSize()
 
     def tearDown(self):
         rmtree(self.tempdir)
-        os.remove(self.tempfile)
+        remove(self.tempfile)
         TestCase.tearDown(self)
 
     def assertTiming(self, t0, t, t1):
@@ -70,7 +72,7 @@ class SeecrTestCase(TestCase):
                 break
 
     def _getVmSize(self):
-        status = open('/proc/%d/status' % os.getpid()).read()
+        status = open('/proc/%d/status' % getpid()).read()
         i = status.find('VmSize:') + len('VmSize:')
         j = status.find('kB', i)
         vmsize = int(status[i:j].strip())
@@ -80,5 +82,18 @@ class SeecrTestCase(TestCase):
         vmsize = self._getVmSize()
         self.assertTrue(self.vmsize*bandwidth < vmsize < self.vmsize/bandwidth,
                 "memory leaking: before: %d, after: %d" % (self.vmsize, vmsize))
+
+
+    @staticmethod
+    def binPath(executable):
+        allPath = [join(p, 'bin') for p in systemPath]
+        if getenv('SEECRTEST_USR_BIN'):
+            allPath.append(getenv('SEECRTEST_USR_BIN'))
+        allPath.append('/usr/bin')
+        for path in allPath:
+            executablePath = join(path, executable)
+            if isfile(executablePath):
+                return realpath(abspath(executablePath))
+        raise ValueError("No executable found for '%s'" % executable)
 
 
