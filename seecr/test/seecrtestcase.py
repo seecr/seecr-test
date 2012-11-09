@@ -71,6 +71,20 @@ class SeecrTestCase(TestCase):
             if not char1 or not char2:
                 break
 
+    def assertEqualsLxml(self, expected, result):
+        expectedNode = getattr(expected, 'getroot', lambda: expected)()
+        resultNode = getattr(result, 'getroot', lambda: result)()
+        toVerify = [(expectedNode, resultNode)]
+        compare = CompareXml(
+            expectedNode=expectedNode,
+            resultNode=resultNode,
+            remainingContainer=toVerify
+        )
+
+        while toVerify:
+            expectedNode, resultNode = toVerify.pop()
+            compare.compareNode(expectedNode, resultNode)
+
     def _getVmSize(self):
         status = open('/proc/%d/status' % getpid()).read()
         i = status.find('VmSize:') + len('VmSize:')
@@ -96,4 +110,48 @@ class SeecrTestCase(TestCase):
                 return realpath(abspath(executablePath))
         raise ValueError("No executable found for '%s'" % executable)
 
+
+class CompareXml(object):
+    def __init__(self, expectedNode, resultNode, remainingContainer):
+        self._expectedNode = expectedNode
+        self._resultNode = resultNode
+        self._remainingContainer = remainingContainer
+
+    def compareNode(self, expectedNode, resultNode):
+        if expectedNode.tag != resultNode.tag:
+            raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
+
+        expectedAttrs = expectedNode.attrib
+        expectedAttrsSet = set(expectedAttrs.keys())
+        resultAttrs = resultNode.attrib
+        resultAttrsSet = set(resultAttrs.keys())
+
+        diff = expectedAttrsSet.difference(resultAttrsSet)
+        if diff:
+            raise AssertionError("Missing attributes %s at location: '%s'" % (
+                    ', '.join(
+                        (("'%s'" % a) for a in diff)), 
+                        self.xpathToHere(expectedNode, includeCurrent=True)
+                ))
+        diff = resultAttrsSet.difference(expectedAttrsSet)
+        if diff:
+            raise AssertionError("Unexpected attributes %s at location: '%s'" % (
+                    ', '.join(
+                        (("'%s'" % a) for a in diff)), 
+                        self.xpathToHere(expectedNode, includeCurrent=True)
+                ))
+
+        for attrName, expectedAttrValue in expectedAttrs.items():
+            resultAttrValue = resultAttrs[attrName]
+            if expectedAttrValue != resultAttrValue:
+                raise AssertionError("Attribute '%s' has a different value ('%s' != '%s') at location: '%s'" % (attrName, expectedAttrValue, resultAttrValue, self.xpathToHere(expectedNode, includeCurrent=True)))
+
+    def xpathToHere(self, node, includeCurrent=False):
+        path = []
+        startNode = node
+        while node != self._expectedNode:
+            node = node.getparent()
+
+        pathString = '/'.join(path)
+        return pathString + ('/' if pathString else '') + startNode.tag if includeCurrent else pathString
 
