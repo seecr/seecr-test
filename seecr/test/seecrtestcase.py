@@ -122,9 +122,18 @@ class CompareXml(object):
         if expectedNode.tag != resultNode.tag:
             raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
 
+        if expectedNode.text != resultNode.text:
+            raise AssertionError("Text difference: %s != %s\nAt location: '%s'" % (
+                '>no|text<' if expectedNode.text is None else "'" + expectedNode.text + "'",
+                '>no|text<' if resultNode.text is None else "'" + resultNode.text + "'",
+                self.xpathToHere(expectedNode, includeCurrent=True)
+            ))
+
         if expectedNode.tail != resultNode.tail:
-            # Finish this
-            raise AssertionError("?: %s != %s" % (expectedNode.tail, resultNode.tail))
+            raise AssertionError("Tail difference: %s != %s" % (
+                '>no|tail<' if expectedNode.tail is None else "'" + expectedNode.tail + "'",
+                '>no|tail<' if resultNode.tail is None else "'" + resultNode.tail + "'",
+            ))
 
         expectedAttrs = expectedNode.attrib
         expectedAttrsSet = set(expectedAttrs.keys())
@@ -153,7 +162,6 @@ class CompareXml(object):
 
         expectedChildren = expectedNode.getchildren()
         resultChildren = resultNode.getchildren()
-        print expectedChildren, resultChildren
         if len(expectedChildren) != len(resultChildren):
             tagsLandR = [
                 (getattr(x, 'tag', None), getattr(r, 'tag', None))
@@ -170,11 +178,14 @@ class CompareXml(object):
             ])
             raise AssertionError("Number of children not equal (expected -- result):\n%s\n\nAt location: '%s'" % (tagsLandR, self.xpathToHere(expectedNode, includeCurrent=True)))
 
+        self._remainingContainer.extend(zip(expectedChildren, resultChildren))
+
     def xpathToHere(self, node, includeCurrent=False):
         path = []
         startNode = node
         while node != self._expectedNode:
             node = node.getparent()
+            path.append(node.tag)
 
         pathString = '/'.join(path)
         return pathString + ('/' if pathString else '') + startNode.tag if includeCurrent else pathString

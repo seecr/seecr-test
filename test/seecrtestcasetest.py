@@ -103,20 +103,61 @@ class SeecrTestCaseTest(SeecrTestCase):
 \n\
 At location: 'xml'")
 
-        self.fail("Continue here")
+        # (root) tag text difference
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml></xml>'),
+            parseString('<xml>TeXT</xml>'),
+            "Text difference: >no|text< != 'TeXT'\nAt location: 'xml'")
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml>OtHer</xml>'),
+            parseString('<xml>TeXT</xml>'),
+            "Text difference: 'OtHer' != 'TeXT'\nAt location: 'xml'")
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml>Xet</xml>'),
+            parseString('<xml></xml>'),
+            "Text difference: 'Xet' != >no|text<\nAt location: 'xml'")
 
         # subtag tagname difference
         self.checkAssertEqualsLxmlFails(
             parseString('<xml><subtag/></xml>'),
             parseString('<xml><subgat/></xml>'),
-            "?")
+            "Tags do not match 'subtag' != 'subgat' at location: 'xml'")
+
+        # subtag attrs left and right
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml><subtag a="" z=""/></xml>'),
+            parseString('<xml><subtag a="" m=""/></xml>'),
+            "Missing attributes 'z' at location: 'xml/subtag'")
+        # subtag attrs value
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml><subtag attr="a"/></xml>'),
+            parseString('<xml><subtag attr="b"/></xml>'),
+            "Attribute 'attr' has a different value ('a' != 'b') at location: 'xml/subtag'")
+
+        # sub-subtag #nr difference
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml><ml><subtag/><another.tag/></ml></xml>'),
+            parseString('<xml><ml><another.tag/></ml></xml>'),
+            "Number of children not equal (expected -- result):\n\
+    'subtag' -- 'another.tag'\n\
+    'another.tag' -- no|tag\n\
+\n\
+At location: 'xml/ml'")
+
+        # subtag text difference
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml><subtag/></xml>'),
+            parseString('<xml> TeXT <subtag/></xml>'),
+            "Text difference: >no|text< != ' TeXT '\nAt location: 'xml'")
 
         # subtag tail difference
         self.checkAssertEqualsLxmlFails(
             parseString('<xml><subtag/></xml>'),
             parseString('<xml><subtag/> tail </xml>'),
-            "?")
+            "Tail difference: >no|tail< != ' tail '")
 
+    def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
+        self.fail()
 
 
         # TODO: Test this!
