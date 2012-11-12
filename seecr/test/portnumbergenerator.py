@@ -22,7 +22,7 @@
 # 
 ## end license ##
 
-from socket import socket, SO_LINGER, SOL_SOCKET
+from socket import socket, SO_LINGER, SOL_SOCKET, SO_REUSEADDR
 from struct import pack
 from time import sleep
 
@@ -35,7 +35,8 @@ class PortNumberGenerator(object):
     def next(cls):
         for i in xrange(cls._maxTries):
             sok = socket()
-            sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 1, 1))
+            sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 0, 0))
+            sok.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
             sok.bind(('127.0.0.1', 0))
             ignoredHost, port = sok.getsockname()
             sok.close()
