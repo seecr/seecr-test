@@ -93,7 +93,30 @@ class SeecrTestCaseTest(SeecrTestCase):
             parseString('<xml a:attr="b" xmlns:a="urn:something"/>'),
             "Missing attributes 'attr' at location: 'xml'")
 
+        # subtag #nr difference
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml><subtag/><another.tag/></xml>'),
+            parseString('<xml><another.tag/></xml>'),
+            "Number of children not equal (expected -- result):\n\
+    'subtag' -- 'another.tag'\n\
+    'another.tag' -- no|tag\n\
+\n\
+At location: 'xml'")
+
         self.fail("Continue here")
+
+        # subtag tagname difference
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml><subtag/></xml>'),
+            parseString('<xml><subgat/></xml>'),
+            "?")
+
+        # subtag tail difference
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml><subtag/></xml>'),
+            parseString('<xml><subtag/> tail </xml>'),
+            "?")
+
 
 
         # TODO: Test this!

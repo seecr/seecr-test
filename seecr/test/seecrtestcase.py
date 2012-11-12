@@ -31,6 +31,7 @@ from timing import T
 from sys import path as systemPath
 from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
+from itertools import izip_longest
 
 class SeecrTestCase(TestCase):
 
@@ -121,6 +122,10 @@ class CompareXml(object):
         if expectedNode.tag != resultNode.tag:
             raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
 
+        if expectedNode.tail != resultNode.tail:
+            # Finish this
+            raise AssertionError("?: %s != %s" % (expectedNode.tail, resultNode.tail))
+
         expectedAttrs = expectedNode.attrib
         expectedAttrsSet = set(expectedAttrs.keys())
         resultAttrs = resultNode.attrib
@@ -145,6 +150,25 @@ class CompareXml(object):
             resultAttrValue = resultAttrs[attrName]
             if expectedAttrValue != resultAttrValue:
                 raise AssertionError("Attribute '%s' has a different value ('%s' != '%s') at location: '%s'" % (attrName, expectedAttrValue, resultAttrValue, self.xpathToHere(expectedNode, includeCurrent=True)))
+
+        expectedChildren = expectedNode.getchildren()
+        resultChildren = resultNode.getchildren()
+        print expectedChildren, resultChildren
+        if len(expectedChildren) != len(resultChildren):
+            tagsLandR = [
+                (getattr(x, 'tag', None), getattr(r, 'tag', None))
+                for x, r in izip_longest(expectedChildren, resultChildren)
+            ]
+            tagsLandR = [
+                (x and "'%s'" % x or 'no|tag',
+                 r and "'%s'" % r or 'no|tag')
+                for x,r in tagsLandR
+            ]
+            tagsLandR = '\n'.join([
+                '    %s -- %s' % (x, r)
+                 for x, r in tagsLandR
+            ])
+            raise AssertionError("Number of children not equal (expected -- result):\n%s\n\nAt location: '%s'" % (tagsLandR, self.xpathToHere(expectedNode, includeCurrent=True)))
 
     def xpathToHere(self, node, includeCurrent=False):
         path = []
