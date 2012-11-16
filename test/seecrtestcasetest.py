@@ -154,7 +154,7 @@ At location: 'xml/ml'")
         self.checkAssertEqualsLxmlFails(
             parseString('<xml><subtag/></xml>'),
             parseString('<xml><subtag/> tail </xml>'),
-            "Tail difference: >no|tail< != ' tail '")
+            "Tail difference (text after closing of tag): >no|tail< != ' tail '\nAt location: 'xml/subtag'")
 
     def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
         self.fail()
@@ -162,7 +162,6 @@ At location: 'xml/ml'")
 
         # TODO: Test this!
         #   deeper nested xml (for correct (non-)recusion and CompareXml.xpathToHere testing)
-        #   xpathToHere correct for tail's, and other more complex structures
         #   breadth first not depth first (i.e. not intuitive "first error" in test may not be first error in xml-serialisation)
         #   fail on str's, ... not lxml'ish
         #   fail-or-retree Node's iso Tree.

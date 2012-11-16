@@ -130,9 +130,10 @@ class CompareXml(object):
             ))
 
         if expectedNode.tail != resultNode.tail:
-            raise AssertionError("Tail difference: %s != %s" % (
+            raise AssertionError("Tail difference (text after closing of tag): %s != %s\nAt location: '%s'" % (
                 '>no|tail<' if expectedNode.tail is None else "'" + expectedNode.tail + "'",
                 '>no|tail<' if resultNode.tail is None else "'" + resultNode.tail + "'",
+                self.xpathToHere(expectedNode, includeCurrent=True)
             ))
 
         expectedAttrs = expectedNode.attrib
