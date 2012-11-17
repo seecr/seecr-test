@@ -31,6 +31,9 @@ from StringIO import StringIO
 #   lxmltostring stuff ...
 from lxml.etree import parse, tostring
 
+# whiteboxing:
+from seecr.test.seecrtestcase import CompareXml
+
 
 class SeecrTestCaseTest(SeecrTestCase):
 
@@ -157,7 +160,39 @@ At location: 'xml/ml'")
             "Tail difference (text after closing of tag): >no|tail< != ' tail '\nAt location: 'xml/subtag'")
 
     def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
-        self.fail()
+        def assertPathToTagOkInXml(xml, tagsWithPaths):
+            lxml = parseString(xml)
+            lxmlNode = lxml.getroot()
+            compareXml = CompareXml(expectedNode=lxmlNode, resultNode=lxmlNode, remainingContainer=[])
+
+            for d in tagsWithPaths:
+                tag, pathExc, pathIncl = d['tag'], d['excl'], d['incl']
+                self.assertEquals(set(['tag', 'excl', 'incl']), set(d.keys()))
+                t = lxmlNode.xpath('//%s' % tag)[0]
+                self.assertEquals(pathExc, compareXml.xpathToHere(t, includeCurrent=False))
+                self.assertEquals(pathIncl, compareXml.xpathToHere(t, includeCurrent=True))
+
+        xml = '''\
+<a>
+    <b>
+        <c/>
+    </b>
+    <b2>
+        <c2>
+            <d/>
+        </c2>
+        <c3/>
+    </b2>
+</a>'''
+        assertPathToTagOkInXml(xml=xml, tagsWithPaths=[
+            {'tag': 'a', 'excl': '', 'incl': 'a'},
+            {'tag': 'b', 'excl': 'a', 'incl': 'a/b'},
+            {'tag': 'c', 'excl': 'a/b', 'incl': 'a/b/c'},
+            {'tag': 'b2', 'excl': 'a', 'incl': 'a/b2'},
+            {'tag': 'c2', 'excl': 'a/b2', 'incl': 'a/b2/c2'},
+            {'tag': 'd', 'excl': 'a/b2/c2', 'incl': 'a/b2/c2/d'},
+            {'tag': 'c3', 'excl': 'a/b2', 'incl': 'a/b2/c3'}
+        ])
 
 
         # TODO: Test this!

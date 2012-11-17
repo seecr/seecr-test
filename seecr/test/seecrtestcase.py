@@ -186,7 +186,7 @@ class CompareXml(object):
         startNode = node
         while node != self._expectedNode:
             node = node.getparent()
-            path.append(node.tag)
+            path.insert(0, node.tag)
 
         pathString = '/'.join(path)
         return pathString + ('/' if pathString else '') + startNode.tag if includeCurrent else pathString
