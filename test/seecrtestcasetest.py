@@ -194,6 +194,29 @@ At location: 'xml/ml'")
             {'tag': 'c3', 'excl': 'a/b2', 'incl': 'a/b2/c3'}
         ])
 
+        xml = '''\
+<a>
+    <b/>
+    <b>
+        <c>
+            <c>ignored</c>
+            <d/>
+            <e>ignored</e>
+        </c>
+        <c>
+            <e>ignored</e>
+            <e/>
+        </c>
+    </b>
+</a>'''
+        assertPathToTagOkInXml(xml=xml, tagsWithPaths=[
+            {'tag': 'b[1]', 'excl': 'a', 'incl': 'a/b[1]'},
+            {'tag': 'b/c[1]', 'excl': 'a/b[2]', 'incl': 'a/b[2]/c[1]'},
+            {'tag': 'd', 'excl': 'a/b[2]/c[1]', 'incl': 'a/b[2]/c[1]/d'},
+            {'tag': 'b/c[2]', 'excl': 'a/b[2]', 'incl': 'a/b[2]/c[2]'},
+            {'tag': 'b/c[2]/e[2]', 'excl': 'a/b[2]/c[2]', 'incl': 'a/b[2]/c[2]/e[2]'},
+        ])
+
 
         # TODO: Test this!
         #   deeper nested xml (for correct (non-)recusion and CompareXml.xpathToHere testing)

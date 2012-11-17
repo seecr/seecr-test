@@ -33,6 +33,10 @@ from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
 from itertools import izip_longest
 
+
+XPATH_IS_ONE_BASED = 1
+
+
 class SeecrTestCase(TestCase):
 
     def setUp(self):
@@ -186,8 +190,24 @@ class CompareXml(object):
         startNode = node
         while node != self._expectedNode:
             node = node.getparent()
-            path.insert(0, node.tag)
+            path.insert(0, self._currentPointInTreeElementXpath(node))
 
-        pathString = '/'.join(path)
-        return pathString + ('/' if pathString else '') + startNode.tag if includeCurrent else pathString
+        if includeCurrent:
+            path.append(self._currentPointInTreeElementXpath(startNode))
+
+        return '/'.join(path)
+
+    def _currentPointInTreeElementXpath(self, node):
+        nodeTag = node.tag
+        if node == self._expectedNode:
+            return nodeTag
+
+        othersWithsameTagCount = 0
+        for i, n in enumerate(node.getparent().iterfind(nodeTag)):
+            if n == node:
+                nodeIndex = i + XPATH_IS_ONE_BASED
+            else:
+                othersWithsameTagCount += 1
+
+        return '%s[%s]' % (nodeTag, nodeIndex) if othersWithsameTagCount else nodeTag
 
