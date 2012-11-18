@@ -164,7 +164,7 @@ At location: 'xml/ml'")
             namespaces = namespaces if namespaces else {}
             lxml = parseString(xml)
             lxmlNode = lxml.getroot()
-            compareXml = CompareXml(expectedNode=lxmlNode, resultNode=lxmlNode, remainingContainer=[])
+            compareXml = CompareXml(expectedNode=lxmlNode, resultNode=lxmlNode)
 
             for d in tagsWithPaths:
                 tag, pathExc, pathIncl = d['tag'], d['excl'], d['incl']

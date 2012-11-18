@@ -31,7 +31,44 @@ from timing import T
 from sys import path as systemPath
 from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
-from itertools import izip_longest
+
+try:
+    from itertools import izip_longest
+except ImportError:
+    # Added for Python 2.5 compatibility
+    from itertools import repeat, chain
+    _SENTINEL = object()
+    def next(iterable, default=_SENTINEL):
+        try:
+            retval = iterable.next()
+        except StopIteration:
+            if default is _SENTINEL:
+                raise
+            retval = default
+        return retval
+
+    # izip_longest code below from:
+    #    http://docs.python.org/2/library/itertools.html#itertools.izip_longest
+    #    For it's license see: http://docs.python.org/2/license.html#history-and-license
+    class ZipExhausted(Exception):
+        pass
+
+    def izip_longest(*args, **kwds):
+        # izip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-
+        fillvalue = kwds.get('fillvalue')
+        counter = [len(args) - 1]
+        def sentinel():
+            if not counter[0]:
+                raise ZipExhausted
+            counter[0] -= 1
+            yield fillvalue
+        fillers = repeat(fillvalue)
+        iterators = [chain(it, sentinel(), fillers) for it in args]
+        try:
+            while iterators:
+                yield tuple(map(next, iterators))
+        except ZipExhausted:
+            pass
 
 
 XPATH_IS_ONE_BASED = 1
@@ -77,24 +114,11 @@ class SeecrTestCase(TestCase):
                 break
 
     def assertEqualsLxml(self, expected, result):
-        expectedNode = getattr(expected, 'getroot', lambda: expected)()
-        resultNode = getattr(result, 'getroot', lambda: result)()
-
-        if not getattr(expectedNode, 'getroottree', False):
-            raise ValueError('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(expectedNode))
-        if not getattr(resultNode, 'getroottree', False):
-            raise ValueError('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(resultNode))
-
-        toVerify = [(expectedNode, resultNode)]
         compare = CompareXml(
-            expectedNode=expectedNode,
-            resultNode=resultNode,
-            remainingContainer=toVerify
+            expectedNode=expected,
+            resultNode=result,
         )
-
-        while toVerify:
-            expectedNode, resultNode = toVerify.pop()
-            compare.compareNode(expectedNode, resultNode)
+        compare.compare()
 
     def _getVmSize(self):
         status = open('/proc/%d/status' % getpid()).read()
@@ -123,12 +147,23 @@ class SeecrTestCase(TestCase):
 
 
 class CompareXml(object):
-    def __init__(self, expectedNode, resultNode, remainingContainer):
-        self._expectedNode = expectedNode
-        self._resultNode = resultNode
-        self._remainingContainer = remainingContainer
+    def __init__(self, expectedNode, resultNode):
+        self._expectedNode = getattr(expectedNode, 'getroot', lambda: expectedNode)()
+        self._resultNode = getattr(resultNode, 'getroot', lambda: resultNode)()
+        self._remainingContainer = None  # filled & used by compare and _compareNode
 
-    def compareNode(self, expectedNode, resultNode):
+        for o in [self._expectedNode, self._resultNode]:
+            if not getattr(o, 'getroottree', False):
+                raise ValueError('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(o))
+
+    def compare(self):
+        self._remainingContainer = [(self._expectedNode, self._resultNode)]
+
+        while self._remainingContainer:
+            expectedNode, resultNode = self._remainingContainer.pop()
+            self._compareNode(expectedNode, resultNode)
+
+    def _compareNode(self, expectedNode, resultNode):
         if expectedNode.tag != resultNode.tag:
             raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
 
