@@ -79,6 +79,12 @@ class SeecrTestCase(TestCase):
     def assertEqualsLxml(self, expected, result):
         expectedNode = getattr(expected, 'getroot', lambda: expected)()
         resultNode = getattr(result, 'getroot', lambda: result)()
+
+        if not getattr(expectedNode, 'getroottree', False):
+            raise ValueError('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(expectedNode))
+        if not getattr(resultNode, 'getroottree', False):
+            raise ValueError('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(resultNode))
+
         toVerify = [(expectedNode, resultNode)]
         compare = CompareXml(
             expectedNode=expectedNode,

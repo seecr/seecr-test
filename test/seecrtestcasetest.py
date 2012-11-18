@@ -160,7 +160,8 @@ At location: 'xml/ml'")
             "Tail difference (text after closing of tag): >no|tail< != ' tail '\nAt location: 'xml/subtag'")
 
     def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
-        def assertPathToTagOkInXml(xml, tagsWithPaths):
+        def assertPathToTagOkInXml(xml, tagsWithPaths, namespaces=None):
+            namespaces = namespaces if namespaces else {}
             lxml = parseString(xml)
             lxmlNode = lxml.getroot()
             compareXml = CompareXml(expectedNode=lxmlNode, resultNode=lxmlNode, remainingContainer=[])
@@ -168,7 +169,7 @@ At location: 'xml/ml'")
             for d in tagsWithPaths:
                 tag, pathExc, pathIncl = d['tag'], d['excl'], d['incl']
                 self.assertEquals(set(['tag', 'excl', 'incl']), set(d.keys()))
-                t = lxmlNode.xpath('//%s' % tag)[0]
+                t = lxmlNode.xpath('//%s' % tag, namespaces=namespaces)[0]
                 self.assertEquals(pathExc, compareXml.xpathToHere(t, includeCurrent=False))
                 self.assertEquals(pathIncl, compareXml.xpathToHere(t, includeCurrent=True))
 
@@ -217,12 +218,52 @@ At location: 'xml/ml'")
             {'tag': 'b/c[2]/e[2]', 'excl': 'a/b[2]/c[2]', 'incl': 'a/b[2]/c[2]/e[2]'},
         ])
 
+        xml = '''\
+<a xmlns="a:a">
+    <a xmlns="b:b"/>
+    <a xmlns="b:b"/>
+    <x:a xmlns:x="b:b">
+        <x:a xmlns:x="c:c"/>
+    </x:a>
+</a>'''
+        assertPathToTagOkInXml(xml=xml, tagsWithPaths=[
+            {'tag': 'a:a', 'excl': '', 'incl': '{a:a}a'},
+            {'tag': 'b:a[c:a]', 'excl': '{a:a}a', 'incl': '{a:a}a/{b:b}a[3]'},
+            {'tag': 'b:a/c:a', 'excl': '{a:a}a/{b:b}a[3]', 'incl': '{a:a}a/{b:b}a[3]/{c:c}a'},
+        ], namespaces={'a': 'a:a', 'b': 'b:b', 'c': 'c:c'})
 
-        # TODO: Test this!
-        #   deeper nested xml (for correct (non-)recusion and CompareXml.xpathToHere testing)
-        #   breadth first not depth first (i.e. not intuitive "first error" in test may not be first error in xml-serialisation)
-        #   fail on str's, ... not lxml'ish
-        #   fail-or-retree Node's iso Tree.
+    def testBreathFirst(self):
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml><a><b/><b/></a><a/></xml>'),
+            parseString('<xml><a><c/></a><x/></xml>'),
+            "Tags do not match 'a' != 'x' at location: 'xml'")
+
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml><a><b/><b/></a><a/></xml>'),
+            parseString('<xml><a><b/><c/><b/></a><a><x/></a></xml>'),
+            "Number of children not equal (expected -- result):\n    no|tag -- 'x'\n\nAt location: 'xml/a[2]'")
+
+    def testObjectsNeedToBeLxmlNodesOrTrees(self):
+        expectedLxml = parseString('<ignored><root/></ignored>')
+        resultLxml = parseString('<root/>')  # Tree
+
+        expectedLxml = expectedLxml.xpath('root')[0]  # Node
+        self.assertEqualsLxml(expected=expectedLxml, result=resultLxml)
+
+        try:
+            self.assertEqualsLxml('<root/>', resultLxml)
+        except ValueError, e:
+            self.assertEquals('Expected an Lxml Node- or Tree-like object, but got: "<root/>".', str(e))
+        else:
+            self.fail('Should not happen')
+
+        try:
+            o = object()
+            self.assertEqualsLxml(expectedLxml, o)
+        except ValueError, e:
+            self.assertEquals('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(o), str(e))
+        else:
+            self.fail('Should not happen')
 
 
 def parseString(s):
