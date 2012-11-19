@@ -243,6 +243,13 @@ At location: 'xml/ml'")
             parseString('<xml><a><b/><c/><b/></a><a><x/></a></xml>'),
             "Number of children not equal (expected -- result):\n    no|tag -- 'x'\n\nAt location: 'xml/a[2]'")
 
+    def testWSBetweenTagsIgnored(self):
+        self.assertEqualsLxml(
+            parseString('<xml><a><b></b></a></xml>'),
+            parseString('<xml><a>\n   <b></b>\n</a></xml>'),
+            )
+
+
     def testObjectsNeedToBeLxmlNodesOrTrees(self):
         expectedLxml = parseString('<ignored><root/></ignored>')
         resultLxml = parseString('<root/>')  # Tree

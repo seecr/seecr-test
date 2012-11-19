@@ -127,14 +127,14 @@ class CompareXml(object):
         if expectedNode.tag != resultNode.tag:
             raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
 
-        if expectedNode.text != resultNode.text:
+        if stripWSonly(expectedNode.text) != stripWSonly(resultNode.text):
             raise AssertionError("Text difference: %s != %s\nAt location: '%s'" % (
                 '>no|text<' if expectedNode.text is None else "'" + expectedNode.text + "'",
                 '>no|text<' if resultNode.text is None else "'" + resultNode.text + "'",
                 self.xpathToHere(expectedNode, includeCurrent=True)
             ))
 
-        if expectedNode.tail != resultNode.tail:
+        if stripWSonly(expectedNode.tail) != stripWSonly(resultNode.tail):
             raise AssertionError("Tail difference (text after closing of tag): %s != %s\nAt location: '%s'" % (
                 '>no|tail<' if expectedNode.tail is None else "'" + expectedNode.tail + "'",
                 '>no|tail<' if resultNode.tail is None else "'" + resultNode.tail + "'",
@@ -211,6 +211,10 @@ class CompareXml(object):
                 othersWithsameTagCount += 1
 
         return '%s[%s]' % (nodeTag, nodeIndex) if othersWithsameTagCount else nodeTag
+
+def stripWSonly(aString):
+    stripped = aString.strip() if aString else aString
+    return aString if stripped else None
 
 try:
     from itertools import izip_longest
