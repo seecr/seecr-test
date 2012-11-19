@@ -32,47 +32,7 @@ from sys import path as systemPath
 from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
 
-try:
-    from itertools import izip_longest
-except ImportError:
-    # Added for Python 2.5 compatibility
-    from itertools import repeat, chain
-    _SENTINEL = object()
-    def next(iterable, default=_SENTINEL):
-        try:
-            retval = iterable.next()
-        except StopIteration:
-            if default is _SENTINEL:
-                raise
-            retval = default
-        return retval
-
-    # izip_longest code below from:
-    #    http://docs.python.org/2/library/itertools.html#itertools.izip_longest
-    #    For it's license see: http://docs.python.org/2/license.html#history-and-license
-    class ZipExhausted(Exception):
-        pass
-
-    def izip_longest(*args, **kwds):
-        # izip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-
-        fillvalue = kwds.get('fillvalue')
-        counter = [len(args) - 1]
-        def sentinel():
-            if not counter[0]:
-                raise ZipExhausted
-            counter[0] -= 1
-            yield fillvalue
-        fillers = repeat(fillvalue)
-        iterators = [chain(it, sentinel(), fillers) for it in args]
-        try:
-            while iterators:
-                yield tuple(map(next, iterators))
-        except ZipExhausted:
-            pass
-
-
 XPATH_IS_ONE_BASED = 1
-
 
 class SeecrTestCase(TestCase):
 
@@ -251,4 +211,42 @@ class CompareXml(object):
                 othersWithsameTagCount += 1
 
         return '%s[%s]' % (nodeTag, nodeIndex) if othersWithsameTagCount else nodeTag
+
+try:
+    from itertools import izip_longest
+except ImportError:
+    # Added for Python 2.5 compatibility
+    from itertools import repeat, chain
+    _SENTINEL = object()
+    def next(iterable, default=_SENTINEL):
+        try:
+            retval = iterable.next()
+        except StopIteration:
+            if default is _SENTINEL:
+                raise
+            retval = default
+        return retval
+
+    # izip_longest code below from:
+    #    http://docs.python.org/2/library/itertools.html#itertools.izip_longest
+    #    For it's license see: http://docs.python.org/2/license.html#history-and-license
+    class ZipExhausted(Exception):
+        pass
+
+    def izip_longest(*args, **kwds):
+        # izip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-
+        fillvalue = kwds.get('fillvalue')
+        counter = [len(args) - 1]
+        def sentinel():
+            if not counter[0]:
+                raise ZipExhausted
+            counter[0] -= 1
+            yield fillvalue
+        fillers = repeat(fillvalue)
+        iterators = [chain(it, sentinel(), fillers) for it in args]
+        try:
+            while iterators:
+                yield tuple(map(next, iterators))
+        except ZipExhausted:
+            pass
 
