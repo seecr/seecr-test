@@ -249,6 +249,11 @@ At location: 'xml/ml'")
             parseString('<xml><a>\n   <b></b>\n</a></xml>'),
             )
 
+    def testWSInLeafsMatter(self):
+        self.checkAssertEqualsLxmlFails(
+            parseString('<xml><a><b> </b></a></xml>'),
+            parseString('<xml><a><b>   </b></a></xml>'),
+            "Text difference: ' ' != '   '\nAt location: 'xml/a/b'")
 
     def testObjectsNeedToBeLxmlNodesOrTrees(self):
         expectedLxml = parseString('<ignored><root/></ignored>')

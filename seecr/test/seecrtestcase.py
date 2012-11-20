@@ -127,7 +127,11 @@ class CompareXml(object):
         if expectedNode.tag != resultNode.tag:
             raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
 
-        if stripWSonly(expectedNode.text) != stripWSonly(resultNode.text):
+        if  stripWSonly(expectedNode.text) != stripWSonly(resultNode.text) \
+                or (
+                    len(expectedNode.getchildren()) == 0 and \
+                    expectedNode.text != resultNode.text
+                ):
             raise AssertionError("Text difference: %s != %s\nAt location: '%s'" % (
                 '>no|text<' if expectedNode.text is None else "'" + expectedNode.text + "'",
                 '>no|text<' if resultNode.text is None else "'" + resultNode.text + "'",
