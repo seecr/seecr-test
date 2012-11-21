@@ -29,6 +29,10 @@
 from sys import path
 import sys
 temppath = []
+def pystones(*args, **kwargs):
+    from warnings import warn
+    warn("Python module 'test.pystone' not available. Will assume T=1.0")
+    return 1.0, "ignored"
 while len(path) > 0:
     try:
         if 'test' in sys.modules:
