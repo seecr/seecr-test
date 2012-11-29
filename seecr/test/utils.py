@@ -28,7 +28,8 @@ from StringIO import StringIO
 from lxml.etree import parse as parse_xml
 from socket import socket
 from urllib import urlencode
-from sys import stdout, getdefaultencoding
+import sys
+from sys import getdefaultencoding
 from time import sleep
 
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
@@ -215,14 +216,15 @@ def headerToDict(header):
 def sleepWheel(seconds, callback=None, interval=0.2):
     parts = ['\\', '|', '/', '-']
     for i in range(int(seconds/interval)):
-        stdout.write(parts[i%len(parts)])
-        stdout.flush()
+        sys.stdout.write(parts[i%len(parts)])
+        sys.stdout.flush()
         sleep(interval)
-        stdout.write("\b")
-        stdout.flush()
+        sys.stdout.write("\b")
+        sys.stdout.flush()
         if not callback is None:
             if callback():
-                break
+                return True
+    return False
 
 def ignoreLineNumbers(s):
     return sub("line \d+,", "line [#],", s)
