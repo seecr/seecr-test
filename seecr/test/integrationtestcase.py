@@ -25,6 +25,7 @@
 
 from __future__ import with_statement
 
+from errno import ECHILD
 from os.path import isdir, join, abspath, dirname, basename, isfile, realpath
 from os import system, listdir, makedirs, waitpid, kill, WNOHANG, getenv
 from sys import stdout, path as systemPath
@@ -114,9 +115,22 @@ class IntegrationState(object):
                     exit('Service "%s" died, check "%s"' % (serviceName, stdoutfile))
         self._stdoutWrite('oom!\n')
 
-    def _stopServer(self, serviceName):
+    def _stopServer(self, serviceName, waitInSeconds=20.0):
         kill(self.pids[serviceName], SIGTERM)
-        waitpid(self.pids[serviceName], WNOHANG)
+
+        for i in xrange(int(waitInSeconds * 200)):
+            try:
+                result = waitpid(self.pids[serviceName], WNOHANG)
+                if result != (0, 0):
+                    break
+                sleep(0.005)
+            except OSError, e:
+                if e.errno == ECHILD:  # ECHILD / 10 --> No child processes, means we're done.
+                    break
+                raise
+        else:
+            self._stdoutWrite("Server with servicename '%s' and pid '%s' did not stop within %s seconds - giving up.\n" % (serviceName, self.pids[serviceName], waitInSeconds))
+
         del self.pids[serviceName]
 
     def _runExecutable(self, executable, processName=None, cwd=None, redirect=True, flagOptions=None, timeoutInSeconds=15, expectedReturnCode=0, **kwargs):
