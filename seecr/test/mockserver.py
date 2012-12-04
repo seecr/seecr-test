@@ -23,8 +23,10 @@
 ## end license ##
 
 from sys import stdout
-from socket import socket, SOL_SOCKET, SO_REUSEADDR
+from socket import socket, SOL_SOCKET, SO_REUSEADDR, SO_LINGER
+from struct import pack
 from select import select
+from time import sleep
 from threading import Thread
 from urlparse import urlsplit
 from cgi import parse_qs
@@ -34,17 +36,23 @@ from _httpspec import REGEXP, parseHeaders
 
 
 class MockServer(Thread):
-    def __init__(self, port):
+    def __init__(self, port, ipAddress='0.0.0.0', hangupConnectionTimeout=None):
         Thread.__init__(self)
+        address = (ipAddress, port)
         self.socket = socket()
         self.socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        self.socket.bind(('0.0.0.0', port))
+        self.socket.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 0, 0))
+        self.socket.bind(address)
         self.socket.listen(5)
 
+        self.myUrl = 'http://%s:%s' % address
         self.response = None
         self.responses = []
         self.requests = []
         self.halt = False
+
+        # Accept a connection, wait some time, then close.
+        self.hangupConnectionTimeout = hangupConnectionTimeout
 
     def run(self):
         while True:
@@ -55,6 +63,10 @@ class MockServer(Thread):
 
             if self.socket in r:
                 c, addr = self.socket.accept()
+                if self.hangupConnectionTimeout is not None:
+                    sleep(self.hangupConnectionTimeout)
+                    c.close()
+                    continue
                 request = c.recv(4096)
                 if 'Content-Length' in request:
                     header, body = request.split('\r\n\r\n')

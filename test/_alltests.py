@@ -38,6 +38,7 @@ from unittest import main
 
 from calltracetest import CallTraceTest
 from iotest import IOTest
+from mockservertest import MockServerTest
 from portnumbergeneratortest import PortNumberGeneratorTest
 from seecrtestcasetest import SeecrTestCaseTest
 from utilstest import UtilsTest
