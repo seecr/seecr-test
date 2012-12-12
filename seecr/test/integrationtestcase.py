@@ -78,8 +78,8 @@ class IntegrationState(object):
     def binDir(self):
         raise NotImplementedError()
 
-    def binPath(self, executable):
-        return SeecrTestCase.binPath(executable, binDirs=[self.binDir()])
+    def binPath(self, executable, binDirs=None):
+        return SeecrTestCase.binPath(executable, binDirs=[self.binDir()] + (binDirs or []))
 
     def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
