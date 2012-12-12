@@ -94,8 +94,9 @@ class SeecrTestCase(TestCase):
 
 
     @staticmethod
-    def binPath(executable):
+    def binPath(executable, binDirs=None):
         allPath = [join(p, 'bin') for p in systemPath]
+        allPath.extend([d for d in (binDirs or []) if d])
         if getenv('SEECRTEST_USR_BIN'):
             allPath.append(getenv('SEECRTEST_USR_BIN'))
         allPath.append('/usr/bin')
