@@ -41,7 +41,7 @@ function definePythonVars() {
         export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.5/site-packages
     elif distro_is_debian_squeeze; then 
         export PYTHON=python2.6
-        export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.6/dist-packages
+        export SITEPACKAGES=`pwd`/tmp/usr/local/lib/python2.6/dist-packages
     elif distro_is_centos_5; then
         export PYTHON=python2.5
         export SITEPACKAGES=`pwd`/tmp/usr/lib/python2.5/site-packages
