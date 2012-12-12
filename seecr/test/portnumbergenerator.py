@@ -26,23 +26,44 @@ from socket import socket, SO_LINGER, SOL_SOCKET, SO_REUSEADDR
 from struct import pack
 from time import sleep
 
+from itertools import cycle
+from random import choice
+
+
 class PortNumberGenerator(object):
     _ephemeralPortLow, _ephemeralPortHigh = [int(p) for p in open('/proc/sys/net/ipv4/ip_local_port_range', 'r').read().strip().split('\t', 1)]  # low\thigh
-    _maxTries = (_ephemeralPortHigh - _ephemeralPortLow) / 2
     _usedPorts = set([])
+    _ephemeralPorts = set(range(_ephemeralPortLow, _ephemeralPortHigh + 1))
 
     @classmethod
     def next(cls):
-        for i in xrange(cls._maxTries):
-            sok = socket()
-            sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 0, 0))
-            sok.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-            sok.bind(('127.0.0.1', 0))
-            ignoredHost, port = sok.getsockname()
-            sok.close()
-            if port not in cls._usedPorts:
-                cls._usedPorts.add(port)
-                return port
+        portsInUse = cls._inUsePortForLocalAddresses()
+        forbiddenPorts = cls._usedPorts.union(portsInUse)
+        usablePorts = cls._ephemeralPorts.difference(forbiddenPorts)
 
-        raise RuntimeError('Not been able to get an new uniqe free port within a reasonable amount (%s) of tries.' % cls._maxTries)
+        chosenPort = choice(list(usablePorts))
+        cls._usedPorts.add(chosenPort)
+        return chosenPort
+    #raise RuntimeError('Not been able to get an new uniqe free port within a reasonable amount (%s) of tries.' % cls._maxTries)
+
+    @classmethod
+    def _inUsePortForLocalAddresses(cls):
+        ipv4TcpLocalPorts = portsForProcNetTcpFile("/proc/net/tcp")
+        ipv6TcpLocalPorts = portsForProcNetTcpFile("/proc/net/tcp6")
+        ipv4UdpLocalPorts = portsForProcNetTcpFile("/proc/net/udp")
+        ipv6UdpLocalPorts = portsForProcNetTcpFile("/proc/net/udp6")
+        return ipv4TcpLocalPorts.union(ipv6TcpLocalPorts).union(ipv4UdpLocalPorts).union(ipv6UdpLocalPorts)
+
+def portsForProcNetTcpFile(filePath):
+    ports = set([])
+    for i, line in enumerate(open(filePath)):
+        # Line structure, space(s) separated:
+        # sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode
+        # 0: 00000000:006F 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 3441 1 ffff88007d7b8000 300 0 0 2 -1
+        if i == 0:
+            continue
+        _localIP, localPortHex = line.strip().split()[1].split(':')
+        localPort = int(localPortHex, 16)
+        ports.add(localPort)
+    return ports
 

@@ -39,32 +39,25 @@ class PortNumberGeneratorTest(TestCase):
         # More than 14000 gets *very* slow or fails
         # When guaranteed uniqe numbers for that many ports are needed,
         # change the approach (say reading: cat /proc/net/tcp | awk '{print $2}' | sed -e '1d')
-        for i in xrange(14000):
+        for i in xrange(140):
             numbers.append(PortNumberGenerator.next())
 
-        self.assertEquals(14000, len(numbers))
-        self.assertEquals(14000, len(set(numbers)))
+        self.assertEquals(140, len(numbers))
+        self.assertEquals(140, len(set(numbers)))
         self.assertEquals(True, all((0 <= n < 65536) for n in numbers))
 
     def testFindProblemWithLockupAfterReuseQuickly(self):
-        soks = []
-        nrs = set([])
+        nr = PortNumberGenerator.next()
+        portsInUse = PortNumberGenerator._inUsePortForLocalAddresses()
+
+        self.assertFalse(nr in portsInUse, portsInUse)
+
+        sok = socket()
+        sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 1, 1))
+        sok.bind(('127.0.0.1', nr))
         try:
-            for i in range(10):
-                for j in xrange(950):
-                    nr = PortNumberGenerator.next()
-                    sok = socket()
-                    sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 1, 1))
-                    sok.bind(('127.0.0.1', nr))
-                    soks.append(sok)
-                else:
-                    # To prevent needing to raise ulimit's for open files
-                    for s in reversed(soks):
-                        s.close()
-                        soks.remove(s)
-        except Exception, e:
-            for s in reversed(soks):
-                s.close()
-                soks.remove(s)
-            raise  # "[Errno 98] Address already in use" when misimplemented
+            portsInUse = PortNumberGenerator._inUsePortForLocalAddresses()
+            self.assertTrue(nr in portsInUse, '%s not in %s' % (nr, repr(portsInUse)))
+        finally:
+            sok.close()
 
