@@ -32,10 +32,8 @@ from sys import path as systemPath
 from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
 
-XPATH_IS_ONE_BASED = 1
 
 class SeecrTestCase(TestCase):
-
     def setUp(self):
         TestCase.setUp(self)
         self.tempdir = mkdtemp()
@@ -92,7 +90,6 @@ class SeecrTestCase(TestCase):
         self.assertTrue(self.vmsize*bandwidth < vmsize < self.vmsize/bandwidth,
                 "memory leaking: before: %d, after: %d" % (self.vmsize, vmsize))
 
-
     @staticmethod
     def binPath(executable, binDirs=None):
         allPath = [join(p, 'bin') for p in systemPath]
@@ -112,14 +109,12 @@ class CompareXml(object):
         self._expectedNode = getattr(expectedNode, 'getroot', lambda: expectedNode)()
         self._resultNode = getattr(resultNode, 'getroot', lambda: resultNode)()
         self._remainingContainer = None  # filled & used by compare and _compareNode
-
         for o in [self._expectedNode, self._resultNode]:
             if not getattr(o, 'getroottree', False):
                 raise ValueError('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(o))
 
     def compare(self):
         self._remainingContainer = [(self._expectedNode, self._resultNode)]
-
         while self._remainingContainer:
             expectedNode, resultNode = self._remainingContainer.pop()
             self._compareNode(expectedNode, resultNode)
@@ -128,7 +123,7 @@ class CompareXml(object):
         if expectedNode.tag != resultNode.tag:
             raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
 
-        if  stripWSonly(expectedNode.text) != stripWSonly(resultNode.text) \
+        if stripWSonly(expectedNode.text) != stripWSonly(resultNode.text) \
                 or (
                     len(expectedNode.getchildren()) == 0 and \
                     expectedNode.text != resultNode.text
@@ -188,7 +183,6 @@ class CompareXml(object):
                  for x, r in tagsLandR
             ])
             raise AssertionError("Number of children not equal (expected -- result):\n%s\n\nAt location: '%s'" % (tagsLandR, self.xpathToHere(expectedNode, includeCurrent=True)))
-
         self._remainingContainer.extend(zip(expectedChildren, resultChildren))
 
     def xpathToHere(self, node, includeCurrent=False):
@@ -197,29 +191,28 @@ class CompareXml(object):
         while node != self._expectedNode:
             node = node.getparent()
             path.insert(0, self._currentPointInTreeElementXpath(node))
-
         if includeCurrent:
             path.append(self._currentPointInTreeElementXpath(startNode))
-
         return '/'.join(path)
 
     def _currentPointInTreeElementXpath(self, node):
         nodeTag = node.tag
         if node == self._expectedNode:
             return nodeTag
-
         othersWithsameTagCount = 0
         for i, n in enumerate(node.getparent().iterfind(nodeTag)):
             if n == node:
+                XPATH_IS_ONE_BASED = 1
                 nodeIndex = i + XPATH_IS_ONE_BASED
             else:
                 othersWithsameTagCount += 1
-
         return '%s[%s]' % (nodeTag, nodeIndex) if othersWithsameTagCount else nodeTag
+
 
 def stripWSonly(aString):
     stripped = aString.strip() if aString else aString
     return aString if stripped else None
+
 
 try:
     from itertools import izip_longest
@@ -258,4 +251,3 @@ except ImportError:
                 yield tuple(map(next, iterators))
         except ZipExhausted:
             pass
-
