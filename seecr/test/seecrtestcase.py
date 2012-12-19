@@ -78,6 +78,23 @@ class SeecrTestCase(TestCase):
         )
         compare.compare()
 
+    def assertDictEquals(expected, result):
+        expectedKeys = set(expected.keys())
+        resultKeys = set(result.keys())
+        if expectedKeys != resultKeys:
+            missesKeys = expectedKeys.difference(resultKeys)
+            missesKeysMsg = '    - Misses keys: %s\n' % (', '.join("'"+str(s)+"'" for s in missesKeys))
+            excessKeys = resultKeys.difference(expectedKeys)
+            excessKeysMsg = '    - Excess keys: %s' % (', '.join("'"+str(s)+"'" for s in excessKeys))        
+            raise AssertionError('''Unbalanced keys, result:\n%s%s''' % (missesKeysMsg, excessKeysMsg))
+        valueFailure = []
+        for k, v in expected.items():
+            if v != result[k]:
+                valueFailure.append("  Values for key: '%s' differ:\n    %s != %s" % (k, v, result[k]))
+        if len(valueFailure) > 0:
+            valueFailure.insert(0, 'Unbalanced values:')
+            raise AssertionError('\n'.join(valueFailure))
+
     def _getVmSize(self):
         status = open('/proc/%d/status' % getpid()).read()
         i = status.find('VmSize:') + len('VmSize:')
