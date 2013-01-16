@@ -3,7 +3,7 @@
 # 
 # "Seecr Test" provides test tools. 
 # 
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # 
 # This file is part of "Seecr Test"
 # 
@@ -25,7 +25,7 @@
 
 from re import DOTALL, compile, sub
 from StringIO import StringIO
-from lxml.etree import parse as parse_xml
+from lxml.etree import parse as parse_xml, XMLSyntaxError
 from socket import socket
 from urllib import urlencode
 import sys

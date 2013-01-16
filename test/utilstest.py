@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 # 
 # "Seecr Test" provides test tools. 
 # 
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # 
 # This file is part of "Seecr Test"
 # 
@@ -28,7 +29,8 @@ from unittest import TestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml
+from lxml.etree import XMLSyntaxError
 
 from time import time, sleep
 
@@ -88,5 +90,11 @@ Exception: xcptn\n"""
         self.assertTrue(0.001 < delta < max(0.002, (0.002 * T_ADJUSTMENT * T)), delta)
         self.assertEquals(1, len(calls))
         self.assertEquals(True, retval)
+
+    def testParseHtmlAsXml(self):
+        with stdout_replaced():
+            self.assertRaises(XMLSyntaxError, parseHtmlAsXml, '<not xml>')
+        result = parseHtmlAsXml('<html><body>&lsquo;to the left &larr;&rsquo;</body></html>')
+        self.assertEquals(['‘to the left <-’'], result.xpath('/html/body/text()'))
 
 T_ADJUSTMENT = 1.5
