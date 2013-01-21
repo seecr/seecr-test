@@ -27,3 +27,5 @@ function distro_is_centos_5 {
 function distro_is_centos_6 {
     distro_is_redhat && test "${DISTRO_VERSION}" == "6"
 }
+
+# vim: set syntax=sh: #
