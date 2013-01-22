@@ -41,6 +41,12 @@ def stderr_replaced():
     finally:
         sys.stderr = oldstderr
 
+def stderr_replace_decorator(func):
+    def wrapper(*args, **kwargs):
+        with stderr_replaced():
+            return func(*args, **kwargs)
+    return wrapper
+
 @contextmanager
 def stdout_replaced():
     oldstdout = sys.stdout
@@ -51,3 +57,8 @@ def stdout_replaced():
     finally:
         sys.stdout = oldstdout
 
+def stdout_replace_decorator(func):
+    def wrapper(*args, **kwargs):
+        with stdout_replaced():
+            return func(*args, **kwargs)
+    return wrapper
