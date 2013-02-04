@@ -81,7 +81,7 @@ class IntegrationState(object):
     def binPath(self, executable, binDirs=None):
         return SeecrTestCase.binPath(executable, binDirs=[self.binDir()] + (binDirs or []))
 
-    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, **kwargs):
+    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, env=None, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
         stdouterrlog = open(stdoutfile, 'w')
         args = executable if isinstance(executable, list) else [executable]
@@ -97,7 +97,8 @@ class IntegrationState(object):
             args=args,
             cwd=cwd if cwd else getenv('SEECRTEST_USR_BIN', self.binDir()),
             stdout=fileno,
-            stderr=fileno
+            stderr=fileno,
+            env=env,
         )
         self.pids[serviceName] = serverProcess.pid
 
