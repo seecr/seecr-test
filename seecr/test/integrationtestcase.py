@@ -134,7 +134,7 @@ class IntegrationState(object):
 
         del self.pids[serviceName]
 
-    def _runExecutable(self, executable, processName=None, cwd=None, redirect=True, flagOptions=None, timeoutInSeconds=15, expectedReturnCode=0, **kwargs):
+    def _runExecutable(self, executable, processName=None, cwd=None, redirect=True, flagOptions=None, timeoutInSeconds=15, expectedReturnCode=0, env=None, **kwargs):
         processName = randomString() if processName is None else processName
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s-%s.log" % (basename(executable), processName))
         stdouterrlog = open(stdoutfile, 'w')
@@ -150,7 +150,8 @@ class IntegrationState(object):
             args=args,
             cwd=cwd if cwd else getenv('SEECRTEST_USR_BIN', self.binDir()),
             stdout=fileno,
-            stderr=fileno
+            stderr=fileno,
+            env=env,
         )
 
         self._stdoutWrite("Running '%s', for state '%s' : v" % (basename(executable), self.stateName))
