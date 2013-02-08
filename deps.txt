@@ -1,3 +1,4 @@
 seecr-core (>= 1.0.1)
 seecr-core (<< 1.1)
+python-lxml
 bash-completion
