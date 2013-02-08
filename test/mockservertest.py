@@ -5,6 +5,8 @@ from seecr.test.portnumbergenerator import PortNumberGenerator
 
 from time import time
 from urllib2 import urlopen, HTTPError, URLError
+from sys import version_info
+PY_VERSION = '%s.%s' % version_info[:2]
 
 class MockServerTest(TestCase):
     def setUp(self):
@@ -32,14 +34,15 @@ class MockServerTest(TestCase):
         self.assertEquals(3, len(self.ms.requests))
 
     def testHangupConnectionTimeout(self):
+        expectedException = IOError if PY_VERSION == "2.7" else URLError
         self.ms = MockServer(port=PortNumberGenerator.next(), hangupConnectionTimeout=0.1)
         self.ms.start()
 
         t0 = time()
-        self.assertRaises(URLError, lambda: urlopen(self.ms.myUrl).read())
+        self.assertRaises(expectedException, lambda: urlopen(self.ms.myUrl).read())
         t1 = time()
         delta = t1 - t0
-        self.assertTrue(0.09 < delta < 0.12)
+        self.assertTrue(0.09 < delta < 0.12, "Expected around 0.1, was %s" % delta)
         self.assertEquals(0, len(self.ms.requests))
 
     def tearDown(self):
