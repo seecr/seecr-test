@@ -136,10 +136,10 @@ class IntegrationState(object):
 
     def _runExecutable(self, executable, processName=None, cwd=None, redirect=True, flagOptions=None, timeoutInSeconds=15, expectedReturnCode=0, env=None, **kwargs):
         processName = randomString() if processName is None else processName
-        stdoutfile = join(self.integrationTempdir, "stdouterr-%s-%s.log" % (basename(executable), processName))
-        stdouterrlog = open(stdoutfile, 'w')
         args = executable if isinstance(executable, list) else [executable]
         executable = args[0]
+        stdoutfile = join(self.integrationTempdir, "stdouterr-%s-%s.log" % (basename(executable), processName))
+        stdouterrlog = open(stdoutfile, 'w')
         fileno = stdouterrlog.fileno() if redirect else None
         flagOptions = flagOptions if flagOptions else []
         for flag in flagOptions:
@@ -168,7 +168,7 @@ class IntegrationState(object):
                 process.terminate()
                 exit('Executable "%s" took more than %s seconds, check "%s"' % (basename(executable), timeoutInSeconds, stdoutfile))
 
-        if result != expectedReturnCode:
+        if expectedReturnCode is not None and result != expectedReturnCode:
             exit('Executable "%s" exited with returncode %s, check "%s"' % (basename(executable), result, stdoutfile))
         self._stdoutWrite('oom!\n')
         process.wait()
