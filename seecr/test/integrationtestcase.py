@@ -138,7 +138,8 @@ class IntegrationState(object):
         processName = randomString() if processName is None else processName
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s-%s.log" % (basename(executable), processName))
         stdouterrlog = open(stdoutfile, 'w')
-        args = [executable]
+        args = executable if isinstance(executable, list) else [executable]
+        executable = args[0]
         fileno = stdouterrlog.fileno() if redirect else None
         flagOptions = flagOptions if flagOptions else []
         for flag in flagOptions:
