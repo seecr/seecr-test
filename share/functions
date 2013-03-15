@@ -46,7 +46,7 @@ function definePythonVars() {
         export SEECRTEST_USR_BIN=`pwd`/tmp/usr/local/bin
     elif distro_is_debian_wheezy; then
         version=2.7
-        if [ -z "$1" ]; then
+        if [ ! -z "$1" ]; then
             version=$1
         fi
         export PYTHON=python${version}
