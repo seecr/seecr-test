@@ -20,6 +20,10 @@ function distro_is_debian_squeeze {
     distro_is_debian && test "${DISTRO_VERSION}" == "6"
 }
 
+function distro_is_debian_wheezy {
+    distro_is_debian && test "${DISTRO_VERSION}" == "7"
+}
+
 function distro_is_centos_5 {
     distro_is_redhat && test "${DISTRO_VERSION}" == "5"
 }
