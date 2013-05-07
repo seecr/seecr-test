@@ -79,6 +79,7 @@ class SeecrTestCase(TestCase):
         )
         compare.compare()
 
+    @staticmethod
     def assertDictEquals(expected, result):
         expectedKeys = set(expected.keys())
         resultKeys = set(result.keys())

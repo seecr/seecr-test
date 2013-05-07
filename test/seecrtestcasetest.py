@@ -302,6 +302,9 @@ At location: 'xml/ml'")
         else:
             self.fail('Should not happen')
 
+    def testAssertDictEquals(self):
+        self.assertDictEquals({'aap':'noot'}, dict(aap='noot'))
+
 
 def parseString(s):
     return parse(StringIO(s))
