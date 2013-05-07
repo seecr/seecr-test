@@ -1,26 +1,26 @@
 ## begin license ##
-# 
-# "Seecr Test" provides test tools. 
-# 
+#
+# "Seecr Test" provides test tools.
+#
 # Copyright (C) 2005-2009 Seek You Too (CQ2) http://www.cq2.nl
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
-# 
+# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
+#
 # This file is part of "Seecr Test"
-# 
+#
 # "Seecr Test" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Seecr Test" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Seecr Test"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
 from unittest import TestCase
@@ -71,10 +71,11 @@ class SeecrTestCase(TestCase):
             if not char1 or not char2:
                 break
 
-    def assertEqualsLxml(self, expected, result):
+    def assertEqualsLxml(self, expected, result, matchPrefixes=True):
         compare = CompareXml(
             expectedNode=expected,
             resultNode=result,
+            matchPrefixes=matchPrefixes,
         )
         compare.compare()
 
@@ -122,9 +123,10 @@ class SeecrTestCase(TestCase):
 
 
 class CompareXml(object):
-    def __init__(self, expectedNode, resultNode):
+    def __init__(self, expectedNode, resultNode, matchPrefixes=True):
         self._expectedNode = getattr(expectedNode, 'getroot', lambda: expectedNode)()
         self._resultNode = getattr(resultNode, 'getroot', lambda: resultNode)()
+        self._matchPrefixes = matchPrefixes
         self._remainingContainer = None  # filled & used by compare and _compareNode
         for o in [self._expectedNode, self._resultNode]:
             if not getattr(o, 'getroottree', False):
@@ -155,6 +157,14 @@ class CompareXml(object):
             raise AssertionError("Tail difference (text after closing of tag): %s != %s\nAt location: '%s'" % (
                 '>no|tail<' if expectedNode.tail is None else "'" + expectedNode.tail + "'",
                 '>no|tail<' if resultNode.tail is None else "'" + resultNode.tail + "'",
+                self.xpathToHere(expectedNode, includeCurrent=True)
+            ))
+
+        if self._matchPrefixes and expectedNode.prefix != resultNode.prefix:
+            raise AssertionError("Prefix difference %s != %s for namespace: '%s'\nAt location: '%s'" % (
+                expectedNode.prefix,
+                resultNode.prefix,
+                expectedNode.nsmap[expectedNode.prefix],
                 self.xpathToHere(expectedNode, includeCurrent=True)
             ))
 
