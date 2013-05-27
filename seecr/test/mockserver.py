@@ -68,10 +68,20 @@ class MockServer(Thread):
                     c.close()
                     continue
                 request = c.recv(4096)
-                if 'Content-Length' in request:
-                    header, body = request.split('\r\n\r\n')
-                    if not body:
+                while True:
+                    if not '\r\n\r\n' in request:
                         request += c.recv(4096)
+                        continue
+                    header, body = request.split('\r\n\r\n')
+                    if 'Content-Length' in request:
+                        headers = header.split('\r\n')
+                        for h in headers:
+                            if h.startswith('Content-Length'):
+                                contentLength = int(h.split(':')[1])
+
+                        if contentLength > len(body):
+                            request += c.recv(contentLength - len(body))
+                        break
 
                 self.requests.append(request)
 
