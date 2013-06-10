@@ -157,6 +157,8 @@ class CallTraceTest(TestCase):
         self.assertEquals('result', trace.someMethod())
         trace = CallTrace(methods={"someMethod": lambda : "result"}, onlySpecifiedMethods=True)
         self.assertEquals("result", trace.someMethod())
+        trace = CallTrace(emptyGeneratorMethods=["someMethod"], onlySpecifiedMethods=True)
+        self.assertEquals(GeneratorType, type(trace.someMethod()))
 
     def testReset(self):
         callTrace = CallTrace()
