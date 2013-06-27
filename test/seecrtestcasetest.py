@@ -257,16 +257,16 @@ At location: 'xml/ml'")
             {'tag': 'b:a/c:a', 'excl': '{a:a}a/{b:b}a[3]', 'incl': '{a:a}a/{b:b}a[3]/{c:c}a'},
         ], namespaces={'a': 'a:a', 'b': 'b:b', 'c': 'c:c'})
 
-    def testBreathFirst(self):
+    def testDepthFirst(self):
         self.checkAssertEqualsLxmlFails(
             parseString('<xml><a><b/><b/></a><a/></xml>'),
             parseString('<xml><a><c/></a><x/></xml>'),
-            "Tags do not match 'a' != 'x' at location: 'xml'")
+            "Number of children not equal (expected -- result):\n    'b' -- 'c'\n    'b' -- no|tag\n\nAt location: 'xml/a[1]'")
 
         self.checkAssertEqualsLxmlFails(
             parseString('<xml><a><b/><b/></a><a/></xml>'),
             parseString('<xml><a><b/><c/><b/></a><a><x/></a></xml>'),
-            "Number of children not equal (expected -- result):\n    no|tag -- 'x'\n\nAt location: 'xml/a[2]'")
+            "Number of children not equal (expected -- result):\n    'b' -- 'b'\n    'b' -- 'c'\n    no|tag -- 'b'\n\nAt location: 'xml/a[1]'")
 
     def testWSBetweenTagsIgnored(self):
         self.assertEqualsLxml(

@@ -136,7 +136,7 @@ class CompareXml(object):
     def compare(self):
         self._remainingContainer = [(self._expectedNode, self._resultNode)]
         while self._remainingContainer:
-            expectedNode, resultNode = self._remainingContainer.pop()
+            expectedNode, resultNode = self._remainingContainer.pop(0)
             self._compareNode(expectedNode, resultNode)
 
     def _compareNode(self, expectedNode, resultNode):
@@ -211,7 +211,7 @@ class CompareXml(object):
                  for x, r in tagsLandR
             ])
             raise AssertionError("Number of children not equal (expected -- result):\n%s\n\nAt location: '%s'" % (tagsLandR, self.xpathToHere(expectedNode, includeCurrent=True)))
-        self._remainingContainer.extend(zip(expectedChildren, resultChildren))
+        self._remainingContainer[:0] = zip(expectedChildren, resultChildren)
 
     def xpathToHere(self, node, includeCurrent=False):
         path = []
