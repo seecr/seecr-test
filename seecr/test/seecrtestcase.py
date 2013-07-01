@@ -138,9 +138,16 @@ class CompareXml(object):
 
     def compare(self):
         self._remainingContainer = []
-        #previousNodes(self._expectedNode)
-        #previousNodes(self._resultNode)
-        self._remainingContainer.extend([(self._expectedNode, self._resultNode)])
+        expectedNodes = previousNodes(self._expectedNode) + \
+            [self._expectedNode] + \
+            nextNodes(self._expectedNode)
+        resultNodes = previousNodes(self._resultNode) + \
+            [self._resultNode] + \
+            nextNodes(self._resultNode)
+        self._compareChildrenAndAddToQueue(
+                parent=None,
+                expectedChildren=expectedNodes,
+                resultChildren=resultNodes)
         while self._remainingContainer:
             expectedNode, resultNode = self._remainingContainer.pop(0)
             self._compareNode(expectedNode, resultNode)
@@ -202,9 +209,12 @@ class CompareXml(object):
 
         expectedChildren = expectedNode.getchildren()
         resultChildren = resultNode.getchildren()
-        self._compareChildrenAndAddToQueue(expectedNode, expectedChildren, resultChildren)
+        self._compareChildrenAndAddToQueue(
+                parent=expectedNode,
+                expectedChildren=expectedChildren,
+                resultChildren=resultChildren)
 
-    def _compareChildrenAndAddToQueue(self, expectedNode, expectedChildren, resultChildren):
+    def _compareChildrenAndAddToQueue(self, parent, expectedChildren, resultChildren):
         if len(expectedChildren) != len(resultChildren):
             tagsLandR = [
                 (elementAsRepresentation(x), elementAsRepresentation(r))
@@ -214,7 +224,8 @@ class CompareXml(object):
                 '    %s -- %s' % (x, r)
                  for x, r in tagsLandR
             ])
-            raise AssertionError("Number of children not equal (expected -- result):\n%s\n\nAt location: '%s'" % (tagsLandR, self.xpathToHere(expectedNode, includeCurrent=True)))
+            path = self.xpathToHere(parent, includeCurrent=True) if parent is not None else ''
+            raise AssertionError("Number of children not equal (expected -- result):\n%s\n\nAt location: '%s'" % (tagsLandR, path))
         self._remainingContainer[:0] = zip(expectedChildren, resultChildren)
 
     def xpathToHere(self, node, includeCurrent=False):

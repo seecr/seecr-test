@@ -241,7 +241,19 @@ At location: 'xml/ml'")
         self.checkAssertEqualsLxmlFails(
             parseString('<r/>'),
             parseString('<!-- Comment --><r/>'),
-            "...")
+            "Number of children not equal (expected -- result):\n    'r' -- Comment|node\n    no|tag -- 'r'\n\nAt location: ''")
+
+        # Pre-root-tag comment difference
+        self.checkAssertEqualsLxmlFails(
+            parseString('<!-- ign --><!-- X --><r/><!-- ign. -->'),
+            parseString('<!-- ign --><!-- Y --><r/><!-- ign. -->'),
+            "Text difference: ' X ' != ' Y '\nAt location: 'comment()[2]'")
+
+        # Post-root-tag comment existence
+        self.checkAssertEqualsLxmlFails(
+            parseString('<!-- ign. --><r/><!-- same --><!-- different -->'),
+            parseString('<!-- ign. --><r/><!-- same -->'),
+            "Number of children not equal (expected -- result):\n    Comment|node -- Comment|node\n    'r' -- 'r'\n    Comment|node -- Comment|node\n    Comment|node -- no|tag\n\nAt location: ''")
 
     def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
         def assertPathToTagOkInXml(xml, tagsWithPaths, namespaces=None):
