@@ -220,9 +220,12 @@ At location: 'xml/ml'")
         self.assertEquals('comment()[3]', c.xpathToHere(_post_root, includeCurrent=True))
         self.assertEquals('comment()[4]', c.xpathToHere(_last, includeCurrent=True))
 
+    def testTODO(self):
+        self.fail('Finish TODO`s')
     # TODO:
-    # ... You can also pass the Element, Comment, ProcessingInstruction and
-    #  Entity factory functions to look only for the specific element type. ... (<element>.iter*() functions).
+    # - ... You can also pass the Element, Comment, ProcessingInstruction and
+    #    Entity factory functions to look only for the specific element type. ... (<element>.iter*() functions).
+    # - Add a context-diff (n-lines above and below the where the differences start to occur.
 
     def testAssertEqualsLxmlCommentNodes(self):
         # In(-root)-tag comment existence
