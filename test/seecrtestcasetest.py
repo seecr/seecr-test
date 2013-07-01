@@ -29,7 +29,7 @@ from StringIO import StringIO
 
 # TODO:
 #   lxmltostring stuff ...
-from lxml.etree import parse, tostring
+from lxml.etree import parse, tostring, Comment
 
 # whiteboxing:
 from seecr.test.seecrtestcase import CompareXml
@@ -183,6 +183,65 @@ At location: 'xml/ml'")
             self.fail()
 
         self.assertEqualsLxml(matchPrefixes=False, *args)
+
+    def testAssertEqualsLxmlsXpathToHereWithCommentNodes(self):
+        xml = '''\
+<!-- 1st Comment -->
+<!-- Pre-Root Comment -->
+<a xmlns="n:s/#">
+    <!-- 1st Comment inside -->
+    <!-- 2nd Comment inside -->
+    <b/>
+</a>
+<!-- Post-Root Comment -->
+<!-- last Comment -->'''
+        lxml = parseString(xml)
+        _pre_root = lxml.getroot().getprevious()
+        _1st = _pre_root.getprevious()
+        _post_root = lxml.getroot().getnext()
+        _last = _post_root.getnext()
+        _1st_inside = lxml.getroot().getchildren()[0]
+        _2nd_inside = lxml.getroot().getchildren()[1]
+
+        c = CompareXml(expectedNode=lxml, resultNode=lxml)
+
+        self.assertEquals('{n:s/#}a', c.xpathToHere(_1st_inside))
+        self.assertEquals('{n:s/#}a', c.xpathToHere(_2nd_inside))
+        self.assertEquals('{n:s/#}a/comment()[1]', c.xpathToHere(_1st_inside, includeCurrent=True))
+        self.assertEquals('{n:s/#}a/comment()[2]', c.xpathToHere(_2nd_inside, includeCurrent=True))
+
+        self.assertEquals('', c.xpathToHere(_1st))
+        self.assertEquals('', c.xpathToHere(_pre_root))
+        self.assertEquals('comment()[1]', c.xpathToHere(_1st, includeCurrent=True))
+        self.assertEquals('comment()[2]', c.xpathToHere(_pre_root, includeCurrent=True))
+
+        self.assertEquals('', c.xpathToHere(_post_root))
+        self.assertEquals('', c.xpathToHere(_last))
+        self.assertEquals('comment()[3]', c.xpathToHere(_post_root, includeCurrent=True))
+        self.assertEquals('comment()[4]', c.xpathToHere(_last, includeCurrent=True))
+
+    # TODO:
+    # ... You can also pass the Element, Comment, ProcessingInstruction and
+    #  Entity factory functions to look only for the specific element type. ... (<element>.iter*() functions).
+
+    def testAssertEqualsLxmlCommentNodes(self):
+        # In(-root)-tag comment existence
+        self.checkAssertEqualsLxmlFails(
+            parseString('<r></r>'),
+            parseString('<r><!-- Comment --></r>'),
+            "Number of children not equal (expected -- result):\n    no|tag -- Comment|node\n\nAt location: 'r'")
+
+        # In(-root)-tag comment difference
+        self.checkAssertEqualsLxmlFails(
+            parseString('<r><!-- Tnemmoc --></r>'),
+            parseString('<r><!-- Comment --></r>'),
+            "Text difference: ' Tnemmoc ' != ' Comment '\nAt location: 'r/comment()'")
+
+        # Pre-root-tag comment existence
+        self.checkAssertEqualsLxmlFails(
+            parseString('<r/>'),
+            parseString('<!-- Comment --><r/>'),
+            "...")
 
     def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
         def assertPathToTagOkInXml(xml, tagsWithPaths, namespaces=None):

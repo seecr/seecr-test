@@ -24,13 +24,16 @@
 ## end license ##
 
 from unittest import TestCase
-from string import whitespace
-from tempfile import mkdtemp, mkstemp
-from shutil import rmtree
-from timing import T
-from sys import path as systemPath
+from itertools import chain
 from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
+from shutil import rmtree
+from string import whitespace
+from sys import path as systemPath
+from tempfile import mkdtemp, mkstemp
+from timing import T
+
+from lxml.etree import Comment
 
 
 class SeecrTestCase(TestCase):
@@ -134,7 +137,10 @@ class CompareXml(object):
                 raise ValueError('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(o))
 
     def compare(self):
-        self._remainingContainer = [(self._expectedNode, self._resultNode)]
+        self._remainingContainer = []
+        #previousNodes(self._expectedNode)
+        #previousNodes(self._resultNode)
+        self._remainingContainer.extend([(self._expectedNode, self._resultNode)])
         while self._remainingContainer:
             expectedNode, resultNode = self._remainingContainer.pop(0)
             self._compareNode(expectedNode, resultNode)
@@ -196,15 +202,13 @@ class CompareXml(object):
 
         expectedChildren = expectedNode.getchildren()
         resultChildren = resultNode.getchildren()
+        self._compareChildrenAndAddToQueue(expectedNode, expectedChildren, resultChildren)
+
+    def _compareChildrenAndAddToQueue(self, expectedNode, expectedChildren, resultChildren):
         if len(expectedChildren) != len(resultChildren):
             tagsLandR = [
-                (getattr(x, 'tag', None), getattr(r, 'tag', None))
+                (elementAsRepresentation(x), elementAsRepresentation(r))
                 for x, r in izip_longest(expectedChildren, resultChildren)
-            ]
-            tagsLandR = [
-                (x and "'%s'" % x or 'no|tag',
-                 r and "'%s'" % r or 'no|tag')
-                for x,r in tagsLandR
             ]
             tagsLandR = '\n'.join([
                 '    %s -- %s' % (x, r)
@@ -216,30 +220,87 @@ class CompareXml(object):
     def xpathToHere(self, node, includeCurrent=False):
         path = []
         startNode = node
-        while node != self._expectedNode:
-            node = node.getparent()
-            path.insert(0, self._currentPointInTreeElementXpath(node))
+        if node.getparent() is not None and node != self._expectedNode:
+            while node != self._expectedNode:
+                node = node.getparent()
+                path.insert(0, self._currentPointInTreeElementXpath(node))
         if includeCurrent:
             path.append(self._currentPointInTreeElementXpath(startNode))
         return '/'.join(path)
 
     def _currentPointInTreeElementXpath(self, node):
-        nodeTag = node.tag
+        nodeTag = nodeTagStr = node.tag
         if node == self._expectedNode:
             return nodeTag
+
+        if nodeTag == Comment:
+            nodeTagStr = 'comment()'
+            if node.getparent() is not None:
+                nodeIndex, othersWithsameTagCount = self._nodeIndex(
+                    node=node,
+                    iterator=node.getparent().iterchildren(tag=Comment))
+            else:
+                nodeIndex, othersWithsameTagCount = self._rootlessNodeIndex(node, nodeTag)
+        elif isinstance(nodeTag, basestring):
+            nodeIndex, othersWithsameTagCount = self._nodeIndex(
+                    node=node,
+                    iterator=node.getparent().iterfind(nodeTag))
+        else:
+            raise TypeError('Unexpected type!')  # TODO: Handle all types and remove this check!
+
+        return '%s[%s]' % (nodeTagStr, nodeIndex) if othersWithsameTagCount else nodeTagStr
+
+    def _nodeIndex(self, node, iterator):
         othersWithsameTagCount = 0
-        for i, n in enumerate(node.getparent().iterfind(nodeTag)):
+        for i, n in enumerate(iterator):
             if n == node:
-                XPATH_IS_ONE_BASED = 1
                 nodeIndex = i + XPATH_IS_ONE_BASED
             else:
                 othersWithsameTagCount += 1
-        return '%s[%s]' % (nodeTag, nodeIndex) if othersWithsameTagCount else nodeTag
+        return nodeIndex, othersWithsameTagCount
 
+    def _rootlessNodeIndex(self, node, nodeTag):
+        rootlessNodes = [n
+            for n in chain(previousNodes(self._expectedNode), nextNodes(self._expectedNode))
+            if n.tag == nodeTag]
+
+        othersWithsameTagCount = max(0, len(rootlessNodes) - 1)
+
+        return rootlessNodes.index(node) + XPATH_IS_ONE_BASED, othersWithsameTagCount
+
+
+def previousNodes(node):
+    previousNodes = []
+    n = node.getprevious()
+    while n is not None:
+        previousNodes.insert(0, n)
+        n = n.getprevious()
+    return previousNodes
+
+def nextNodes(node):
+    nextNodes = []
+    n = node.getnext()
+    while n is not None:
+        nextNodes.append(n)
+        n = n.getnext()
+    return nextNodes
 
 def stripWSonly(aString):
     stripped = aString.strip() if aString else aString
     return aString if stripped else None
+
+def elementAsRepresentation(el):
+    tagName = getattr(el, 'tag', None)
+    if tagName == Comment:
+        tagName = 'Comment|node'
+    elif tagName is None:
+        tagName = 'no|tag'
+    else:
+        tagName = "'%s'" % tagName
+    return tagName
+
+
+XPATH_IS_ONE_BASED = 1
 
 
 try:
