@@ -33,7 +33,7 @@ from sys import path as systemPath
 from tempfile import mkdtemp, mkstemp
 from timing import T
 
-from lxml.etree import Comment, PI
+from lxml.etree import Comment, PI, Entity
 
 
 class SeecrTestCase(TestCase):
@@ -255,6 +255,14 @@ class CompareXml(object):
                 nodeIndex, othersWithsameTagCount = self._nodeIndex(
                     node=node,
                     iterator=node.getparent().iterchildren(tag=Comment))
+        elif nodeTag is Entity:
+            nodeTagStr = '?'  # No way to mention Entities in XPath (they're normally resolved), so don't try.
+            if node.getparent() is None:
+                nodeIndex, othersWithsameTagCount = self._rootlessNodeIndex(node, nodeTag)
+            else:
+                nodeIndex, othersWithsameTagCount = self._nodeIndex(
+                    node=node,
+                    iterator=node.getparent().iterchildren(tag=Entity))
         elif nodeTag is PI:
             nodeTagStr = "processing-instruction('%s')" % node.target
             if node.getparent() is None:
@@ -265,12 +273,13 @@ class CompareXml(object):
                     iterator=ifilter(
                         lambda n: n.target == node.target,
                         node.getparent().iterchildren(tag=PI)))
-        elif isinstance(nodeTag, basestring):
+        else:
+            if not isinstance(nodeTag, basestring):
+                raise TypeError("Unexpected Node-Type '%s'" % nodeTag)
+
             nodeIndex, othersWithsameTagCount = self._nodeIndex(
                     node=node,
                     iterator=node.getparent().iterfind(nodeTag))
-        else:
-            raise TypeError('Unexpected type!')  # TODO: Handle all types and remove this check!
 
         return '%s[%s]' % (nodeTagStr, nodeIndex) if othersWithsameTagCount else nodeTagStr
 
@@ -322,6 +331,8 @@ def elementAsRepresentation(el):
         tagName = 'comment|node'
     elif tagName is PI:
         tagName = "processing-instruction('%s')|node" % el.target
+    elif tagName is Entity:
+        tagName = 'entity|node'
     elif tagName is None:
         tagName = 'no|tag'
     else:

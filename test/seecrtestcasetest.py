@@ -29,7 +29,7 @@ from StringIO import StringIO
 
 # TODO:
 #   lxmltostring stuff ...
-from lxml.etree import parse, tostring, Comment
+from lxml.etree import parse, tostring, Comment, XMLParser
 
 # whiteboxing:
 from seecr.test.seecrtestcase import CompareXml
@@ -256,12 +256,34 @@ newlines?>'''
         self.assertEquals("processing-instruction('xml-stylesheet')", c.xpathToHere(_xml_style, includeCurrent=True))
         self.assertEquals("processing-instruction('pro')[2]", c.xpathToHere(_pro_newline, includeCurrent=True))
 
+    def testAssertEqualsLxmlsXpathToHereWithEntityNodes(self):
+        # For a (possible) use-case of this parsing method, see: http://lxml.de/FAQ.html#how-do-i-use-lxml-safely-as-a-web-service-endpoint
+        parser = XMLParser(resolve_entities=False)  # Otherwise, no entity nodes remain.
+        xml = '''\
+<!DOCTYPE root [
+    <!ENTITY self "sefl">
+    <!ENTITY otherself "ohtersefl">
+]>
+<r>&#1234;  &self;  &otherself;<a>&self;</a></r>
+'''
+        lxml = parse(StringIO(xml), parser=parser)
+        _inside_self = lxml.getroot().getchildren()[0]
+        _inside_otherself = lxml.getroot().getchildren()[1]
+        _insideA_self = lxml.getroot().getchildren()[2].getchildren()[0]
+
+        c = CompareXml(expectedNode=lxml, resultNode=lxml)
+
+        self.assertEquals("r", c.xpathToHere(_inside_self))
+        self.assertEquals("r", c.xpathToHere(_inside_otherself))
+        self.assertEquals("r/a", c.xpathToHere(_insideA_self))
+        self.assertEquals("r/?[1]", c.xpathToHere(_inside_self, includeCurrent=True))
+        self.assertEquals("r/?[2]", c.xpathToHere(_inside_otherself, includeCurrent=True))
+        self.assertEquals("r/a/?", c.xpathToHere(_insideA_self, includeCurrent=True))
+
     def testTODO(self):
         self.fail('Finish TODO`s')
     # TODO:
-    # - ... You can also pass the Element, Comment, ProcessingInstruction and
-    #    Entity factory functions to look only for the specific element type. ... (<element>.iter*() functions).
-    # - Add a context-diff (n-lines above and below the where the differences start to occur.
+    #   - Add a context-diff (n-lines above and below the where the differences start to occur.
 
     def testAssertEqualsLxmlCommentNodes(self):
         # In(-root)-tag comment existence
@@ -336,6 +358,38 @@ newlines?>'''
             parseString('<?sa me?><r/><?diff?>'),
             parseString('<?sa me?><r/><?errent?>'),
             "Processing-Instruction targets do not match 'diff' != 'errent' at location: ''")
+
+    def testAssertEqualsLxmlEntityNodes(self):
+        # For a (possible) use-case of this parsing method, see: http://lxml.de/FAQ.html#how-do-i-use-lxml-safely-as-a-web-service-endpoint
+        parser = XMLParser(resolve_entities=False)  # Otherwise, no entity nodes remain.
+        def parseStringUnres(s):
+            return parse(StringIO(s), parser=parser)
+
+        xml = '''\
+<!DOCTYPE root [
+    <!ENTITY self "sefl">
+    <!ENTITY otherself "ohtersefl">
+]>
+<r>%s</r>
+'''
+
+        # In(-root)-tag Entity existence
+        self.checkAssertEqualsLxmlFails(
+            parseStringUnres(xml % '&self;'),
+            parseStringUnres(xml % ''),
+            "Number of children not equal (expected -- result):\n    entity|node -- no|tag\n\nAt location: 'r'")
+
+        # In(-root)-tag Entity difference
+        self.checkAssertEqualsLxmlFails(
+            parseStringUnres(xml % '&self;'),
+            parseStringUnres(xml % '&otherself;'),
+            "Text difference: '&self;' != '&otherself;'\nAt location: 'r/?'")
+
+        # In(-root)-tag Entity - tail diff
+        self.checkAssertEqualsLxmlFails(
+            parseStringUnres(xml % '&self;'),
+            parseStringUnres(xml % '&self; TAIL '),
+            "Tail difference (text after closing of tag): >no|tail< != ' TAIL '\nAt location: 'r/?'")
 
     def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
         def assertPathToTagOkInXml(xml, tagsWithPaths, namespaces=None):
