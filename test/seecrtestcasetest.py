@@ -220,6 +220,42 @@ At location: 'xml/ml'")
         self.assertEquals('comment()[3]', c.xpathToHere(_post_root, includeCurrent=True))
         self.assertEquals('comment()[4]', c.xpathToHere(_last, includeCurrent=True))
 
+    def testAssertEqualsLxmlsXpathToHereWithProcessingInstructions(self):
+        xml = '''\
+<?pro cessing instruction?>
+<a xmlns="n:s/#">
+    <?php ...?>
+    <?notphp Intermezzo?>
+    <?php just kidding!?>
+    <b/>
+</a>
+<?xml-stylesheet href="what.css" type="text/ever"?>
+<?pro with
+newlines?>'''
+        lxml = parseString(xml)
+        _pro_cessing = lxml.getroot().getprevious()
+        _xml_style = lxml.getroot().getnext()
+        _pro_newline = _xml_style.getnext()
+        _inside_1_php = lxml.getroot().getchildren()[0]
+        _inside_2_notphp = lxml.getroot().getchildren()[1]
+        _inside_3_php = lxml.getroot().getchildren()[2]
+
+        c = CompareXml(expectedNode=lxml, resultNode=lxml)
+
+        self.assertEquals("{n:s/#}a", c.xpathToHere(_inside_1_php))
+        self.assertEquals("{n:s/#}a", c.xpathToHere(_inside_2_notphp))
+        self.assertEquals("{n:s/#}a", c.xpathToHere(_inside_3_php))
+        self.assertEquals("{n:s/#}a/processing-instruction('php')[1]", c.xpathToHere(_inside_1_php, includeCurrent=True))
+        self.assertEquals("{n:s/#}a/processing-instruction('notphp')", c.xpathToHere(_inside_2_notphp, includeCurrent=True))
+        self.assertEquals("{n:s/#}a/processing-instruction('php')[2]", c.xpathToHere(_inside_3_php, includeCurrent=True))
+
+        self.assertEquals("", c.xpathToHere(_pro_cessing))
+        self.assertEquals("", c.xpathToHere(_xml_style))
+        self.assertEquals("", c.xpathToHere(_pro_newline))
+        self.assertEquals("processing-instruction('pro')[1]", c.xpathToHere(_pro_cessing, includeCurrent=True))
+        self.assertEquals("processing-instruction('xml-stylesheet')", c.xpathToHere(_xml_style, includeCurrent=True))
+        self.assertEquals("processing-instruction('pro')[2]", c.xpathToHere(_pro_newline, includeCurrent=True))
+
     def testTODO(self):
         self.fail('Finish TODO`s')
     # TODO:
@@ -232,7 +268,7 @@ At location: 'xml/ml'")
         self.checkAssertEqualsLxmlFails(
             parseString('<r></r>'),
             parseString('<r><!-- Comment --></r>'),
-            "Number of children not equal (expected -- result):\n    no|tag -- Comment|node\n\nAt location: 'r'")
+            "Number of children not equal (expected -- result):\n    no|tag -- comment|node\n\nAt location: 'r'")
 
         # In(-root)-tag comment difference
         self.checkAssertEqualsLxmlFails(
@@ -244,7 +280,7 @@ At location: 'xml/ml'")
         self.checkAssertEqualsLxmlFails(
             parseString('<r/>'),
             parseString('<!-- Comment --><r/>'),
-            "Number of children not equal (expected -- result):\n    'r' -- Comment|node\n    no|tag -- 'r'\n\nAt location: ''")
+            "Number of children not equal (expected -- result):\n    'r' -- comment|node\n    no|tag -- 'r'\n\nAt location: ''")
 
         # Pre-root-tag comment difference
         self.checkAssertEqualsLxmlFails(
@@ -256,7 +292,50 @@ At location: 'xml/ml'")
         self.checkAssertEqualsLxmlFails(
             parseString('<!-- ign. --><r/><!-- same --><!-- different -->'),
             parseString('<!-- ign. --><r/><!-- same -->'),
-            "Number of children not equal (expected -- result):\n    Comment|node -- Comment|node\n    'r' -- 'r'\n    Comment|node -- Comment|node\n    Comment|node -- no|tag\n\nAt location: ''")
+            "Number of children not equal (expected -- result):\n    comment|node -- comment|node\n    'r' -- 'r'\n    comment|node -- comment|node\n    comment|node -- no|tag\n\nAt location: ''")
+
+    def testAssertEqualsLxmlPINodes(self):
+        # In(-root)-tag PI existence
+        self.checkAssertEqualsLxmlFails(
+            parseString('<r></r>'),
+            parseString('<r><?pro cessing?></r>'),
+            "Number of children not equal (expected -- result):\n    no|tag -- processing-instruction('pro')|node\n\nAt location: 'r'")
+
+        # In(-root)-tag PI difference; data
+        self.checkAssertEqualsLxmlFails(
+            parseString('<r><?pro gnissec?></r>'),
+            parseString('<r><?pro cessing?></r>'),
+            "Text difference: 'gnissec' != 'cessing'\nAt location: 'r/processing-instruction('pro')'")
+
+        # In(-root)-tag PI difference; target
+        self.checkAssertEqualsLxmlFails(
+            parseString('<r><?pre cessing?></r>'),
+            parseString('<r><?pro cessing?></r>'),
+            "Processing-Instruction targets do not match 'pre' != 'pro' at location: 'r'")
+
+        # Pre-root-tag PI existence
+        self.checkAssertEqualsLxmlFails(
+            parseString('<?pro x?><?pro cessing?><r/>'),
+            parseString('<?pro x?><r/>'),
+            "Number of children not equal (expected -- result):\n    processing-instruction('pro')|node -- processing-instruction('pro')|node\n    processing-instruction('pro')|node -- 'r'\n    'r' -- no|tag\n\nAt location: ''")
+
+        # Pre-root-tag PI difference; data
+        self.checkAssertEqualsLxmlFails(
+            parseString('<?pro x?><?pro cessing?><r/>'),
+            parseString('<?pro x?><?pro gnissec?><r/>'),
+            "Text difference: 'cessing' != 'gnissec'\nAt location: 'processing-instruction('pro')[2]'")
+
+        # Pre-root-tag PI difference; target
+        self.checkAssertEqualsLxmlFails(
+            parseString('<?pro x?><?pro cessing?><r/>'),
+            parseString('<?pro x?><?am ignored?><r/>'),
+            "Processing-Instruction targets do not match 'pro' != 'am' at location: ''")
+
+        # Post-root-tag PI difference; target
+        self.checkAssertEqualsLxmlFails(
+            parseString('<?sa me?><r/><?diff?>'),
+            parseString('<?sa me?><r/><?errent?>'),
+            "Processing-Instruction targets do not match 'diff' != 'errent' at location: ''")
 
     def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
         def assertPathToTagOkInXml(xml, tagsWithPaths, namespaces=None):

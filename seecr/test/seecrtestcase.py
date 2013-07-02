@@ -24,7 +24,7 @@
 ## end license ##
 
 from unittest import TestCase
-from itertools import chain
+from itertools import chain, ifilter
 from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
 from shutil import rmtree
@@ -33,7 +33,7 @@ from sys import path as systemPath
 from tempfile import mkdtemp, mkstemp
 from timing import T
 
-from lxml.etree import Comment
+from lxml.etree import Comment, PI
 
 
 class SeecrTestCase(TestCase):
@@ -156,6 +156,9 @@ class CompareXml(object):
         if expectedNode.tag != resultNode.tag:
             raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
 
+        if hasattr(expectedNode, 'target') and expectedNode.target != resultNode.target:  # Is a processing-instruction
+            raise AssertionError("Processing-Instruction targets do not match '%s' != '%s' at location: '%s'" % (expectedNode.target, resultNode.target, self.xpathToHere(expectedNode)))
+
         if stripWSonly(expectedNode.text) != stripWSonly(resultNode.text) \
                 or (
                     len(expectedNode.getchildren()) == 0 and \
@@ -244,14 +247,24 @@ class CompareXml(object):
         if node == self._expectedNode:
             return nodeTag
 
-        if nodeTag == Comment:
+        if nodeTag is Comment:
             nodeTagStr = 'comment()'
-            if node.getparent() is not None:
+            if node.getparent() is None:
+                nodeIndex, othersWithsameTagCount = self._rootlessNodeIndex(node, nodeTag)
+            else:
                 nodeIndex, othersWithsameTagCount = self._nodeIndex(
                     node=node,
                     iterator=node.getparent().iterchildren(tag=Comment))
-            else:
+        elif nodeTag is PI:
+            nodeTagStr = "processing-instruction('%s')" % node.target
+            if node.getparent() is None:
                 nodeIndex, othersWithsameTagCount = self._rootlessNodeIndex(node, nodeTag)
+            else:
+                nodeIndex, othersWithsameTagCount = self._nodeIndex(
+                    node=node,
+                    iterator=ifilter(
+                        lambda n: n.target == node.target,
+                        node.getparent().iterchildren(tag=PI)))
         elif isinstance(nodeTag, basestring):
             nodeIndex, othersWithsameTagCount = self._nodeIndex(
                     node=node,
@@ -271,9 +284,12 @@ class CompareXml(object):
         return nodeIndex, othersWithsameTagCount
 
     def _rootlessNodeIndex(self, node, nodeTag):
+        condition = lambda n: n.tag == nodeTag
+        if nodeTag is PI:
+            condition = lambda n: n.tag == nodeTag and n.target == node.target
         rootlessNodes = [n
             for n in chain(previousNodes(self._expectedNode), nextNodes(self._expectedNode))
-            if n.tag == nodeTag]
+            if condition(n)]
 
         othersWithsameTagCount = max(0, len(rootlessNodes) - 1)
 
@@ -302,8 +318,10 @@ def stripWSonly(aString):
 
 def elementAsRepresentation(el):
     tagName = getattr(el, 'tag', None)
-    if tagName == Comment:
-        tagName = 'Comment|node'
+    if tagName is Comment:
+        tagName = 'comment|node'
+    elif tagName is PI:
+        tagName = "processing-instruction('%s')|node" % el.target
     elif tagName is None:
         tagName = 'no|tag'
     else:
