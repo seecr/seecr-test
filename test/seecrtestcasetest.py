@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 # "Seecr Test" provides test tools.
@@ -26,6 +27,7 @@
 from seecr.test import SeecrTestCase
 
 from StringIO import StringIO
+import re
 
 # TODO:
 #   lxmltostring stuff ...
@@ -56,7 +58,7 @@ class SeecrTestCaseTest(SeecrTestCase):
         try:
             self.assertEqualsLxml(expected=x1, result=x2, showContext=showContext)
         except AssertionError, e:
-            self.assertEquals(message, str(e))
+            self.assertEquals(message, stripColor(str(e)))
             return
         self.fail("Fail!\n%s should not equal:\n%s" % (tostring(x1, encoding='UTF-8', pretty_print=True), tostring(x2, encoding='UTF-8', pretty_print=True)))
 
@@ -396,14 +398,35 @@ newlines?>'''
             parseString('<r>\n  <y/>\n</r>'),
             """Tags do not match 'x' != 'y' at location: 'r'
 === expected (line 10, sourceline 12) ===
- 9: 
+ 9- 
 10:   <x/>
-11: </r>
+11- </r>
 === result (line 2) ===
-1: <r>
+1- <r>
 2:   <y/>
-3: </r>
+3- </r>
 =======================\n""", showContext=1)
+
+        # Small diff, with ANSI Color stuff
+        try:
+            self.assertEqualsLxml(
+                parseString('\n\n<r>%s\n  <x/>\n</r>' % ('\n'*8)),
+                parseString('<r>\n  <y/>\n</r>')
+                , showContext=1)
+        except AssertionError, e:
+            self.assertEquals("""\
+Tags do not match 'x' != 'y' at location: 'r'
+=== expected (line 10, sourceline 12) ===
+ 9- 
+\033[31m10:   <x/>\033[0m
+11- </r>
+=== result (line 2) ===
+1- <r>
+\033[32m2:   <y/>\033[0m
+3- </r>
+=======================\n""", str(e))
+        else:
+            self.fail()
 
         # Small diff, result sourceline
         self.checkAssertEqualsLxmlFails(
@@ -412,13 +435,13 @@ newlines?>'''
             """\
 Tags do not match 'y' != 'x' at location: 'r'
 === expected (line 2) ===
-1: <r>
+1- <r>
 2:   <y/>
-3: </r>
+3- </r>
 === result (line 2, sourceline 4) ===
-1: <r>
+1- <r>
 2:   <x/>
-3: 
+3- 
 =====================================
 """, showContext=1)
 
@@ -434,8 +457,8 @@ Number of children not equal (expected -- result):
 At location: ''
 === expected (line 1, sourceline 2) ===
 1: <!-- Text --><r>
-2:   <sub/>
-3: </r>
+2-   <sub/>
+3- </r>
 === result (line 1) ===
 1: <r/>
 =======================
@@ -469,25 +492,25 @@ At location: ''
 Text difference: 'TextDiff' != 'Different Text'
 At location: 'r/{uri:1}sub/{uri:2}sub2/{uri:1}sub3/{uri:2}sub4'
 === expected (line 5) ===
-1: <r>
-2:   <sub xmlns="uri:1">
-3:     <sub2 xmlns="uri:2">
-4:       <s:sub3 xmlns:s="uri:1">
+1- <r>
+2-   <sub xmlns="uri:1">
+3-     <sub2 xmlns="uri:2">
+4-       <s:sub3 xmlns:s="uri:1">
 5:         <s:sub4 xmlns:s="uri:2">TextDiff</s:sub4>
-6:       </s:sub3>
-7:     </sub2>
-8:   </sub>
-9: </r>
+6-       </s:sub3>
+7-     </sub2>
+8-   </sub>
+9- </r>
 === result (line 5) ===
-1: <r>
-2:   <sub xmlns="uri:1">
-3:     <sub2 xmlns="uri:2">
-4:       <s:sub3 xmlns:s="uri:1">
+1- <r>
+2-   <sub xmlns="uri:1">
+3-     <sub2 xmlns="uri:2">
+4-       <s:sub3 xmlns:s="uri:1">
 5:         <s:sub4 xmlns:s="uri:2">Different Text</s:sub4>
-6:       </s:sub3>
-7:     </sub2>
-8:   </sub>
-9: </r>
+6-       </s:sub3>
+7-     </sub2>
+8-   </sub>
+9- </r>
 =======================
 """, showContext=10)
 
@@ -712,4 +735,8 @@ At location: ''
 
 def parseString(s):
     return parse(StringIO(s))
+
+COLOR_RE = re.compile('\033\[[^m]*m')
+def stripColor(s):
+    return COLOR_RE.sub('', s)
 

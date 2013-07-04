@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 # "Seecr Test" provides test tools.
@@ -186,7 +187,7 @@ class CompareXml(object):
             newNode = refind(newTree)
             return newTree, newNode, text
 
-        def formatTextForNode(node, originalNode, label, text):
+        def formatTextForNode(node, originalNode, label, colorCode, text):
             diffLines = []
             sourceline = node.sourceline
             origSourceline = originalNode.sourceline
@@ -196,14 +197,28 @@ class CompareXml(object):
                     digitLen = len('%d' % i)
             heading = '=== %s (line %s%s) ===\n' % (label, sourceline, '' if origSourceline == sourceline else (', sourceline %s' % origSourceline))
             footer = '=' * len(heading.strip()) + '\n'
-            text = heading + '\n'.join('%%%sd: %%s' % digitLen % (i,l) for (i,l) in diffLines)
+
+            def renderLine(i, line):
+                startMark = ''
+                endMark = ''
+                afterNumber = '-'
+                if i == sourceline:
+                    startMark = '\033[%sm' % colorCode  # 31 -> red, 32 -> green
+                    afterNumber = ':'
+                    endMark = '\033[0m'
+                return startMark + '%%%sd%%s %%s' % digitLen % (i, afterNumber, line) + endMark
+
+            text = heading + '\n'.join(
+                renderLine(i, l)
+                for (i,l) in diffLines
+            )
             return text, footer
 
         tree, node, text = reparseAndFindNode(root=self._expectedNode, node=expectedNode)
-        expectedText, _ = formatTextForNode(node=node, originalNode=expectedNode, label='expected', text=text)
+        expectedText, _ = formatTextForNode(node=node, originalNode=expectedNode, label='expected', colorCode='31', text=text)
 
         tree, node, text = reparseAndFindNode(root=self._resultNode, node=resultNode)
-        resultText, footer = formatTextForNode(node=node, originalNode=resultNode, label='result', text=text)
+        resultText, footer = formatTextForNode(node=node, originalNode=resultNode, label='result', colorCode='32', text=text)
 
         return '\n%s\n%s\n%s' % (expectedText, resultText, footer)
 
