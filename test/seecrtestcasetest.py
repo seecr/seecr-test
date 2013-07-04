@@ -52,9 +52,9 @@ class SeecrTestCaseTest(SeecrTestCase):
         self.checkAssertEqualsWSFails('', 'a')
         self.checkAssertEqualsWSFails('asdf', 'fdsa')
 
-    def checkAssertEqualsLxmlFails(self, x1, x2, message):
+    def checkAssertEqualsLxmlFails(self, x1, x2, message, showContext=False):
         try:
-            self.assertEqualsLxml(expected=x1, result=x2)
+            self.assertEqualsLxml(expected=x1, result=x2, showContext=showContext)
         except AssertionError, e:
             self.assertEquals(message, str(e))
             return
@@ -280,11 +280,6 @@ newlines?>'''
         self.assertEquals("r/?[2]", c.xpathToHere(_inside_otherself, includeCurrent=True))
         self.assertEquals("r/a/?", c.xpathToHere(_insideA_self, includeCurrent=True))
 
-    def testTODO(self):
-        self.fail('Finish TODO`s')
-    # TODO:
-    #   - Add a context-diff (n-lines above and below the where the differences start to occur.
-
     def testAssertEqualsLxmlCommentNodes(self):
         # In(-root)-tag comment existence
         self.checkAssertEqualsLxmlFails(
@@ -390,6 +385,25 @@ newlines?>'''
             parseStringUnres(xml % '&self;'),
             parseStringUnres(xml % '&self; TAIL '),
             "Tail difference (text after closing of tag): >no|tail< != ' TAIL '\nAt location: 'r/?'")
+
+    def testAssertEqualsLxmlWithContext(self):
+        # No difference, no context
+        self.assertEqualsLxml(parseString('<x/>'), parseString('<x/>'))
+
+        # Small diff means show full XML's
+        self.checkAssertEqualsLxmlFails(
+            parseString('\n\n<r>%s\n  <x/>\n</r>' % ('\n'*8)),
+            parseString('<r>\n  <y/>\n</r>'),
+            """Tags do not match 'x' != 'y' at location: 'r'
+=== expected (line 10, sourceline 12) ===
+ 9: 
+10:   <x/>
+11: </r>
+=== result (line 2) ===
+1: <r>
+2:   <y/>
+3: </r>
+=======================\n""", showContext=1)
 
     def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
         def assertPathToTagOkInXml(xml, tagsWithPaths, namespaces=None):

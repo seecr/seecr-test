@@ -24,6 +24,8 @@
 ## end license ##
 
 from unittest import TestCase
+from StringIO import StringIO
+from functools import partial
 from itertools import chain, ifilter
 from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
@@ -33,7 +35,7 @@ from sys import path as systemPath
 from tempfile import mkdtemp, mkstemp
 from timing import T
 
-from lxml.etree import Comment, PI, Entity
+from lxml.etree import tostring, parse, Comment, PI, Entity
 
 
 class SeecrTestCase(TestCase):
@@ -74,11 +76,12 @@ class SeecrTestCase(TestCase):
             if not char1 or not char2:
                 break
 
-    def assertEqualsLxml(self, expected, result, matchPrefixes=True):
+    def assertEqualsLxml(self, expected, result, matchPrefixes=True, showContext=True):
         compare = CompareXml(
             expectedNode=expected,
             resultNode=result,
             matchPrefixes=matchPrefixes,
+            showContext=showContext,
         )
         compare.compare()
 
@@ -127,16 +130,23 @@ class SeecrTestCase(TestCase):
 
 
 class CompareXml(object):
-    def __init__(self, expectedNode, resultNode, matchPrefixes=True):
+    def __init__(self, expectedNode, resultNode, matchPrefixes=True, showContext=False):
         self._expectedNode = getattr(expectedNode, 'getroot', lambda: expectedNode)()
         self._resultNode = getattr(resultNode, 'getroot', lambda: resultNode)()
         self._matchPrefixes = matchPrefixes
+        if showContext != False:
+            if isinstance(showContext, bool):
+                self._context = 10
+            else:
+                self._context = showContext
         self._remainingContainer = None  # filled & used by compare and _compareNode
         for o in [self._expectedNode, self._resultNode]:
             if not getattr(o, 'getroottree', False):
                 raise ValueError('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(o))
 
     def compare(self):
+        # FIXME: Rootless-nodes support breaks node-compare; specifically
+        #        ".getparent() is None" and ".getnext()/.getprevious()" checks.
         self._remainingContainer = []
         expectedNodes = previousNodes(self._expectedNode) + \
             [self._expectedNode] + \
@@ -152,9 +162,58 @@ class CompareXml(object):
             expectedNode, resultNode = self._remainingContainer.pop(0)
             self._compareNode(expectedNode, resultNode)
 
+    def _contextStr(self, expectedNode, resultNode):
+        if not hasattr(self, '_context'):
+            return ''
+
+        # FIXME: either fix this for node-compare i.s.o. tree-compare;
+        #        or disable "context" for node-comparisons.
+
+        def reparseAndFindNode(root, node):
+            def extractNS(root, node):
+                # Theoretically incomplete (same default-ns or prefix declared
+                # with different URI's), but seems to work with roottree.getpath(...)
+                # Which is the only thing that matters here.
+                namespaces = {}
+                n = node
+                while n is not None:
+                    namespaces.update(n.nsmap)
+                    n = n.getparent()
+                return namespaces
+
+            root = root.getroottree()
+            nodePath = root.getpath(node)
+            namespaces = extractNS(root, node)
+            text = tostring(root, encoding='UTF-8')  # pretty_print input if you want to have pretty output.
+            newTree = parse(StringIO(text))
+            newNode = newTree.xpath(nodePath, namespaces=namespaces)[0]
+            return newTree, newNode, text
+
+        def formatTextForNode(node, originalNode, label, text):
+            diffLines = []
+            sourceline = node.sourceline
+            origSourceline = originalNode.sourceline
+            for i, line in ((i+1,l) for (i,l) in enumerate(text.split('\n'))):  # <node>.sourceline is one-based.
+                if sourceline - self._context <= i <= sourceline + self._context:
+                    diffLines.append((i, line))
+            digitLen = len('%d' % i)
+            heading = '=== %s (line %s%s) ===\n' % (label, sourceline, '' if origSourceline == sourceline else (', sourceline %s' % origSourceline))
+            footer = '=' * len(heading.strip()) + '\n'
+            text = heading + '\n'.join('%%%sd: %%s' % digitLen % (i,l) for (i,l) in diffLines)
+            return text, footer
+
+        tree, node, text = reparseAndFindNode(root=self._expectedNode, node=expectedNode)
+        expectedText, _ = formatTextForNode(node=node, originalNode=expectedNode, label='expected', text=text)
+
+        tree, node, text = reparseAndFindNode(root=self._resultNode, node=resultNode)
+        resultText, footer = formatTextForNode(node=node, originalNode=resultNode, label='result', text=text)
+
+        return '\n%s\n%s\n%s' % (expectedText, resultText, footer)
+
     def _compareNode(self, expectedNode, resultNode):
+        c = partial(self._contextStr, expectedNode, resultNode)
         if expectedNode.tag != resultNode.tag:
-            raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
+            raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'%s" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode), c()))
 
         if hasattr(expectedNode, 'target') and expectedNode.target != resultNode.target:  # Is a processing-instruction
             raise AssertionError("Processing-Instruction targets do not match '%s' != '%s' at location: '%s'" % (expectedNode.target, resultNode.target, self.xpathToHere(expectedNode)))
