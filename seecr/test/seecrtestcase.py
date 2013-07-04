@@ -145,8 +145,6 @@ class CompareXml(object):
                 raise ValueError('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(o))
 
     def compare(self):
-        # FIXME: Rootless-nodes support breaks node-compare; specifically
-        #        ".getparent() is None" and ".getnext()/.getprevious()" checks.
         self._remainingContainer = []
 
         expectedNodes = [self._expectedNode]
