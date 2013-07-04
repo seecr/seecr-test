@@ -31,7 +31,7 @@ from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
 from shutil import rmtree
 from string import whitespace
-from sys import path as systemPath
+from sys import path as systemPath, exc_info
 from tempfile import mkdtemp, mkstemp
 from timing import T
 
@@ -154,13 +154,22 @@ class CompareXml(object):
         resultNodes = previousNodes(self._resultNode) + \
             [self._resultNode] + \
             nextNodes(self._resultNode)
-        self._compareChildrenAndAddToQueue(
-                parent=None,
-                expectedChildren=expectedNodes,
-                resultChildren=resultNodes)
-        while self._remainingContainer:
-            expectedNode, resultNode = self._remainingContainer.pop(0)
-            self._compareNode(expectedNode, resultNode)
+
+        try:
+            expectedNode = self._expectedNode
+            resultNode = self._resultNode
+            self._compareChildrenAndAddToQueue(
+                    parent=None,
+                    expectedChildren=expectedNodes,
+                    resultChildren=resultNodes)
+
+            while self._remainingContainer:
+                expectedNode, resultNode = self._remainingContainer.pop(0)
+                self._compareNode(expectedNode, resultNode)
+        except AssertionError:
+            c, v, t = exc_info()
+            v = c(str(v) + self._contextStr(expectedNode, resultNode))
+            raise c, v, t.tb_next
 
     def _contextStr(self, expectedNode, resultNode):
         if not hasattr(self, '_context'):
@@ -196,7 +205,7 @@ class CompareXml(object):
             for i, line in ((i+1,l) for (i,l) in enumerate(text.split('\n'))):  # <node>.sourceline is one-based.
                 if sourceline - self._context <= i <= sourceline + self._context:
                     diffLines.append((i, line))
-            digitLen = len('%d' % i)
+                    digitLen = len('%d' % i)
             heading = '=== %s (line %s%s) ===\n' % (label, sourceline, '' if origSourceline == sourceline else (', sourceline %s' % origSourceline))
             footer = '=' * len(heading.strip()) + '\n'
             text = heading + '\n'.join('%%%sd: %%s' % digitLen % (i,l) for (i,l) in diffLines)
@@ -213,7 +222,7 @@ class CompareXml(object):
     def _compareNode(self, expectedNode, resultNode):
         c = partial(self._contextStr, expectedNode, resultNode)
         if expectedNode.tag != resultNode.tag:
-            raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'%s" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode), c()))
+            raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
 
         if hasattr(expectedNode, 'target') and expectedNode.target != resultNode.target:  # Is a processing-instruction
             raise AssertionError("Processing-Instruction targets do not match '%s' != '%s' at location: '%s'" % (expectedNode.target, resultNode.target, self.xpathToHere(expectedNode)))

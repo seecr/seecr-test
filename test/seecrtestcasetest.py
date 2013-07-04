@@ -390,7 +390,7 @@ newlines?>'''
         # No difference, no context
         self.assertEqualsLxml(parseString('<x/>'), parseString('<x/>'))
 
-        # Small diff means show full XML's
+        # Small diff, expected sourceline
         self.checkAssertEqualsLxmlFails(
             parseString('\n\n<r>%s\n  <x/>\n</r>' % ('\n'*8)),
             parseString('<r>\n  <y/>\n</r>'),
@@ -404,6 +404,68 @@ newlines?>'''
 2:   <y/>
 3: </r>
 =======================\n""", showContext=1)
+
+        # Small diff, result sourceline
+        self.checkAssertEqualsLxmlFails(
+            parseString('<r>\n  <y/>\n</r>'),
+            parseString('\n\n<r>\n  <x/>\n%s</r>' % ('\n'*8)),
+            """\
+Tags do not match 'y' != 'x' at location: 'r'
+=== expected (line 2) ===
+1: <r>
+2:   <y/>
+3: </r>
+=== result (line 2, sourceline 4) ===
+1: <r>
+2:   <x/>
+3: 
+=====================================
+""", showContext=1)
+
+        # Pre-root diff
+        self.checkAssertEqualsLxmlFails(
+            parseString('<!-- Text -->\n<r>\n  <sub/>\n</r>'),
+            parseString('<r/>'),
+            """\
+Number of children not equal (expected -- result):
+    comment|node -- 'r'
+    'r' -- no|tag
+
+At location: ''
+=== expected (line 1, sourceline 2) ===
+1: <!-- Text --><r>
+2:   <sub/>
+3: </r>
+=== result (line 1) ===
+1: <r/>
+=======================
+""", showContext=10)
+
+        # Odd namespaces still ok
+        self.checkAssertEqualsLxmlFails(
+            parseString('''\
+<r>
+  <sub xmlns="uri:1">
+    <sub2 xmlns="uri:2">
+      <s:sub3 xmlns:s="uri:1">
+        <s:sub4 xmlns:s="uri:2">TextDiff</s:sub4>
+      </s:sub3>
+    </sub2>
+  </sub>
+</r>
+'''),
+            parseString('''\
+<r>
+  <sub xmlns="uri:1">
+    <sub2 xmlns="uri:2">
+      <s:sub3 xmlns:s="uri:1">
+        <s:sub4 xmlns:s="uri:2">Different Text</s:sub4>
+      </s:sub3>
+    </sub2>
+  </sub>
+</r>
+'''),
+            """""", showContext=10)
 
     def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
         def assertPathToTagOkInXml(xml, tagsWithPaths, namespaces=None):
