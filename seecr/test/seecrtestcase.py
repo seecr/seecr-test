@@ -148,12 +148,18 @@ class CompareXml(object):
         # FIXME: Rootless-nodes support breaks node-compare; specifically
         #        ".getparent() is None" and ".getnext()/.getprevious()" checks.
         self._remainingContainer = []
-        expectedNodes = previousNodes(self._expectedNode) + \
-            [self._expectedNode] + \
-            nextNodes(self._expectedNode)
-        resultNodes = previousNodes(self._resultNode) + \
-            [self._resultNode] + \
-            nextNodes(self._resultNode)
+
+        expectedNodes = [self._expectedNode]
+        if isRootNode(self._expectedNode):
+            expectedNodes = previousNodes(self._expectedNode) + \
+                [self._expectedNode] + \
+                nextNodes(self._expectedNode)
+
+        resultNodes = [self._resultNode]
+        if isRootNode(self._resultNode):
+            resultNodes = previousNodes(self._resultNode) + \
+                [self._resultNode] + \
+                nextNodes(self._resultNode)
 
         try:
             expectedNode = self._expectedNode
@@ -175,27 +181,11 @@ class CompareXml(object):
         if not hasattr(self, '_context'):
             return ''
 
-        # FIXME: either fix this for node-compare i.s.o. tree-compare;
-        #        or disable "context" for node-comparisons.
-
         def reparseAndFindNode(root, node):
-            def extractNS(root, node):
-                # Theoretically incomplete (same default-ns or prefix declared
-                # with different URI's), but seems to work with roottree.getpath(...)
-                # Which is the only thing that matters here.
-                namespaces = {}
-                n = node
-                while n is not None:
-                    namespaces.update(n.nsmap)
-                    n = n.getparent()
-                return namespaces
-
-            root = root.getroottree()
-            nodePath = root.getpath(node)
-            namespaces = extractNS(root, node)
-            text = tostring(root, encoding='UTF-8')  # pretty_print input if you want to have pretty output.
+            refind = refindLxmlNodeCallback(root, node)
+            text = tostring(root.getroottree() if isRootNode(root) else root, encoding='UTF-8')  # pretty_print input if you want to have pretty output.
             newTree = parse(StringIO(text))
-            newNode = newTree.xpath(nodePath, namespaces=namespaces)[0]
+            newNode = refind(newTree)
             return newTree, newNode, text
 
         def formatTextForNode(node, originalNode, label, text):
@@ -220,7 +210,6 @@ class CompareXml(object):
         return '\n%s\n%s\n%s' % (expectedText, resultText, footer)
 
     def _compareNode(self, expectedNode, resultNode):
-        c = partial(self._contextStr, expectedNode, resultNode)
         if expectedNode.tag != resultNode.tag:
             raise AssertionError("Tags do not match '%s' != '%s' at location: '%s'" % (expectedNode.tag, resultNode.tag, self.xpathToHere(expectedNode)))
 
@@ -373,6 +362,9 @@ class CompareXml(object):
         return rootlessNodes.index(node) + XPATH_IS_ONE_BASED, othersWithsameTagCount
 
 
+def isRootNode(node):
+    return True if node.getroottree().getroot() == node else False
+
 def previousNodes(node):
     previousNodes = []
     n = node.getprevious()
@@ -388,6 +380,38 @@ def nextNodes(node):
         nextNodes.append(n)
         n = n.getnext()
     return nextNodes
+
+def refindLxmlNodeCallback(root, node):
+    root = getattr(root, 'getroot', lambda: root)()
+    operations = []
+    if isRootNode(root):
+        if node in previousNodes(root) + nextNodes(root):
+            # getpath works OK for rootless-nodes since they are namespaceless
+            path = root.getroottree().getpath(node)
+            operations.insert(0, lambda n: n.getroottree().xpath(path)[0])
+
+    n = node
+    while n is not None or n == root:
+        parent = n.getparent()
+        if parent is not None:
+            index = parent.index(n)
+            operations.append(
+                    partial(
+                        lambda n, index: n.getchildren()[index],
+                        index=index)
+                )
+        n = parent
+
+    def refind(newRoot):
+        node = getattr(newRoot, 'getroot', lambda: newRoot)()
+        try:
+            while True:
+                op = operations.pop()
+                node = op(node)
+        except IndexError:
+            return node
+    return refind
+
 
 def stripWSonly(aString):
     stripped = aString.strip() if aString else aString

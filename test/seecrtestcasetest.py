@@ -32,7 +32,7 @@ from StringIO import StringIO
 from lxml.etree import parse, tostring, Comment, XMLParser
 
 # whiteboxing:
-from seecr.test.seecrtestcase import CompareXml
+from seecr.test.seecrtestcase import CompareXml, refindLxmlNodeCallback
 
 
 class SeecrTestCaseTest(SeecrTestCase):
@@ -465,7 +465,128 @@ At location: ''
   </sub>
 </r>
 '''),
-            """""", showContext=10)
+            """\
+Text difference: 'TextDiff' != 'Different Text'
+At location: 'r/{uri:1}sub/{uri:2}sub2/{uri:1}sub3/{uri:2}sub4'
+=== expected (line 5) ===
+1: <r>
+2:   <sub xmlns="uri:1">
+3:     <sub2 xmlns="uri:2">
+4:       <s:sub3 xmlns:s="uri:1">
+5:         <s:sub4 xmlns:s="uri:2">TextDiff</s:sub4>
+6:       </s:sub3>
+7:     </sub2>
+8:   </sub>
+9: </r>
+=== result (line 5) ===
+1: <r>
+2:   <sub xmlns="uri:1">
+3:     <sub2 xmlns="uri:2">
+4:       <s:sub3 xmlns:s="uri:1">
+5:         <s:sub4 xmlns:s="uri:2">Different Text</s:sub4>
+6:       </s:sub3>
+7:     </sub2>
+8:   </sub>
+9: </r>
+=======================
+""", showContext=10)
+
+    def testAssertEqualsLxmlNodeOrTreeBothWork(self):
+        # Same node, same parentage
+        self.assertEqualsLxml(
+            parseString('<x/>'),
+            parseString('<x/>').getroot()
+        )
+
+        # Same node, different parentage
+        self.assertEqualsLxml(
+            parseString('<x/>'),
+            parseString('<r><x/></r>').getroot().getchildren()[0]
+        )
+
+        # Root-siblings ONLY when root is at roottree/ElementTree level.
+        self.checkAssertEqualsLxmlFails(
+            parseString('<!-- Comment --><x/>'),
+            parseString('<r><!-- Comment --><x/></r>').getroot().getchildren()[1],
+            """\
+Number of children not equal (expected -- result):
+    comment|node -- 'x'
+    'x' -- no|tag
+
+At location: ''
+=== expected (line 1) ===
+1: <!-- Comment --><x/>
+=== result (line 1) ===
+1: <x/>
+=======================
+""", showContext=10)
+
+        # Root-siblings ONLY when root is at roottree/ElementTree level.
+        self.checkAssertEqualsLxmlFails(
+            parseString('<x/><!-- Comment -->'),
+            parseString('<r><x/><!-- Comment --></r>').getroot().getchildren()[0],
+            """\
+Number of children not equal (expected -- result):
+    'x' -- 'x'
+    comment|node -- no|tag
+
+At location: ''""", showContext=False)
+
+        # Root-siblings ONLY when root is at roottree/ElementTree level.
+        self.checkAssertEqualsLxmlFails(
+            parseString('<!-- Comment --><x/>'),
+            parseString('<r><x/></r>').getroot().getchildren()[0],
+            """\
+Number of children not equal (expected -- result):
+    comment|node -- 'x'
+    'x' -- no|tag
+
+At location: ''
+=== expected (line 1) ===
+1: <!-- Comment --><x/>
+=== result (line 1) ===
+1: <x/>
+=======================
+""", showContext=10)
+
+    def testRefindLxmlNodeCallback(self):
+        xml = '''\
+<!-- pre1 -->
+<!-- pre2 -->
+<r>
+  <sub xmlns="uri:1">
+    <sub2 xmlns="uri:2">
+      <s:sub3 xmlns:s="uri:1">
+        <s:sub4 xmlns:s="uri:2">Different Text</s:sub4>
+      </s:sub3>
+      <n:notFirstChild xmlns:n="uri:n" />
+    </sub2>
+  </sub>
+</r>
+<?post?>
+'''
+        lxml1 = parseString(xml)
+        lxml2 = parseString('\n\n' + xml)  # Different text, same tree
+
+        pre1 = lxml1.getroot().getprevious().getprevious()
+        pre2 = lxml1.getroot().getprevious()
+        root1 = lxml1.getroot()
+        sub4 = lxml1.getroot().getchildren()[0].getchildren()[0].getchildren()[0].getchildren()[0]
+        sub3 = lxml1.getroot().getchildren()[0].getchildren()[0].getchildren()[0]
+        notFirstChild = lxml1.getroot().getchildren()[0].getchildren()[0].getchildren()[1]
+        post = lxml1.getroot().getnext()
+
+        def assertPathEqual(node):
+            refind = refindLxmlNodeCallback(lxml1, node)
+            self.assertEquals(lxml1.getpath(node), lxml2.getpath(refind(lxml2)))
+
+        assertPathEqual(root1)
+        assertPathEqual(pre1)
+        assertPathEqual(pre2)
+        assertPathEqual(post)
+        assertPathEqual(sub3)
+        assertPathEqual(sub4)
+        assertPathEqual(notFirstChild)
 
     def testAssertEqualsLxmlXpathsOkWithCompexNesting(self):
         def assertPathToTagOkInXml(xml, tagsWithPaths, namespaces=None):
