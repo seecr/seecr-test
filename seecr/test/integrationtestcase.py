@@ -179,7 +179,7 @@ class IntegrationState(object):
 
     def tearDown(self):
         for serviceName in self.pids.keys():
-            self._stdoutWrite("Stopping service '%s' for state '%s'." % (serviceName, self.stateName))
+            self._stdoutWrite("Stopping service '%s' for state '%s'\n" % (serviceName, self.stateName))
             self._stopServer(serviceName)
 
     @staticmethod
