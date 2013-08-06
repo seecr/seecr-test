@@ -731,7 +731,11 @@ At location: ''
 
     def testAssertDictEquals(self):
         self.assertDictEquals({'aap':'noot'}, dict(aap='noot'))
-
+        try:
+            self.assertDictEquals(dict(aap='noot'), dict(aap='note'))
+            self.fail()
+        except AssertionError, e:
+            self.assertEquals("{'aap': 'noot'} != {'aap': 'note'}\n- {'aap': 'noot'}\n?            -\n\n+ {'aap': 'note'}\n?             +\n", str(e))
 
 def parseString(s):
     return parse(StringIO(s))

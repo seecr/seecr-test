@@ -36,6 +36,9 @@ from sys import path as systemPath, exc_info
 from tempfile import mkdtemp, mkstemp
 from timing import T
 
+import pprint
+import difflib
+
 from lxml.etree import tostring, parse, Comment, PI, Entity
 
 
@@ -86,23 +89,27 @@ class SeecrTestCase(TestCase):
         )
         compare.compare()
 
-    @staticmethod
-    def assertDictEquals(expected, result):
-        expectedKeys = set(expected.keys())
-        resultKeys = set(result.keys())
-        if expectedKeys != resultKeys:
-            missesKeys = expectedKeys.difference(resultKeys)
-            missesKeysMsg = '    - Misses keys: %s\n' % (', '.join("'"+str(s)+"'" for s in missesKeys))
-            excessKeys = resultKeys.difference(expectedKeys)
-            excessKeysMsg = '    - Excess keys: %s' % (', '.join("'"+str(s)+"'" for s in excessKeys))        
-            raise AssertionError('''Unbalanced keys, result:\n%s%s''' % (missesKeysMsg, excessKeysMsg))
-        valueFailure = []
-        for k, v in expected.items():
-            if v != result[k]:
-                valueFailure.append("  Values for key: '%s' differ:\n    %s != %s" % (k, v, result[k]))
-        if len(valueFailure) > 0:
-            valueFailure.insert(0, 'Unbalanced values:')
-            raise AssertionError('\n'.join(valueFailure))
+    def assertDictEqual(self, d1, d2, msg=None):
+        # 'borrowed' from python2.7's unittest.
+        self.assertTrue(isinstance(d1, dict), 'First argument is not a dictionary')
+        self.assertTrue(isinstance(d2, dict), 'Second argument is not a dictionary')
+
+        if d1 != d2:
+            standardMsg = '%s != %s' % (safe_repr(d1, True), safe_repr(d2, True))
+            diff = ('\n' + '\n'.join(difflib.ndiff(
+                       pprint.pformat(d1).splitlines(),
+                       pprint.pformat(d2).splitlines())))
+            standardMsg = self._truncateMessage(standardMsg, diff)
+            fullMsg = (msg + " : " if msg else '') + standardMsg
+            self.fail(fullMsg)
+
+    assertDictEquals = assertDictEqual
+
+    def _truncateMessage(self, message, diff):
+        max_diff = 8*80
+        if max_diff is None or len(diff) <= max_diff:
+            return message + diff
+        return message + (DIFF_OMITTED % len(diff))
 
     def _getVmSize(self):
         status = open('/proc/%d/status' % getpid()).read()
@@ -485,3 +492,15 @@ except ImportError:
                 yield tuple(map(next, iterators))
         except ZipExhausted:
             pass
+
+
+_MAX_LENGTH = 80
+def safe_repr(obj, short=False):
+    try:
+        result = repr(obj)
+    except Exception:
+        result = object.__repr__(obj)
+    if not short or len(result) < _MAX_LENGTH:
+        return result
+    return result[:_MAX_LENGTH] + ' [truncated]...'
+
