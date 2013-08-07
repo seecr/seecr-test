@@ -97,19 +97,13 @@ class SeecrTestCase(TestCase):
         if d1 != d2:
             standardMsg = '%s != %s' % (safe_repr(d1, True), safe_repr(d2, True))
             diff = ('\n' + '\n'.join(difflib.ndiff(
-                       pprint.pformat(d1).splitlines(),
-                       pprint.pformat(d2).splitlines())))
-            standardMsg = self._truncateMessage(standardMsg, diff)
+                       pprint.pformat(dict(d1)).splitlines(),
+                       pprint.pformat(dict(d2)).splitlines())))
+            standardMsg += diff
             fullMsg = (msg + " : " if msg else '') + standardMsg
             self.fail(fullMsg)
 
     assertDictEquals = assertDictEqual
-
-    def _truncateMessage(self, message, diff):
-        max_diff = 8*80
-        if max_diff is None or len(diff) <= max_diff:
-            return message + diff
-        return message + (DIFF_OMITTED % len(diff))
 
     def _getVmSize(self):
         status = open('/proc/%d/status' % getpid()).read()
@@ -271,14 +265,14 @@ class CompareXml(object):
         if diff:
             raise AssertionError("Missing attributes %s at location: '%s'" % (
                     ', '.join(
-                        (("'%s'" % a) for a in diff)), 
+                        (("'%s'" % a) for a in diff)),
                         self.xpathToHere(expectedNode, includeCurrent=True)
                 ))
         diff = resultAttrsSet.difference(expectedAttrsSet)
         if diff:
             raise AssertionError("Unexpected attributes %s at location: '%s'" % (
                     ', '.join(
-                        (("'%s'" % a) for a in diff)), 
+                        (("'%s'" % a) for a in diff)),
                         self.xpathToHere(expectedNode, includeCurrent=True)
                 ))
 
