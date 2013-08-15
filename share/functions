@@ -2,7 +2,7 @@ source /usr/share/seecr-test/_distro  # from seecr-tools/share/functions.d/distr
 
 function runtests() {
     local tests_to_run=$1
-    if [ -z $tests_to_run ]; then
+    if [ -z "$tests_to_run" ]; then
         tests_to_run=$(cd test; ls *.sh)
     else
         shift
@@ -19,8 +19,8 @@ function runtests() {
 
     for test_to_run in $tests_to_run; do
         (   
-            cd tmp/test
-            ./$test_to_run "$@"
+            cd tmp/test/$(dirname $test_to_run)
+            ./$(basename $test_to_run) "$@"
         )   
         if [ -z "$SEECRTEST_SKIP_PRESS_ENTER" ]; then
             echo "Finished $test_to_run. Press [ENTER] to continue"
@@ -67,3 +67,5 @@ function definePythonVars() {
 
     export PYTHONPATH=${SITEPACKAGES}:${PYTHONPATH}
 }
+
+# vim: syn=sh
