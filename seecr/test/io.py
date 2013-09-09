@@ -32,13 +32,6 @@ from StringIO import StringIO
 
 @contextmanager
 def stderr_replaced():
-    if func:
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            with stderr_replaced():
-                return func(*args, **kwargs)
-        return wrapper
-
     oldstderr = sys.stderr
     mockStderr = StringIO()
     sys.stderr = mockStderr
@@ -47,16 +40,15 @@ def stderr_replaced():
     finally:
         sys.stderr = oldstderr
 
+def stderr_replace_decorator(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with stderr_replaced():
+            return func(*args, **kwargs)
+    return wrapper
 
 @contextmanager
-def stdout_replaced(func=None):
-    if func:
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            with stdout_replaced():
-                return func(*args, **kwargs)
-        return wrapper
-
+def stdout_replaced():
     oldstdout = sys.stdout
     mockStdout = StringIO()
     sys.stdout = mockStdout
@@ -65,3 +57,9 @@ def stdout_replaced(func=None):
     finally:
         sys.stdout = oldstdout
 
+def stdout_replace_decorator(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with stdout_replaced():
+            return func(*args, **kwargs)
+    return wrapper
