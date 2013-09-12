@@ -2,7 +2,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -30,36 +30,36 @@ from functools import wraps
 from StringIO import StringIO
 
 
-@contextmanager
-def stderr_replaced():
-    oldstderr = sys.stderr
-    mockStderr = StringIO()
-    sys.stderr = mockStderr
-    try:
-        yield mockStderr
-    finally:
-        sys.stderr = oldstderr
+def _replace_stream_factory(name):
+    @contextmanager
+    def stream_replace_contextmanager():
+        mockStream, back = _set_replaced_stream(name)
+        try:
+            yield mockStream
+        finally:
+            back()
 
-def stderr_replace_decorator(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        with stderr_replaced():
-            return func(*args, **kwargs)
-    return wrapper
+    def stream_replace(func=None):
+        if func:
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                with stream_replace_contextmanager():
+                    return func(*args, **kwargs)
+            return wrapper
 
-@contextmanager
-def stdout_replaced():
-    oldstdout = sys.stdout
-    mockStdout = StringIO()
-    sys.stdout = mockStdout
-    try:
-        yield mockStdout
-    finally:
-        sys.stdout = oldstdout
+        return stream_replace_contextmanager()
 
-def stdout_replace_decorator(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        with stdout_replaced():
-            return func(*args, **kwargs)
-    return wrapper
+    return stream_replace
+
+def _set_replaced_stream(name):
+    stream = getattr(sys, name)
+    def andBackAgain():
+        setattr(sys, name, stream)
+
+    streamReplacement = StringIO()
+    setattr(sys, name, streamReplacement)
+    return streamReplacement, andBackAgain
+
+stderr_replaced = _replace_stream_factory('stderr')
+stdout_replaced = _replace_stream_factory('stdout')
+
