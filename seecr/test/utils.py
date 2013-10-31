@@ -137,7 +137,7 @@ def postRequest(port, path, data, contentType='text/xml; charset="utf-8"', parse
     finally:
         sok.close()
 
-def postMultipartForm(port, path, formValues, parse=True, timeOutInSeconds=None):
+def postMultipartForm(port, path, formValues, parse=True, timeOutInSeconds=None, **kwargs):
     boundary = '-=-=-=-=-=-=-=-=TestBoundary1234567890'
     body = createPostMultipartForm(boundary, formValues)
     return postRequest(
@@ -146,7 +146,8 @@ def postMultipartForm(port, path, formValues, parse=True, timeOutInSeconds=None)
         body,
         contentType='multipart/form-data; boundary=' + boundary,
         parse=parse,
-        timeOutInSeconds=timeOutInSeconds)
+        timeOutInSeconds=timeOutInSeconds,
+        **kwargs)
 
 def createPostMultipartForm(boundary, formValues):
     strm = StringIO()
