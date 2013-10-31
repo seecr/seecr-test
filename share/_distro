@@ -1,6 +1,18 @@
 test -f /etc/debian_version && export DISTRO="debian" DISTRO_VERSION=$(cat /etc/debian_version | cut -d. -f1)
 test -f /etc/redhat-release && export DISTRO="redhat" DISTRO_VERSION=$(cat /etc/redhat-release | sed -e 's,^[^0-9]*\([0-9]\).*$,\1,')
 
+function distro_version_name {
+    declare -a DEBIAN_NAME=("" "" "" "" "" "lenny" "squeeze" "wheezy")
+    declare -a CENTOS_NAME=("" "" "" "" "" "centos5" "centos6")
+    if distro_is_debian; then
+        echo ${DEBIAN_NAME[${DISTRO_VERSION}]}
+    elif distro_is_redhat; then
+        echo ${CENTOS_NAME[${DISTRO_VERSION}]}
+    else
+        echo "unknown"
+    fi
+}
+
 function distro_is_debian {
     test "${DISTRO}" == "debian"
 }
