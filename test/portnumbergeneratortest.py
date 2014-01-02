@@ -31,7 +31,7 @@ from struct import pack
 
 class PortNumberGeneratorTest(TestCase):
     def testReasonableAmountOfUniquePortNumbers(self):
-        number = PortNumberGenerator.next()
+        number = next(PortNumberGenerator)
 
         self.assertEquals(int, type(number))
 
@@ -39,8 +39,8 @@ class PortNumberGeneratorTest(TestCase):
         # More than 14000 gets *very* slow or fails
         # When guaranteed uniqe numbers for that many ports are needed,
         # change the approach (say reading: cat /proc/net/tcp | awk '{print $2}' | sed -e '1d')
-        for i in xrange(14000):
-            numbers.append(PortNumberGenerator.next())
+        for i in range(14000):
+            numbers.append(next(PortNumberGenerator))
 
         self.assertEquals(14000, len(numbers))
         self.assertEquals(14000, len(set(numbers)))
@@ -51,8 +51,8 @@ class PortNumberGeneratorTest(TestCase):
         nrs = set([])
         try:
             for i in range(10):
-                for j in xrange(950):
-                    nr = PortNumberGenerator.next()
+                for j in range(950):
+                    nr = next(PortNumberGenerator)
                     sok = socket()
                     sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 1, 1))
                     sok.bind(('127.0.0.1', nr))
@@ -62,7 +62,7 @@ class PortNumberGeneratorTest(TestCase):
                     for s in reversed(soks):
                         s.close()
                         soks.remove(s)
-        except Exception, e:
+        except Exception as e:
             for s in reversed(soks):
                 s.close()
                 soks.remove(s)
