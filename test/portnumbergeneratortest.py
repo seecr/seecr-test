@@ -33,7 +33,7 @@ class PortNumberGeneratorTest(TestCase):
     def testReasonableAmountOfUniquePortNumbers(self):
         number = PortNumberGenerator.next()
 
-        self.assertEquals(int, type(number))
+        self.assertEqual(int, type(number))
 
         numbers = []
         # More than 14000 gets *very* slow or fails
@@ -42,9 +42,9 @@ class PortNumberGeneratorTest(TestCase):
         for i in range(14000):
             numbers.append(PortNumberGenerator.next())
 
-        self.assertEquals(14000, len(numbers))
-        self.assertEquals(14000, len(set(numbers)))
-        self.assertEquals(True, all((0 <= n < 65536) for n in numbers))
+        self.assertEqual(14000, len(numbers))
+        self.assertEqual(14000, len(set(numbers)))
+        self.assertEqual(True, all((0 <= n < 65536) for n in numbers))
 
     def testFindProblemWithLockupAfterReuseQuickly(self):
         soks = []

@@ -58,7 +58,7 @@ class SeecrTestCaseTest(SeecrTestCase):
         try:
             self.assertEqualsLxml(expected=x1, result=x2, showContext=showContext)
         except AssertionError as e:
-            self.assertEquals(message, stripColor(str(e)))
+            self.assertEqual(message, stripColor(str(e)))
             return
         self.fail("Fail!\n%s should not equal:\n%s" % (tostring(x1, encoding='UTF-8', pretty_print=True), tostring(x2, encoding='UTF-8', pretty_print=True)))
 
@@ -207,20 +207,20 @@ At location: 'xml/ml'")
 
         c = CompareXml(expectedNode=lxml, resultNode=lxml)
 
-        self.assertEquals('{n:s/#}a', c.xpathToHere(_1st_inside))
-        self.assertEquals('{n:s/#}a', c.xpathToHere(_2nd_inside))
-        self.assertEquals('{n:s/#}a/comment()[1]', c.xpathToHere(_1st_inside, includeCurrent=True))
-        self.assertEquals('{n:s/#}a/comment()[2]', c.xpathToHere(_2nd_inside, includeCurrent=True))
+        self.assertEqual('{n:s/#}a', c.xpathToHere(_1st_inside))
+        self.assertEqual('{n:s/#}a', c.xpathToHere(_2nd_inside))
+        self.assertEqual('{n:s/#}a/comment()[1]', c.xpathToHere(_1st_inside, includeCurrent=True))
+        self.assertEqual('{n:s/#}a/comment()[2]', c.xpathToHere(_2nd_inside, includeCurrent=True))
 
-        self.assertEquals('', c.xpathToHere(_1st))
-        self.assertEquals('', c.xpathToHere(_pre_root))
-        self.assertEquals('comment()[1]', c.xpathToHere(_1st, includeCurrent=True))
-        self.assertEquals('comment()[2]', c.xpathToHere(_pre_root, includeCurrent=True))
+        self.assertEqual('', c.xpathToHere(_1st))
+        self.assertEqual('', c.xpathToHere(_pre_root))
+        self.assertEqual('comment()[1]', c.xpathToHere(_1st, includeCurrent=True))
+        self.assertEqual('comment()[2]', c.xpathToHere(_pre_root, includeCurrent=True))
 
-        self.assertEquals('', c.xpathToHere(_post_root))
-        self.assertEquals('', c.xpathToHere(_last))
-        self.assertEquals('comment()[3]', c.xpathToHere(_post_root, includeCurrent=True))
-        self.assertEquals('comment()[4]', c.xpathToHere(_last, includeCurrent=True))
+        self.assertEqual('', c.xpathToHere(_post_root))
+        self.assertEqual('', c.xpathToHere(_last))
+        self.assertEqual('comment()[3]', c.xpathToHere(_post_root, includeCurrent=True))
+        self.assertEqual('comment()[4]', c.xpathToHere(_last, includeCurrent=True))
 
     def testAssertEqualsLxmlsXpathToHereWithProcessingInstructions(self):
         xml = '''\
@@ -244,19 +244,19 @@ newlines?>'''
 
         c = CompareXml(expectedNode=lxml, resultNode=lxml)
 
-        self.assertEquals("{n:s/#}a", c.xpathToHere(_inside_1_php))
-        self.assertEquals("{n:s/#}a", c.xpathToHere(_inside_2_notphp))
-        self.assertEquals("{n:s/#}a", c.xpathToHere(_inside_3_php))
-        self.assertEquals("{n:s/#}a/processing-instruction('php')[1]", c.xpathToHere(_inside_1_php, includeCurrent=True))
-        self.assertEquals("{n:s/#}a/processing-instruction('notphp')", c.xpathToHere(_inside_2_notphp, includeCurrent=True))
-        self.assertEquals("{n:s/#}a/processing-instruction('php')[2]", c.xpathToHere(_inside_3_php, includeCurrent=True))
+        self.assertEqual("{n:s/#}a", c.xpathToHere(_inside_1_php))
+        self.assertEqual("{n:s/#}a", c.xpathToHere(_inside_2_notphp))
+        self.assertEqual("{n:s/#}a", c.xpathToHere(_inside_3_php))
+        self.assertEqual("{n:s/#}a/processing-instruction('php')[1]", c.xpathToHere(_inside_1_php, includeCurrent=True))
+        self.assertEqual("{n:s/#}a/processing-instruction('notphp')", c.xpathToHere(_inside_2_notphp, includeCurrent=True))
+        self.assertEqual("{n:s/#}a/processing-instruction('php')[2]", c.xpathToHere(_inside_3_php, includeCurrent=True))
 
-        self.assertEquals("", c.xpathToHere(_pro_cessing))
-        self.assertEquals("", c.xpathToHere(_xml_style))
-        self.assertEquals("", c.xpathToHere(_pro_newline))
-        self.assertEquals("processing-instruction('pro')[1]", c.xpathToHere(_pro_cessing, includeCurrent=True))
-        self.assertEquals("processing-instruction('xml-stylesheet')", c.xpathToHere(_xml_style, includeCurrent=True))
-        self.assertEquals("processing-instruction('pro')[2]", c.xpathToHere(_pro_newline, includeCurrent=True))
+        self.assertEqual("", c.xpathToHere(_pro_cessing))
+        self.assertEqual("", c.xpathToHere(_xml_style))
+        self.assertEqual("", c.xpathToHere(_pro_newline))
+        self.assertEqual("processing-instruction('pro')[1]", c.xpathToHere(_pro_cessing, includeCurrent=True))
+        self.assertEqual("processing-instruction('xml-stylesheet')", c.xpathToHere(_xml_style, includeCurrent=True))
+        self.assertEqual("processing-instruction('pro')[2]", c.xpathToHere(_pro_newline, includeCurrent=True))
 
     def testAssertEqualsLxmlsXpathToHereWithEntityNodes(self):
         # For a (possible) use-case of this parsing method, see: http://lxml.de/FAQ.html#how-do-i-use-lxml-safely-as-a-web-service-endpoint
@@ -275,12 +275,12 @@ newlines?>'''
 
         c = CompareXml(expectedNode=lxml, resultNode=lxml)
 
-        self.assertEquals("r", c.xpathToHere(_inside_self))
-        self.assertEquals("r", c.xpathToHere(_inside_otherself))
-        self.assertEquals("r/a", c.xpathToHere(_insideA_self))
-        self.assertEquals("r/?[1]", c.xpathToHere(_inside_self, includeCurrent=True))
-        self.assertEquals("r/?[2]", c.xpathToHere(_inside_otherself, includeCurrent=True))
-        self.assertEquals("r/a/?", c.xpathToHere(_insideA_self, includeCurrent=True))
+        self.assertEqual("r", c.xpathToHere(_inside_self))
+        self.assertEqual("r", c.xpathToHere(_inside_otherself))
+        self.assertEqual("r/a", c.xpathToHere(_insideA_self))
+        self.assertEqual("r/?[1]", c.xpathToHere(_inside_self, includeCurrent=True))
+        self.assertEqual("r/?[2]", c.xpathToHere(_inside_otherself, includeCurrent=True))
+        self.assertEqual("r/a/?", c.xpathToHere(_insideA_self, includeCurrent=True))
 
     def testAssertEqualsLxmlCommentNodes(self):
         # In(-root)-tag comment existence
@@ -414,7 +414,7 @@ newlines?>'''
                 parseString('<r>\n  <y/>\n</r>')
                 , showContext=1)
         except AssertionError as e:
-            self.assertEquals("""\
+            self.assertEqual("""\
 Tags do not match 'x' != 'y' at location: 'r'
 === expected (line 10, sourceline 12) ===
  9- 
@@ -601,7 +601,7 @@ At location: ''
 
         def assertPathEqual(node):
             refind = refindLxmlNodeCallback(lxml1, node)
-            self.assertEquals(lxml1.getpath(node), lxml2.getpath(refind(lxml2)))
+            self.assertEqual(lxml1.getpath(node), lxml2.getpath(refind(lxml2)))
 
         assertPathEqual(root1)
         assertPathEqual(pre1)
@@ -620,10 +620,10 @@ At location: ''
 
             for d in tagsWithPaths:
                 tag, pathExc, pathIncl = d['tag'], d['excl'], d['incl']
-                self.assertEquals(set(['tag', 'excl', 'incl']), set(d.keys()))
+                self.assertEqual(set(['tag', 'excl', 'incl']), set(d.keys()))
                 t = lxmlNode.xpath('//%s' % tag, namespaces=namespaces)[0]
-                self.assertEquals(pathExc, compareXml.xpathToHere(t, includeCurrent=False))
-                self.assertEquals(pathIncl, compareXml.xpathToHere(t, includeCurrent=True))
+                self.assertEqual(pathExc, compareXml.xpathToHere(t, includeCurrent=False))
+                self.assertEqual(pathIncl, compareXml.xpathToHere(t, includeCurrent=True))
 
         xml = '''\
 <a>
@@ -717,7 +717,7 @@ At location: ''
         try:
             self.assertEqualsLxml('<root/>', resultLxml)
         except ValueError as e:
-            self.assertEquals('Expected an Lxml Node- or Tree-like object, but got: "<root/>".', str(e))
+            self.assertEqual('Expected an Lxml Node- or Tree-like object, but got: "<root/>".', str(e))
         else:
             self.fail('Should not happen')
 
@@ -725,7 +725,7 @@ At location: ''
             o = object()
             self.assertEqualsLxml(expectedLxml, o)
         except ValueError as e:
-            self.assertEquals('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(o), str(e))
+            self.assertEqual('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(o), str(e))
         else:
             self.fail('Should not happen')
 
@@ -735,7 +735,7 @@ At location: ''
             self.assertDictEquals(dict(aap='noot'), dict(aap='note'))
             self.fail()
         except AssertionError as e:
-            self.assertEquals("{'aap': 'noot'} != {'aap': 'note'}\n- {'aap': 'noot'}\n?            -\n\n+ {'aap': 'note'}\n?             +\n", str(e))
+            self.assertEqual("{'aap': 'noot'} != {'aap': 'note'}\n- {'aap': 'noot'}\n?            -\n\n+ {'aap': 'note'}\n?             +\n", str(e))
 
 def parseString(s):
     return parse(StringIO(s))

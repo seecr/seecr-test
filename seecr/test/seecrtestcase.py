@@ -106,6 +106,14 @@ class SeecrTestCase(TestCase):
 
     assertDictEquals = assertDictEqual
 
+    def _getVmSize(self):
+        with open('/proc/%d/status' % getpid()) as f:
+            status = f.read()
+        i = status.find('VmSize:') + len('VmSize:')
+        j = status.find('kB', i)
+        vmsize = int(status[i:j].strip())
+        return vmsize
+
     def assertNoMemoryLeaks(self, bandwidth=0.8):
         vmsize = self._getVmSize()
         self.assertTrue(self.vmsize*bandwidth < vmsize < self.vmsize/bandwidth,

@@ -34,7 +34,6 @@ from time import time
 from os import makedirs
 from os.path import join
 
-
 class UtilsTest(SeecrTestCase):
     def testIgnoreLineNumber(self):
         theTraceback = """Traceback (most recent call last):
@@ -51,7 +50,7 @@ Exception: xcptn\n"""
     raise Exception('xcptn')
 Exception: xcptn\n"""
 
-        self.assertEquals(expected, ignoreLineNumbers(theTraceback))
+        self.assertEqual(expected, ignoreLineNumbers(theTraceback))
 
     def testSleepWheelNoCallback(self):
         t0 = time()
@@ -60,7 +59,7 @@ Exception: xcptn\n"""
         t1 = time()
         delta = t1 - t0
         self.assertTrue(0.01 < delta < max(0.02, (0.02 * T_ADJUSTMENT * T)), delta)
-        self.assertEquals(False, retval)
+        self.assertEqual(False, retval)
 
     def testSleepWheelCallbackFalsy(self):
         calls = []
@@ -70,11 +69,11 @@ Exception: xcptn\n"""
         with stdout_replaced() as out:
             retval = sleepWheel(0.01, interval=0.001, callback=callback)
             t1 = time()
-            self.assertEquals('\\\x08|\x08/\x08-\x08\\\x08|\x08/\x08-\x08\\\x08|\x08', out.getvalue())
+            self.assertEqual('\\\x08|\x08/\x08-\x08\\\x08|\x08/\x08-\x08\\\x08|\x08', out.getvalue())
         delta = t1 - t0
         self.assertTrue(0.01 < delta < max(0.02, (0.02 * T_ADJUSTMENT * T)), delta)
-        self.assertEquals(10, len(calls))
-        self.assertEquals(False, retval)
+        self.assertEqual(10, len(calls))
+        self.assertEqual(False, retval)
 
     def testSleepWheelCallbackTruthy(self):
         calls = []
@@ -85,17 +84,17 @@ Exception: xcptn\n"""
         with stdout_replaced() as out:
             retval = sleepWheel(0.01, interval=0.001, callback=callback)
             t1 = time()
-            self.assertEquals('\\\x08', out.getvalue())
+            self.assertEqual('\\\x08', out.getvalue())
         delta = t1 - t0
         self.assertTrue(0.001 < delta < max(0.002, (0.002 * T_ADJUSTMENT * T)), delta)
-        self.assertEquals(1, len(calls))
-        self.assertEquals(True, retval)
+        self.assertEqual(1, len(calls))
+        self.assertEqual(True, retval)
 
     def testParseHtmlAsXml(self):
         with stdout_replaced():
             self.assertRaises(XMLSyntaxError, parseHtmlAsXml, '<not xml>')
         result = parseHtmlAsXml('<html><body>&lsquo;to the left &larr;&rsquo;</body></html>')
-        self.assertEquals(['‘to the left <-’'], result.xpath('/html/body/text()'))
+        self.assertEqual(['‘to the left <-’'], result.xpath('/html/body/text()'))
 
     def testFindTag(self):
         self.assertEquals(1, len(list(findTag("input", "<input></input>"))))
