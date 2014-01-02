@@ -37,15 +37,15 @@ PY_VERSION = '%s.%s' % version_info[:2]
 class MockServerTest(TestCase):
     def setUp(self):
         TestCase.setUp(self)
-        self.ms = MockServer(port=next(PortNumberGenerator))
+        self.ms = MockServer(port=PortNumberGenerator.next())
 
     def testResponse(self):
         self.ms.response = 'HTTP/1.0 200 OK\r\n\r\nRe-Sponsed.'
         self.ms.start()
 
         self.assertEquals([], self.ms.requests)
-        self.assertEquals('Re-Sponsed.', urlopen(self.ms.myUrl).read())
-        self.assertEquals('Re-Sponsed.', urlopen(self.ms.myUrl).read())
+        self.assertEquals(b'Re-Sponsed.', urlopen(self.ms.myUrl).read())
+        self.assertEquals(b'Re-Sponsed.', urlopen(self.ms.myUrl).read())
         self.assertEquals(2, len(self.ms.requests))
         self.assertTrue('User-Agent: Python-urllib' in self.ms.requests[0], self.ms.requests[0])
         self.assertTrue('GET / HTTP/1.1\r\n' in self.ms.requests[0], self.ms.requests[0])
@@ -54,14 +54,17 @@ class MockServerTest(TestCase):
         self.ms.responses = ['HTTP/1.0 200 OK\r\n\r\nRe-Sponsed.', 'HTTP/1.0 200 OK\r\n\r\nAnother-Sponsed.']
         self.ms.start()
 
-        self.assertEquals('Re-Sponsed.', urlopen(self.ms.myUrl).read())
-        self.assertEquals('Another-Sponsed.', urlopen(self.ms.myUrl).read())
+        self.assertEquals(b'Re-Sponsed.', urlopen(self.ms.myUrl).read())
+        self.assertEquals(b'Another-Sponsed.', urlopen(self.ms.myUrl).read())
         self.assertRaises(HTTPError, lambda: urlopen(self.ms.myUrl).read())
         self.assertEquals(3, len(self.ms.requests))
 
     def testHangupConnectionTimeout(self):
-        expectedException = IOError if PY_VERSION == "2.7" else URLError
-        self.ms = MockServer(port=next(PortNumberGenerator), hangupConnectionTimeout=0.1)
+        if PY_VERSION == '2.7' or PY_VERSION == '3.2':
+            expectedException = IOError
+        else:
+            expectedException = URLError
+        self.ms = MockServer(port=PortNumberGenerator.next(), hangupConnectionTimeout=0.1)
         self.ms.start()
 
         t0 = time()

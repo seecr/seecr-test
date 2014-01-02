@@ -1,29 +1,28 @@
 ## begin license ##
-# 
-# "Seecr Test" provides test tools. 
-# 
+#
+# "Seecr Test" provides test tools.
+#
 # Copyright (C) 2005-2009 Seek You Too (CQ2) http://www.cq2.nl
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
-# 
+# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
+#
 # This file is part of "Seecr Test"
-# 
+#
 # "Seecr Test" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Seecr Test" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Seecr Test"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
-from types import InstanceType, ClassType
 from re import compile
 
 def emptyGenerator():
@@ -51,7 +50,7 @@ class CallTrace:
         if attrname in self.ignoredAttributes:
             raise AttributeError("'CallTrace' is instructed to not have an attribute called '%s'" % attrname)
         if self.onlySpecifiedMethods and not attrname in (list(self.returnValues.keys()) + list(self.methods.keys()) + self.emptyGeneratorMethods):
-            raise AttributeError("'CallTrace' does not support '%s' as it is instructed to only allow specified methods." % attrname) 
+            raise AttributeError("'CallTrace' does not support '%s' as it is instructed to only allow specified methods." % attrname)
         return CallTraceMethod(attrname, self)
 
     def __calltrace__(self):
@@ -79,7 +78,7 @@ class CallTraceMethod:
 
     def __repr__(self):
         return "<bound method %s of %s>" % (self.name, self._callTrace)
-            
+
 
 class TracedCall:
     def __init__(self, methodName, callTrace):
@@ -144,11 +143,11 @@ class TracedCall:
         typeName = str(something)
         match = objectsRe.match(typeName)
         if match:
-            return "<%s>" % filter(None, match.groups())[0]
+            return "<%s>" % list(filter(None, match.groups()))[0]
 
         match = classesRe.match(typeName)
         if match:
-            return "<class %s>" % filter(None, match.groups())[0]
+            return "<class %s>" % list(filter(None, match.groups()))[0]
 
         return typeName
 
