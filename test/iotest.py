@@ -22,7 +22,7 @@
 # 
 ## end license ##
 
-from __future__ import with_statement
+
 
 from unittest import TestCase
 
@@ -62,7 +62,7 @@ class IOTest(TestCase):
         with stdout_replaced() as s:
             self.assertNotEqual(idStdout, id(sys.stdout))
             self.assertEquals(idStderr, id(sys.stderr))
-            print 'output_as_contextmanager'
+            print('output_as_contextmanager')
             self.assertEquals('output_as_contextmanager\n', s.getvalue())
         self.assertEquals(idStdout, id(sys.stdout))
 
@@ -71,7 +71,7 @@ class IOTest(TestCase):
         def decoratedFunction(arg1, *args, **kwargs):
             self.assertNotEqual(idStdout, id(sys.stdout))
             called.append((arg1, args, kwargs))
-            print 'output_as_decorator'
+            print('output_as_decorator')
             return 'retval'
 
         with stdout_replaced() as s:

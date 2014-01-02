@@ -28,7 +28,8 @@ from seecr.test.mockserver import MockServer
 from seecr.test.portnumbergenerator import PortNumberGenerator
 
 from time import time
-from urllib2 import urlopen, HTTPError, URLError
+from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
 from sys import version_info
 PY_VERSION = '%s.%s' % version_info[:2]
 
@@ -36,7 +37,7 @@ PY_VERSION = '%s.%s' % version_info[:2]
 class MockServerTest(TestCase):
     def setUp(self):
         TestCase.setUp(self)
-        self.ms = MockServer(port=PortNumberGenerator.next())
+        self.ms = MockServer(port=next(PortNumberGenerator))
 
     def testResponse(self):
         self.ms.response = 'HTTP/1.0 200 OK\r\n\r\nRe-Sponsed.'
@@ -60,7 +61,7 @@ class MockServerTest(TestCase):
 
     def testHangupConnectionTimeout(self):
         expectedException = IOError if PY_VERSION == "2.7" else URLError
-        self.ms = MockServer(port=PortNumberGenerator.next(), hangupConnectionTimeout=0.1)
+        self.ms = MockServer(port=next(PortNumberGenerator), hangupConnectionTimeout=0.1)
         self.ms.start()
 
         t0 = time()

@@ -26,7 +26,7 @@
 
 from seecr.test import SeecrTestCase
 
-from StringIO import StringIO
+from io import StringIO
 import re
 
 # TODO:
@@ -42,7 +42,7 @@ class SeecrTestCaseTest(SeecrTestCase):
     def checkAssertEqualsWSFails(self, s1, s2):
         try:
             self.assertEqualsWS(s1, s2)
-        except AssertionError, e:
+        except AssertionError as e:
             return
         self.fail("%s should not equal %s" % (s1, s2))
 
@@ -57,7 +57,7 @@ class SeecrTestCaseTest(SeecrTestCase):
     def checkAssertEqualsLxmlFails(self, x1, x2, message, showContext=False):
         try:
             self.assertEqualsLxml(expected=x1, result=x2, showContext=showContext)
-        except AssertionError, e:
+        except AssertionError as e:
             self.assertEquals(message, stripColor(str(e)))
             return
         self.fail("Fail!\n%s should not equal:\n%s" % (tostring(x1, encoding='UTF-8', pretty_print=True), tostring(x2, encoding='UTF-8', pretty_print=True)))
@@ -179,7 +179,7 @@ At location: 'xml/ml'")
 
         try:
             self.assertEqualsLxml(matchPrefixes=True, *args)
-        except AssertionError, e:
+        except AssertionError as e:
             self.assertTrue(str(e).startswith('Prefix difference'), str(e))
         else:
             self.fail()
@@ -413,7 +413,7 @@ newlines?>'''
                 parseString('\n\n<r>%s\n  <x/>\n</r>' % ('\n'*8)),
                 parseString('<r>\n  <y/>\n</r>')
                 , showContext=1)
-        except AssertionError, e:
+        except AssertionError as e:
             self.assertEquals("""\
 Tags do not match 'x' != 'y' at location: 'r'
 === expected (line 10, sourceline 12) ===
@@ -716,7 +716,7 @@ At location: ''
 
         try:
             self.assertEqualsLxml('<root/>', resultLxml)
-        except ValueError, e:
+        except ValueError as e:
             self.assertEquals('Expected an Lxml Node- or Tree-like object, but got: "<root/>".', str(e))
         else:
             self.fail('Should not happen')
@@ -724,7 +724,7 @@ At location: ''
         try:
             o = object()
             self.assertEqualsLxml(expectedLxml, o)
-        except ValueError, e:
+        except ValueError as e:
             self.assertEquals('Expected an Lxml Node- or Tree-like object, but got: "%s".' % str(o), str(e))
         else:
             self.fail('Should not happen')
@@ -734,7 +734,7 @@ At location: ''
         try:
             self.assertDictEquals(dict(aap='noot'), dict(aap='note'))
             self.fail()
-        except AssertionError, e:
+        except AssertionError as e:
             self.assertEquals("{'aap': 'noot'} != {'aap': 'note'}\n- {'aap': 'noot'}\n?            -\n\n+ {'aap': 'note'}\n?             +\n", str(e))
 
 def parseString(s):

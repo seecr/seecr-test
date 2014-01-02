@@ -77,7 +77,7 @@ class CallTraceTest(TestCase):
         try:
             result = callTrace.simpleCall()
             self.fail()
-        except TestException, e:
+        except TestException as e:
             self.assertEquals('test', str(e))
 
     def testTracedCallRepresentationOneArgument(self):
