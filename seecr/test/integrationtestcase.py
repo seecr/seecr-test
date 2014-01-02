@@ -3,7 +3,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012, 2014 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2014 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -29,12 +29,9 @@ from os import system, waitpid, kill, WNOHANG, getenv
 from sys import stdout
 from random import choice
 from time import sleep
-from io import StringIO
 from subprocess import Popen
 from signal import SIGTERM
 from urllib.request import urlopen
-from urllib.parse import urlencode
-from lxml.etree import XMLSyntaxError, parse
 from string import ascii_letters
 from time import time
 

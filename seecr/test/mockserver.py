@@ -27,8 +27,7 @@ from struct import pack
 from select import select
 from time import sleep
 from threading import Thread
-from urllib.parse import urlsplit
-from cgi import parse_qs
+from urllib.parse import urlsplit, parse_qs
 
 # _httpspec is originally from Weightless (http://weightless.io)
 from ._httpspec import REGEXP, parseHeaders
