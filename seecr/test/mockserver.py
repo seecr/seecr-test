@@ -67,14 +67,14 @@ class MockServer(Thread):
                     c.close()
                     continue
                 contentLength = None
-                request = c.recv(4096).decode('UTF-8')
+                request = c.recv(4096).decode()
                 while True:
                     if not '\r\n\r\n' in request:
-                        request += c.recv(4096).decode('UTF-8')
+                        request += c.recv(4096).decode()
                         continue
                     if contentLength:
                         if contentLength > len(body):
-                            request += c.recv(contentLength - len(body)).decode('UTF-8')
+                            request += c.recv(contentLength - len(body)).decode()
                         break
                     header, body = request.split('\r\n\r\n')
                     for h in header.split('\r\n'):
@@ -107,7 +107,7 @@ class MockServer(Thread):
                     fragments=fragments,
                     arguments=arguments,
                     Headers=Headers)
-                c.send(bytes(response, 'UTF-8'))
+                c.send(response.encode())
                 c.close()
 
         self.socket.close()

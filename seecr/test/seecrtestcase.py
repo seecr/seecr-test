@@ -217,7 +217,7 @@ class CompareXml(object):
         def reparseAndFindNode(root, node):
             refind = refindLxmlNodeCallback(root, node)
             text = tostring(root.getroottree() if isRootNode(root) else root, encoding='UTF-8')  # pretty_print input if you want to have pretty output.
-            newTree = parse(StringIO(text.decode('UTF-8')))
+            newTree = parse(StringIO(text.decode()))
             newNode = refind(newTree)
             return newTree, newNode, text
 
@@ -225,7 +225,7 @@ class CompareXml(object):
             diffLines = []
             sourceline = node.sourceline
             origSourceline = originalNode.sourceline
-            for i, line in ((i+1,l) for (i,l) in enumerate(text.decode('UTF-8').split('\n'))):  # <node>.sourceline is one-based.
+            for i, line in ((i+1,l) for (i,l) in enumerate(text.decode().split('\n'))):  # <node>.sourceline is one-based.
                 if sourceline - self._context <= i <= sourceline + self._context:
                     diffLines.append((i, line))
                     digitLen = len('%d' % i)
