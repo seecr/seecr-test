@@ -3,7 +3,7 @@
 # "Seecr Test" provides test tools.
 #
 # Copyright (C) 2005-2009 Seek You Too (CQ2) http://www.cq2.nl
-# Copyright (C) 2012, 2014 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013,, 2014 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -111,7 +111,7 @@ class CallTraceTest(TestCase):
 
     def testNonZero(self):
         callTrace = CallTrace()
-        self.assertTrue(callTrace)
+        self.assertTrue(callTrace is not None)
 
     def testNotEqualToNone(self):
         callTrace = CallTrace(verbose=True)

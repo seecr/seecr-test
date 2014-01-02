@@ -2,7 +2,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -22,7 +22,6 @@
 #
 ## end license ##
 
-from sys import stdout
 from socket import socket, SOL_SOCKET, SO_REUSEADDR, SO_LINGER
 from struct import pack
 from select import select
@@ -69,14 +68,14 @@ class MockServer(Thread):
                     c.close()
                     continue
                 contentLength = None
-                request = c.recv(4096)
+                request = c.recv(4096).decode('UTF-8')
                 while True:
                     if not '\r\n\r\n' in request:
-                        request += c.recv(4096)
+                        request += c.recv(4096).decode('UTF-8')
                         continue
                     if contentLength:
                         if contentLength > len(body):
-                            request += c.recv(contentLength - len(body))
+                            request += c.recv(contentLength - len(body)).decode('UTF-8')
                         break
                     header, body = request.split('\r\n\r\n')
                     for h in header.split('\r\n'):
@@ -109,7 +108,7 @@ class MockServer(Thread):
                     fragments=fragments,
                     arguments=arguments,
                     Headers=Headers)
-                c.send(response)
+                c.send(bytes(response, 'UTF-8'))
                 c.close()
 
         self.socket.close()
