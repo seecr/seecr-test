@@ -71,6 +71,10 @@ class SeecrTestCase(TestCase):
         return aString[:index - 1] + "---->" + aString[index - 1:]
 
     def assertEqualsWS(self, s1, s2):
+        if type(s1) == bytes:
+            s1 = s1.decode()
+        if type(s2) == bytes:
+            s2 = s2.decode()
         index1 = 0
         index2 = 0
         while True:
