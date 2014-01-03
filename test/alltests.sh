@@ -26,16 +26,11 @@
 export LANG=en_US.UTF-8
 export PYTHONPATH=.:"$PYTHONPATH"
 option=$1
-if [ -f /etc/debian_version ]; then
-    pyversions="$(pyversions --installed)"
-else
-    pyversions="python2.6"
-fi
+pyversions="python3.2"
 if [ "${option:0:10}" == "--python2." ]; then
     shift
     pyversions="${option:2}"
 fi
-pyversions="python3"
 for pycmd in $pyversions; do
     echo "================ $pycmd _alltests.py $@ ================"
     $pycmd _alltests.py "$@"
