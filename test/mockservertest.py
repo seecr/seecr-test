@@ -73,6 +73,7 @@ class MockServerTest(TestCase):
         delta = t1 - t0
         self.assertTrue(0.09 < delta < 0.12, "Expected around 0.1, was %s" % delta)
         self.assertEqual(0, len(ms.requests))
+        ms.halt = True
 
     def tearDown(self):
         self.ms.halt = True

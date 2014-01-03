@@ -56,7 +56,6 @@ class MockServer(Thread):
     def run(self):
         while True:
             r,w,e = select([self.socket], [], [], 0.01)
-
             if self.halt:
                 break
 
