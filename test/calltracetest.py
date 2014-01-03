@@ -34,40 +34,40 @@ class CallTraceTest(TestCase):
     def testSimpleCall(self):
         callTrace = CallTrace()
         callTrace.simpleCall()
-        self.assertEquals(1, len(callTrace.calledMethods))
+        self.assertEqual(1, len(callTrace.calledMethods))
         tracedCall = callTrace.calledMethods[0]
-        self.assertEquals('simpleCall', tracedCall.name)
-        self.assertEquals(0, len(tracedCall.args))
+        self.assertEqual('simpleCall', tracedCall.name)
+        self.assertEqual(0, len(tracedCall.args))
 
     def testCallWithArguments(self):
         callTrace = CallTrace()
         callTrace.simpleCall('argument one', 2)
-        self.assertEquals(1, len(callTrace.calledMethods))
+        self.assertEqual(1, len(callTrace.calledMethods))
 
         tracedCall = callTrace.calledMethods[0]
-        self.assertEquals('simpleCall', tracedCall.name)
-        self.assertEquals(2, len(tracedCall.args))
-        self.assertEquals('argument one', tracedCall.args[0])
-        self.assertEquals(2, tracedCall.args[1])
+        self.assertEqual('simpleCall', tracedCall.name)
+        self.assertEqual(2, len(tracedCall.args))
+        self.assertEqual('argument one', tracedCall.args[0])
+        self.assertEqual(2, tracedCall.args[1])
 
         callTrace.simpleCall('argument two', 4)
-        self.assertEquals(2, len(callTrace.calledMethods))
+        self.assertEqual(2, len(callTrace.calledMethods))
         tracedCall = callTrace.calledMethods[1]
-        self.assertEquals('simpleCall', tracedCall.name)
-        self.assertEquals(2, len(tracedCall.args))
-        self.assertEquals('argument two', tracedCall.args[0])
-        self.assertEquals(4, tracedCall.args[1])
+        self.assertEqual('simpleCall', tracedCall.name)
+        self.assertEqual(2, len(tracedCall.args))
+        self.assertEqual('argument two', tracedCall.args[0])
+        self.assertEqual(4, tracedCall.args[1])
 
     def testCallWithReturnValue(self):
         callTrace = CallTrace()
         callTrace.returnValues['simpleCall'] = 'OK'
         result = callTrace.simpleCall('argument one', 2)
-        self.assertEquals('OK', result)
+        self.assertEqual('OK', result)
 
         callTrace = CallTrace()
         callTrace.methods['simpleCall'] = lambda x: x+3
         result = callTrace.simpleCall(1)
-        self.assertEquals(4, result)
+        self.assertEqual(4, result)
 
     def testCallWithException(self):
         class TestException(Exception):
@@ -78,36 +78,36 @@ class CallTraceTest(TestCase):
             result = callTrace.simpleCall()
             self.fail()
         except TestException as e:
-            self.assertEquals('test', str(e))
+            self.assertEqual('test', str(e))
 
     def testTracedCallRepresentationOneArgument(self):
         callTrace = CallTrace()
         callTrace.simpleCall('argument one')
-        self.assertEquals("simpleCall('argument one')", str(callTrace.calledMethods[0]))
+        self.assertEqual("simpleCall('argument one')", str(callTrace.calledMethods[0]))
 
     def testTracedCallRepresentationTwoArguments(self):
         callTrace = CallTrace()
         callTrace.simpleCall('argument one', 2)
-        self.assertEquals("simpleCall('argument one', 2)", str(callTrace.calledMethods[0]))
+        self.assertEqual("simpleCall('argument one', 2)", str(callTrace.calledMethods[0]))
 
     def testTracedCallRepresentationObjectArgument(self):
         class SomeClass:
             pass
         callTrace = CallTrace()
         callTrace.simpleCall(SomeClass())
-        self.assertEquals("simpleCall(<calltracetest.SomeClass>)", str(callTrace.calledMethods[0]))
+        self.assertEqual("simpleCall(<calltracetest.SomeClass>)", str(callTrace.calledMethods[0]))
 
     def testTracedCallRepresentationClassArgument(self):
         class SomeClass:
             pass
         callTrace = CallTrace()
         callTrace.simpleCall(SomeClass)
-        self.assertEquals("simpleCall(<class calltracetest.SomeClass>)", str(callTrace.calledMethods[0]))
+        self.assertEqual("simpleCall(<class calltracetest.SomeClass>)", str(callTrace.calledMethods[0]))
 
     def testGetList(self):
         callTrace = CallTrace()
         callTrace.simpleCall('argument one', 2)
-        self.assertEquals(["""simpleCall('argument one', 2)"""], callTrace.__calltrace__())
+        self.assertEqual(["""simpleCall('argument one', 2)"""], callTrace.__calltrace__())
 
     def testNonZero(self):
         callTrace = CallTrace()
@@ -120,14 +120,14 @@ class CallTraceTest(TestCase):
     def testCallTraceAsMethod(self):
         trace = CallTrace()
         trace.returnValues['__call__'] = 'output'
-        self.assertEquals('output', trace())
+        self.assertEqual('output', trace())
 
     def testRewriteReprWithMemAddresses(self):
         trace = CallTrace()
         class A(object):
             pass
         trace.blah(A())
-        self.assertEquals('blah(<calltracetest.A>)', str(trace.calledMethods[0]))
+        self.assertEqual('blah(<calltracetest.A>)', str(trace.calledMethods[0]))
 
     def testIgnoreAttributes(self):
         trace = CallTrace(ignoredAttributes=["aMessage"])
@@ -140,55 +140,55 @@ class CallTraceTest(TestCase):
             pass
         class IsObject(object):
             pass
-        self.assertEquals('<calltracetest.NonObject>', c.represent(NonObject()))
-        self.assertEquals('<calltracetest.IsObject>', c.represent(IsObject()))
+        self.assertEqual('<calltracetest.NonObject>', c.represent(NonObject()))
+        self.assertEqual('<calltracetest.IsObject>', c.represent(IsObject()))
 
-        self.assertEquals('<class calltracetest.NonObject>', c.represent(NonObject))
-        self.assertEquals('<class calltracetest.IsObject>', c.represent(IsObject))
+        self.assertEqual('<class calltracetest.NonObject>', c.represent(NonObject))
+        self.assertEqual('<class calltracetest.IsObject>', c.represent(IsObject))
 
-        self.assertEquals("'aap'", c.represent('aap'))
-        self.assertEquals('1', c.represent(1))
-        self.assertEquals('1.1', c.represent(1.1))
-        self.assertEquals('None', c.represent(None))
+        self.assertEqual("'aap'", c.represent('aap'))
+        self.assertEqual('1', c.represent(1))
+        self.assertEqual('1.1', c.represent(1.1))
+        self.assertEqual('None', c.represent(None))
 
     def testOnlySpecifiedMethods(self):
         trace = CallTrace(onlySpecifiedMethods=True)
         self.assertRaises(AttributeError, lambda: trace.someMethod())
         trace = CallTrace(returnValues={"someMethod": 'result'}, onlySpecifiedMethods=True)
-        self.assertEquals('result', trace.someMethod())
+        self.assertEqual('result', trace.someMethod())
         trace = CallTrace(methods={"someMethod": lambda : "result"}, onlySpecifiedMethods=True)
-        self.assertEquals("result", trace.someMethod())
+        self.assertEqual("result", trace.someMethod())
         trace = CallTrace(emptyGeneratorMethods=["someMethod"], onlySpecifiedMethods=True)
-        self.assertEquals(GeneratorType, type(trace.someMethod()))
+        self.assertEqual(GeneratorType, type(trace.someMethod()))
 
     def testReset(self):
         callTrace = CallTrace()
         callTrace.simpleCall()
-        self.assertEquals(1, len(callTrace.calledMethods))
+        self.assertEqual(1, len(callTrace.calledMethods))
         callTrace.simpleCall()
-        self.assertEquals(2, len(callTrace.calledMethods))
+        self.assertEqual(2, len(callTrace.calledMethods))
         callTrace.calledMethods.reset()
-        self.assertEquals(0, len(callTrace.calledMethods))
+        self.assertEqual(0, len(callTrace.calledMethods))
         callTrace.simpleCall()
-        self.assertEquals(1, len(callTrace.calledMethods))
+        self.assertEqual(1, len(callTrace.calledMethods))
 
     def testTracedMethodStr(self):
         myObject = CallTrace('myObject')
         myMethod = myObject.myMethod
-        self.assertEquals("<bound method myMethod of <CallTrace: myObject>>", str(myMethod))
+        self.assertEqual("<bound method myMethod of <CallTrace: myObject>>", str(myMethod))
 
     def testEmptyGeneratorMethods(self):
         calltrace = CallTrace(emptyGeneratorMethods=['emptyGen'])
         result = calltrace.emptyGen()
-        self.assertEquals(GeneratorType, type(result))
-        self.assertEquals([], list(result))
-        self.assertEquals(1, len(calltrace.calledMethods))
+        self.assertEqual(GeneratorType, type(result))
+        self.assertEqual([], list(result))
+        self.assertEqual(1, len(calltrace.calledMethods))
 
     def testCalledMethodNames(self):
         calltrace = CallTrace('name')
         calltrace.methodOne('aap')
         calltrace.methodTwo('aap')
-        self.assertEquals(['methodOne', 'methodTwo'], calltrace.calledMethodNames())
+        self.assertEqual(['methodOne', 'methodTwo'], calltrace.calledMethodNames())
 
     def testObservableCall(self):
         o = Observable()
@@ -197,12 +197,12 @@ class CallTraceTest(TestCase):
 
         result = o.call.getSomething()
         self.assertEqual(None, result)
-        self.assertEquals(['getSomething'], calltrace.calledMethodNames())
+        self.assertEqual(['getSomething'], calltrace.calledMethodNames())
         calltrace.calledMethods.reset()
 
         calltrace.returnValues['getSomething'] = 'RESULT'
         result = o.call.getSomething()
         self.assertEqual('RESULT', result)
-        self.assertEquals(['getSomething'], calltrace.calledMethodNames())
+        self.assertEqual(['getSomething'], calltrace.calledMethodNames())
 
 
