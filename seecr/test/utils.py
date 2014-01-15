@@ -32,6 +32,7 @@ import sys
 from sys import getdefaultencoding
 from time import sleep
 
+
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
 _entities = {
     '&nbsp;': ' ',
@@ -40,6 +41,7 @@ _entities = {
     '&lsquo;': "‘",
     '&rsquo;': "’",
     '&larr;': "&lt;-",
+    '&rarr;': "-&gt;",
 }
 
 def parseHtmlAsXml(body):
