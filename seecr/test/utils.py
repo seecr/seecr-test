@@ -26,6 +26,7 @@
 from re import DOTALL, compile, sub
 from StringIO import StringIO
 from lxml.etree import parse as parse_xml, XMLSyntaxError
+from html5lib import HTMLParser as HTML5Parser, getTreeBuilder as getHtml5TreeBuilder
 from socket import socket
 from urllib import urlencode
 import sys
@@ -56,6 +57,11 @@ def parseHtmlAsXml(body):
     except XMLSyntaxError:
         print body
         raise
+
+def parseHtml5ToXml(doc, strict=False):
+    tb = getHtml5TreeBuilder("lxml")
+    p = HTML5Parser(tb, strict=strict, namespaceHTMLElements=True)
+    return p.parse(doc, encoding='utf-8')
 
 def getPage(port, path, arguments=None, expectedStatus="200", sessionId=None):
     additionalHeaders = {}

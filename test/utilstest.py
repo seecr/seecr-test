@@ -29,8 +29,9 @@ from unittest import TestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml
-from lxml.etree import XMLSyntaxError
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, parseHtml5ToXml
+from lxml.etree import XMLSyntaxError, tostring
+from html5lib.html5parser import ParseError
 
 from time import time, sleep
 
@@ -96,5 +97,16 @@ Exception: xcptn\n"""
             self.assertRaises(XMLSyntaxError, parseHtmlAsXml, '<not xml>')
         result = parseHtmlAsXml('<html><body>&lsquo;to the left &larr;&rsquo;</body></html>')
         self.assertEquals(['‘to the left <-’'], result.xpath('/html/body/text()'))
+
+    def testParseHtml5ToXml(self):
+        malformedHtml5 = '<html><body><p><b></p></b></div></html>'
+        lxmlTree = parseHtml5ToXml(malformedHtml5)
+        lxmlStr = tostring(lxmlTree, encoding='utf-8')
+
+        expected = '<html:html xmlns:html="http://www.w3.org/1999/xhtml"><html:head/><html:body><html:p><html:b/></html:p></html:body></html:html>'
+        self.assertEquals(expected, lxmlStr)
+
+        self.assertRaises(ParseError, lambda: parseHtml5ToXml(malformedHtml5, strict=True))
+
 
 T_ADJUSTMENT = 1.5
