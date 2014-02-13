@@ -42,6 +42,7 @@ from mockservertest import MockServerTest
 from portnumbergeneratortest import PortNumberGeneratorTest
 from seecrtestcasetest import SeecrTestCaseTest
 from utilstest import UtilsTest
+from udplistenandlogtest import UdpListenAndLogTest
 
 
 if __name__ == '__main__':
