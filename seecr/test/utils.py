@@ -232,3 +232,17 @@ def sleepWheel(seconds, callback=None, interval=0.2):
 def ignoreLineNumbers(s):
     return sub("line \d+,", "line [#],", s)
 
+def openConsole():
+    from code import InteractiveConsole
+    from inspect import currentframe
+
+    frame = currentframe().f_back
+
+    d={'_frame':frame}         # Allow access to frame object.
+    d.update(frame.f_globals)  # Unless shadowed by global
+    d.update(frame.f_locals)
+
+    message = "Break in %s:%s" % (frame.f_code.co_filename, frame.f_lineno)
+
+    i = InteractiveConsole(d)
+    i.interact(message)
