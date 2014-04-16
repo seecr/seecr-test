@@ -38,8 +38,9 @@ from timing import T
 
 import pprint
 import difflib
+from difflib import unified_diff
 
-from lxml.etree import tostring, parse, Comment, PI, Entity
+from lxml.etree import tostring, parse, Comment, PI, Entity, XMLParser
 
 
 class SeecrTestCase(TestCase):
@@ -105,17 +106,14 @@ class SeecrTestCase(TestCase):
 
     assertDictEquals = assertDictEqual
 
-    def _getVmSize(self):
-        status = open('/proc/%d/status' % getpid()).read()
-        i = status.find('VmSize:') + len('VmSize:')
-        j = status.find('kB', i)
-        vmsize = int(status[i:j].strip())
-        return vmsize
-
     def assertNoMemoryLeaks(self, bandwidth=0.8):
         vmsize = self._getVmSize()
         self.assertTrue(self.vmsize*bandwidth < vmsize < self.vmsize/bandwidth,
                 "memory leaking: before: %d, after: %d" % (self.vmsize, vmsize))
+
+    def assertXmlEquals(self, expected, value, expectedName='expected', valueName='result'):
+        d = diffXml(expected, value, firstName=expectedName, secondName=valueName)
+        self.assertEquals('', d, d)
 
     @staticmethod
     def binPath(executable, binDirs=None):
@@ -129,6 +127,33 @@ class SeecrTestCase(TestCase):
             if isfile(executablePath):
                 return realpath(abspath(executablePath))
         raise ValueError("No executable found for '%s'" % executable)
+
+    def _getVmSize(self):
+        status = open('/proc/%d/status' % getpid()).read()
+        i = status.find('VmSize:') + len('VmSize:')
+        j = status.find('kB', i)
+        vmsize = int(status[i:j].strip())
+        return vmsize
+
+
+def diffXml(first, second, firstName='expected', secondName='result'):
+    def canonical(xml):
+        if not isinstance(xml, str) and not isinstance(xml, unicode):
+            xml = tostring(xml, encoding='utf-8')
+        xml = parse(StringIO(xml), XMLParser(remove_blank_text=True))
+        xml = parse(StringIO(tostring(xml, pretty_print=True, encoding='utf-8')))
+        sio = StringIO()
+        xml.write_c14n(sio)
+        return sio.getvalue()
+
+    first = canonical(first)
+    second = canonical(second)
+    return '\n'.join(unified_diff(
+        first.split('\n'),
+        second.split('\n'),
+        fromfile=firstName,
+        tofile=secondName,
+        lineterm=''))
 
 
 class CompareXml(object):
