@@ -23,13 +23,11 @@
 # 
 ## end license ##
 
-from __future__ import with_statement
-
 from unittest import TestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag
 from lxml.etree import XMLSyntaxError
 
 from time import time, sleep
@@ -96,5 +94,14 @@ Exception: xcptn\n"""
             self.assertRaises(XMLSyntaxError, parseHtmlAsXml, '<not xml>')
         result = parseHtmlAsXml('<html><body>&lsquo;to the left &larr;&rsquo;</body></html>')
         self.assertEquals(['‘to the left <-’'], result.xpath('/html/body/text()'))
+
+
+    def testFindTag(self):
+        self.assertEquals(1, len(list(findTag("input", "<input></input>"))))
+        self.assertEquals(1, len(list(findTag("input", "<input />"))))
+        self.assertEquals(1, len(list(findTag("input", "<input/>"))))
+        self.assertEquals(2, len(list(findTag("input", "<input/><input></input>"))))
+        self.assertEquals(2, len(list(findTag("input", "<input></input><input/>"))))
+        self.assertEquals(1, len(list(findTag("a", "<a><img/></a>"))))
 
 T_ADJUSTMENT = 1.5

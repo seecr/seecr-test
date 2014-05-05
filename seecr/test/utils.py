@@ -25,13 +25,17 @@
 
 from re import DOTALL, compile, sub
 from StringIO import StringIO
-from lxml.etree import parse as parse_xml, XMLSyntaxError
+from lxml.etree import parse as parse_xml, XMLSyntaxError, XMLParser
 from socket import socket
 from urllib import urlencode
 import sys
 from sys import getdefaultencoding
 from time import sleep
 
+from os.path import dirname, abspath
+mydir=dirname(abspath(__file__))
+
+DOCTYPE="""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "file://%s/dtd/xhtml1-transitional.dtd">""" % mydir
 
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
 _entities = {
@@ -246,3 +250,43 @@ def openConsole():
 
     i = InteractiveConsole(d)
     i.interact(message)
+
+def findTag(tag, body):
+    def findOpenTag(tag, offset):
+        positions = []
+        positions.append(body.find("<%s " % tag, offset))
+        positions.append(body.find("<%s/" % tag, offset))
+        positions.append(body.find("<%s>" % tag, offset))
+        positions = [position for position in positions if position > -1]
+        return min(positions) if positions != [] else -1
+
+    def findEndTag(tag, offset):
+        closeTag = "</%s>" % tag
+        length = len(closeTag)
+        end = body.find(closeTag, start)
+        shortEnd = body.find("%s/>" % tag, start)
+        if shortEnd > -1 and shortEnd < end:
+            end = shortEnd + len(tag)
+            length=2
+        if end == -1:
+            end = body.find("/>", start)
+            length = 2
+            if end == -1:
+                raise RuntimeError("Close tag not found")
+        return end+length
+
+    parser = XMLParser(load_dtd=True)
+    start = findOpenTag(tag, offset=0)
+    while start > -1:
+        end = findEndTag(tag, start)
+        text = DOCTYPE + body[start:end]
+        try:
+            xmlNode = parse_xml(StringIO(text), parser=parser).getroot()
+        except XMLSyntaxError:
+            print "Error parsing:"
+            print text
+            raise
+
+        yield xmlNode
+        start = findOpenTag(tag, end)
+
