@@ -100,8 +100,10 @@ Exception: xcptn\n"""
         self.assertEquals(1, len(list(findTag("input", "<input></input>"))))
         self.assertEquals(1, len(list(findTag("input", "<input />"))))
         self.assertEquals(1, len(list(findTag("input", "<input/>"))))
-        self.assertEquals(2, len(list(findTag("input", "<input/><input></input>"))))
-        self.assertEquals(2, len(list(findTag("input", "<input></input><input/>"))))
+        self.assertEquals(2, len(list(findTag("input", "<form><input/><input></input></form>"))))
+        self.assertEquals(2, len(list(findTag("input", "<form><input attr='value'/><input></input></form>"))))
+        self.assertEquals(2, len(list(findTag("input", "<form><input></input><input/></form>"))))
         self.assertEquals(1, len(list(findTag("a", "<a><img/></a>"))))
+        self.assertEquals(1, len(list(findTag("a", "<a>&euro;</a>"))))
 
 T_ADJUSTMENT = 1.5
