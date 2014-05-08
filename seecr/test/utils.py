@@ -246,12 +246,16 @@ def openConsole():
     i = InteractiveConsole(d)
     i.interact(message)
 
-def findTag(tag, body):
+def findTag(tag, body, **attrs):
     try:
         xmlNode = parse_xml(StringIO(body), parser=HTMLParser()).getroot()
     except XMLSyntaxError:
         print body
         raise
 
-    for tag in xmlNode.xpath("//%s" % tag):
+    xpathExpr = "//%s" % tag
+    if attrs:
+        xpathExpr += "[%s]" % ' and '.join('@%s="%s"' % item for item in attrs.items())
+
+    for tag in xmlNode.xpath(xpathExpr):
         yield tag

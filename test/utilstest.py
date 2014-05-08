@@ -105,5 +105,7 @@ Exception: xcptn\n"""
         self.assertEquals(2, len(list(findTag("input", "<form><input></input><input/></form>"))))
         self.assertEquals(1, len(list(findTag("a", "<a><img/></a>"))))
         self.assertEquals(1, len(list(findTag("a", "<a>&euro;</a>"))))
+        self.assertEquals(1, len(list(findTag("a", "<html><a/><a class='test'>text</a></html>", **{"class": "test"}))))
+        self.assertEquals(1, len(list(findTag("a", "<html><a a='1' b='2'/><a a='1'/></html>", **dict(a=1, b=2)))))
 
 T_ADJUSTMENT = 1.5
