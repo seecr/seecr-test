@@ -31,6 +31,8 @@ from urllib import urlencode
 import sys
 from sys import getdefaultencoding
 from time import sleep
+from os.path import abspath, dirname, isdir, join
+from glob import glob
 
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
 _entities = {
@@ -259,3 +261,13 @@ def findTag(tag, body, **attrs):
 
     for tag in xmlNode.xpath(xpathExpr):
         yield tag
+
+
+def includeParentAndDeps(filename, systemPath=None):
+    if systemPath is None:
+        from sys import path as systemPath
+    parentDirectory = dirname(dirname(abspath(filename)))
+    depsDirectory = join(parentDirectory, "deps.d")
+    if isdir(depsDirectory):
+        map(lambda path: systemPath.insert(0, path), glob(join(depsDirectory, "*")))
+    systemPath.insert(0, parentDirectory)  

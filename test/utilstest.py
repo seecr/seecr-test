@@ -23,17 +23,19 @@
 # 
 ## end license ##
 
-from unittest import TestCase
+from seecr.test import SeecrTestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps
 from lxml.etree import XMLSyntaxError
 
 from time import time, sleep
+from os import makedirs
+from os.path import join
 
 
-class UtilsTest(TestCase):
+class UtilsTest(SeecrTestCase):
     def testIgnoreLineNumber(self):
         theTraceback = """Traceback (most recent call last):
   File "../some/file.py", line 104, in aFunction
@@ -95,7 +97,6 @@ Exception: xcptn\n"""
         result = parseHtmlAsXml('<html><body>&lsquo;to the left &larr;&rsquo;</body></html>')
         self.assertEquals(['‘to the left <-’'], result.xpath('/html/body/text()'))
 
-
     def testFindTag(self):
         self.assertEquals(1, len(list(findTag("input", "<input></input>"))))
         self.assertEquals(1, len(list(findTag("input", "<input />"))))
@@ -107,5 +108,16 @@ Exception: xcptn\n"""
         self.assertEquals(1, len(list(findTag("a", "<a>&euro;</a>"))))
         self.assertEquals(1, len(list(findTag("a", "<html><a/><a class='test'>text</a></html>", **{"class": "test"}))))
         self.assertEquals(1, len(list(findTag("a", "<html><a a='1' b='2'/><a a='1'/></html>", **dict(a=1, b=2)))))
+
+    def testIncludeParentAndDeps(self):
+        makedirs(join(self.tempdir, "bin"))
+        makedirs(join(self.tempdir, "deps.d", "dep_one"))
+        makedirs(join(self.tempdir, "deps.d", "dep_two"))
+
+        systemPath = []
+        includeParentAndDeps(join(self.tempdir, "bin", "thefile.py"), systemPath=systemPath)
+        self.assertEquals([self.tempdir, join(self.tempdir, "deps.d", "dep_two"), join(self.tempdir, "deps.d", "dep_one")], systemPath)
+
+
 
 T_ADJUSTMENT = 1.5
