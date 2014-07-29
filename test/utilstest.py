@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 ## begin license ##
-# 
-# "Seecr Test" provides test tools. 
-# 
-# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
-# 
+#
+# "Seecr Test" provides test tools.
+#
+# Copyright (C) 2012-2014 Seecr (Seek You Too B.V.) http://seecr.nl
+#
 # This file is part of "Seecr Test"
-# 
+#
 # "Seecr Test" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Seecr Test" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Seecr Test"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
 from seecr.test import SeecrTestCase
@@ -30,7 +30,7 @@ from seecr.test.timing import T
 from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps
 from lxml.etree import XMLSyntaxError
 
-from time import time, sleep
+from time import time
 from os import makedirs
 from os.path import join
 
@@ -120,7 +120,7 @@ Exception: xcptn\n"""
         makedirs(join(self.tempdir, "deps.d", "dep_two"))
         systemPath = []
         includeParentAndDeps(join(self.tempdir, "bin", "thefile.py"), systemPath=systemPath)
-        self.assertEquals([self.tempdir, join(self.tempdir, "deps.d", "dep_two"), join(self.tempdir, "deps.d", "dep_one")], systemPath)
+        self.assertEquals(set([self.tempdir, join(self.tempdir, "deps.d", "dep_two"), join(self.tempdir, "deps.d", "dep_one")]), set(systemPath))
 
 
 
