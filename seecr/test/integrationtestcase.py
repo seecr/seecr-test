@@ -3,7 +3,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012, 2014 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -26,16 +26,14 @@
 from __future__ import with_statement
 
 from errno import ECHILD
-from os.path import isdir, join, abspath, dirname, basename, isfile, realpath
-from os import system, listdir, makedirs, waitpid, kill, WNOHANG, getenv
-from sys import stdout, path as systemPath
-from random import randint, choice
+from os.path import join, basename
+from os import system, waitpid, kill, WNOHANG, getenv
+from sys import stdout
+from random import choice
 from time import sleep
-from StringIO import StringIO
 from subprocess import Popen
 from signal import SIGTERM
-from urllib import urlopen, urlencode
-from lxml.etree import XMLSyntaxError, parse
+from urllib import urlopen
 from string import ascii_letters
 from time import time
 
@@ -68,6 +66,7 @@ class IntegrationState(object):
         if not self.fastMode:
             system('rm -rf ' + self.integrationTempdir)
             system('mkdir --parents '+ self.integrationTempdir)
+        self._servicesReadyMethods = []
 
     def addToTestRunner(self, testRunner):
         testRunner.addGroup(
@@ -81,7 +80,7 @@ class IntegrationState(object):
     def binPath(self, executable, binDirs=None):
         return SeecrTestCase.binPath(executable, binDirs=[self.binDir()] + (binDirs or []))
 
-    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, env=None, **kwargs):
+    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, env=None, waitForStart=True, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
         stdouterrlog = open(stdoutfile, 'w')
         args = executable if isinstance(executable, list) else [executable]
@@ -92,6 +91,7 @@ class IntegrationState(object):
             args.append("--%s" % flag)
         for k,v in kwargs.items():
             args.append("--%s=%s" % (k, str(v)))
+        self._stdoutWrite("Starting service '%s', for state '%s'\n" % (serviceName, self.stateName))
         serverProcess = Popen(
             executable=executable,
             args=args,
@@ -102,19 +102,21 @@ class IntegrationState(object):
         )
         self.pids[serviceName] = serverProcess.pid
 
-        self._stdoutWrite("Starting service '%s', for state '%s' : v" % (serviceName, self.stateName))
-        done = False
-        while not done:
+        def serviceReady():
             try:
-                self._stdoutWrite('r')
                 sleep(0.1)
-                serviceReadyResponse = urlopen(serviceReadyUrl).read()
-                done = True
+                self._stdoutWrite('r')
+                urlopen(serviceReadyUrl).read()
+                self._stdoutWrite("\nStarted '%s'\n" % serviceName)
+                return True
             except IOError:
                 if serverProcess.poll() != None:
                     del self.pids[serviceName]
                     exit('Service "%s" died, check "%s"' % (serviceName, stdoutfile))
-        self._stdoutWrite('oom!\n')
+            return False
+        self._servicesReadyMethods.append(serviceReady)
+        if waitForStart:
+            self.waitForServicesStarted()
 
     def _stopServer(self, serviceName, waitInSeconds=20.0):
         kill(self.pids[serviceName], SIGTERM)
@@ -176,11 +178,16 @@ class IntegrationState(object):
         if redirect:
             return open(stdoutfile).read()
 
-
     def tearDown(self):
         for serviceName in self.pids.keys():
             self._stdoutWrite("Stopping service '%s' for state '%s'\n" % (serviceName, self.stateName))
             self._stopServer(serviceName)
+
+    def waitForServicesStarted(self):
+        for r in self._servicesReadyMethods:
+            while not r():
+                pass
+        del self._servicesReadyMethods[:]
 
     @staticmethod
     def _stdoutWrite(aString):
