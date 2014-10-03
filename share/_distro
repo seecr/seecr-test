@@ -30,12 +30,12 @@ function distro_is_redhat {
 
 function distro_is_debian_etch {
 # Test if current distribution is Debian Etch.
-    distro_is_debian && test "${DISTRO_VERSION}" == "4"
+    distro_is_debian && test "${DISTRO_VERSION}" == "4" 
 }
 
 function distro_is_debian_lenny {
 # Test if current distribution is Debian Lenny.
-    distro_is_debian && test "${DISTRO_VERSION}" == "5"
+    distro_is_debian && test "${DISTRO_VERSION}" == "5" 
 }
 
 function distro_is_debian_squeeze {
