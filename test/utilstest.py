@@ -27,7 +27,7 @@ from seecr.test import SeecrTestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, headerToDict
 from lxml.etree import XMLSyntaxError
 
 from time import time
@@ -122,6 +122,9 @@ Exception: xcptn\n"""
         includeParentAndDeps(join(self.tempdir, "bin", "thefile.py"), systemPath=systemPath)
         self.assertEquals(set([self.tempdir, join(self.tempdir, "deps.d", "dep_two"), join(self.tempdir, "deps.d", "dep_one")]), set(systemPath))
 
-
+    def testHeaderToDict(self):
+        self.assertEquals(dict(a="1", b="2"), headerToDict("a: 1\r\nb: 2\r\n"))
+        self.assertEquals(dict(a="1:2", b="2:3"), headerToDict("a: 1:2\r\nb: 2:3\r\n"))
+    
 
 T_ADJUSTMENT = 1.5

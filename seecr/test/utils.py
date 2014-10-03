@@ -212,7 +212,7 @@ def splitHttpHeaderBody(response):
 
 def headerToDict(header):
    return dict(
-       tuple(s.strip() for s in line.split(':'))
+       tuple(s.strip() for s in line.split(':', 1))
        for line in header.split('\r\n')
        if ':' in line
    )
