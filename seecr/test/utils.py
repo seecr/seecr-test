@@ -115,21 +115,24 @@ def createReturnValue(header, body, parse):
     return header, body
 
 
-def postRequest(port, path, data, contentType='text/xml; charset="utf-8"', parse=True, timeOutInSeconds=None, additionalHeaders=None):
+def postRequest(port, path, data=None, arguments=None, contentType='text/xml; charset="utf-8"', parse=True, timeOutInSeconds=None, additionalHeaders=None):
     additionalHeaders = additionalHeaders or {}
     if type(data) is unicode:
         data = data.encode(getdefaultencoding())
     sok = _socket(port, timeOutInSeconds)
     try:
-        contentLength = len(data)
+        contentLength = len(data) if data else 0
+        requestString = path
+        if arguments:
+            requestString = path + '?' + urlencode(arguments, doseq=True)
         lines = [
-            'POST %(path)s HTTP/1.0',
+            'POST %(requestString)s HTTP/1.0',
             'Content-Type: %(contentType)s',
             'Content-Length: %(contentLength)s'
         ]
         lines += ["%s: %s" % (k, v) for k, v in additionalHeaders.items()]
         lines += ['', '']
-        sendBuffer = ('\r\n'.join(lines) % locals()) + data
+        sendBuffer = ('\r\n'.join(lines) % locals()) + (data or '')
         totalBytesSent = 0
         bytesSent = 0
         while totalBytesSent != len(sendBuffer):
@@ -270,4 +273,4 @@ def includeParentAndDeps(filename, systemPath=None):
     depsDirectory = join(parentDirectory, "deps.d")
     if isdir(depsDirectory):
         map(lambda path: systemPath.insert(0, path), glob(join(depsDirectory, "*")))
-    systemPath.insert(0, parentDirectory)  
+    systemPath.insert(0, parentDirectory)
