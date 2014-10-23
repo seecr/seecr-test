@@ -26,3 +26,4 @@ from calltrace import CallTrace
 from integrationtestcase import IntegrationState, IntegrationTestCase
 from seecrtestcase import SeecrTestCase
 from testrunner import TestRunner
+from stoppablereactor import StoppableReactor
