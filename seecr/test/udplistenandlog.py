@@ -24,13 +24,14 @@
 
 from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_REUSEADDR, SO_LINGER
 from struct import pack
-from threading import Thread
+from threading import Thread, Semaphore
 
 class UdpListenAndLog(object):
     def __init__(self, port):
         self._sok = createSocket(port)
         self._stop = False
         self._log = []
+        self._semaphore = Semaphore()
         thread = Thread(None, self._listenAndLog)
         thread.daemon = True
         thread.start()
@@ -38,13 +39,29 @@ class UdpListenAndLog(object):
     def _listenAndLog(self):
         while not self._stop:
             data, remote = self._sok.recvfrom(2048)
-            self._log.append(data)
+            self._semaphore.acquire()
+            try:
+                self._log.append(data)
+            finally:
+                self._semaphore.release()
 
     def log(self):
-        return self._log[:]
+        self._semaphore.acquire()
+        try:
+            log = self._log[:]
+        finally:
+            self._semaphore.release()
+        return log
 
     def stop(self):
         self._stop = True
+
+    def reset(self):
+        self._semaphore.acquire()
+        try:
+            self._log = []
+        finally:
+            self._semaphore.release()
 
 def createSocket(port):
     sok = socket(AF_INET, SOCK_DGRAM)
