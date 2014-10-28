@@ -266,7 +266,7 @@ def findTag(tag, body, **attrs):
         yield tag
 
 
-def includeParentAndDeps(filename, systemPath=None):
+def includeParentAndDeps(filename, systemPath=None, cleanup=True):
     if systemPath is None:
         from sys import path as systemPath
     parentDirectory = dirname(dirname(abspath(filename)))
@@ -274,3 +274,10 @@ def includeParentAndDeps(filename, systemPath=None):
     if isdir(depsDirectory):
         map(lambda path: systemPath.insert(0, path), glob(join(depsDirectory, "*")))
     systemPath.insert(0, parentDirectory)
+    if cleanup:
+        for moduleName in sys.modules.keys():
+            if moduleName.startswith("seecr.test") or moduleName == 'seecr':
+                del sys.modules[moduleName]
+
+
+
