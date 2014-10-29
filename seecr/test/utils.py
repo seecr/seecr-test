@@ -23,16 +23,19 @@
 #
 ## end license ##
 
-from re import DOTALL, compile, sub
-from StringIO import StringIO
-from lxml.etree import parse as parse_xml, XMLSyntaxError, XMLParser, HTMLParser
-from socket import socket
-from urllib import urlencode
 import sys
 from sys import getdefaultencoding
+from re import DOTALL, compile, sub
+from StringIO import StringIO
 from time import sleep
 from os.path import abspath, dirname, isdir, join
 from glob import glob
+from socket import socket
+from urllib import urlencode
+from functools import partial
+
+from lxml.etree import parse as parse_xml, XMLSyntaxError, XMLParser, HTMLParser
+
 
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
 _entities = {
@@ -63,9 +66,9 @@ def getPage(port, path, arguments=None, expectedStatus="200", sessionId=None):
     if sessionId:
         additionalHeaders['Cookie'] = 'session=' + sessionId
     header, body = getRequest(
-        port,
-        path,
-        arguments,
+        port=port,
+        path=path,
+        arguments=arguments,
         parse=False,
         additionalHeaders=additionalHeaders)
     assertHttpOK(header, body, expectedStatus=expectedStatus)
@@ -77,8 +80,8 @@ def postToPage(port, path, data, expectedStatus="302", sessionId=None):
         additionalHeaders['Cookie'] = 'session=' + sessionId
     postBody = urlencode(data, doseq=True)
     header, body = postRequest(
-        port,
-        path,
+        port=port,
+        path=path,
         data=postBody,
         contentType='application/x-www-form-urlencoded',
         parse=False,
@@ -115,7 +118,7 @@ def createReturnValue(header, body, parse):
     return header, body
 
 
-def postRequest(port, path, data=None, arguments=None, contentType='text/xml; charset="utf-8"', parse=True, timeOutInSeconds=None, additionalHeaders=None):
+def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=True, timeOutInSeconds=None, host=None, method='GET', additionalHeaders=None):
     additionalHeaders = additionalHeaders or {}
     if type(data) is unicode:
         data = data.encode(getdefaultencoding())
@@ -125,11 +128,16 @@ def postRequest(port, path, data=None, arguments=None, contentType='text/xml; ch
         requestString = path
         if arguments:
             requestString = path + '?' + urlencode(arguments, doseq=True)
+        httpVersion = '1.0'
         lines = [
-            'POST %(requestString)s HTTP/1.0',
-            'Content-Type: %(contentType)s',
+            '%(method)s %(requestString)s HTTP/%(httpVersion)s',
             'Content-Length: %(contentLength)s'
         ]
+        if host:
+            httpVersion = '1.1'
+            lines.append('Host: %(host)s')
+        if contentType:
+            lines.append('Content-Type: %(contentType)s')
         lines += ["%s: %s" % (k, v) for k, v in additionalHeaders.items()]
         lines += ['', '']
         sendBuffer = ('\r\n'.join(lines) % locals()) + (data or '')
@@ -142,6 +150,11 @@ def postRequest(port, path, data=None, arguments=None, contentType='text/xml; ch
         return createReturnValue(header, body, parse)
     finally:
         sok.close()
+
+postRequest = partial(httpRequest, method='POST', contentType='text/xml; charset="utf-8"')
+getRequest = partial(httpRequest, method='GET')
+putRequest = partial(httpRequest, method='PUT')
+deleteRequest = partial(httpRequest, method='DELETE')
 
 def postMultipartForm(port, path, formValues, parse=True, timeOutInSeconds=None, **kwargs):
     boundary = '-=-=-=-=-=-=-=-=TestBoundary1234567890'
@@ -174,25 +187,7 @@ def createPostMultipartForm(boundary, formValues):
     strm.write('--' + boundary + '--\r\n')
     return strm.getvalue()
 
-def getRequest(port, path, arguments=None, parse=True, timeOutInSeconds=None, host=None, additionalHeaders=None):
-    sok = _socket(port, timeOutInSeconds)
-    try:
-        requestString = path
-        if arguments:
-            requestString = path + '?' + urlencode(arguments, doseq=True)
 
-        request = 'GET %(requestString)s HTTP/1.0\r\n' % locals()
-        if host != None:
-            request = 'GET %(requestString)s HTTP/1.1\r\nHost: %(host)s\r\n' % locals()
-        if additionalHeaders != None:
-            for header in additionalHeaders.items():
-                request += '%s: %s\r\n' % header
-        request += '\r\n'
-        sok.send(request)
-        header, body = splitHttpHeaderBody(receiveFromSocket(sok))
-        return createReturnValue(header, body, parse)
-    finally:
-        sok.close()
 
 def receiveFromSocket(sok):
     response = ''
