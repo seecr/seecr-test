@@ -152,9 +152,11 @@ def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=T
         sok.close()
 
 postRequest = partial(httpRequest, method='POST', contentType='text/xml; charset="utf-8"')
-getRequest = partial(httpRequest, method='GET')
 putRequest = partial(httpRequest, method='PUT')
 deleteRequest = partial(httpRequest, method='DELETE')
+
+def getRequest(port, path, arguments=None, **kwargs):
+    return httpRequest(port=port, path=path, arguments=arguments, method='GET', **kwargs)
 
 def postMultipartForm(port, path, formValues, parse=True, timeOutInSeconds=None, **kwargs):
     boundary = '-=-=-=-=-=-=-=-=TestBoundary1234567890'
