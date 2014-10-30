@@ -1,25 +1,25 @@
 ## begin license ##
-# 
-# "Seecr Test" provides test tools. 
-# 
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
-# 
+#
+# "Seecr Test" provides test tools.
+#
+# Copyright (C) 2012, 2014 Seecr (Seek You Too B.V.) http://seecr.nl
+#
 # This file is part of "Seecr Test"
-# 
+#
 # "Seecr Test" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Seecr Test" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Seecr Test"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
 import types
@@ -27,6 +27,7 @@ from sys import stdout, stderr, exit
 from time import time
 from traceback import print_exc
 from unittest import TestSuite as UnitTestTestSuite, TestLoader as UnitTestTestLoader, TestResult as UnitTestResult, TestCase
+from optparse import OptionParser
 
 
 class TestResult(UnitTestResult):
@@ -133,6 +134,19 @@ class TestGroup(object):
                 suite.addTest(self._loader.loadTestsFromName(testcase[1], testclass))
         return suite
 
+
+class TestArguments(object):
+    def __init__(self, args=None):
+        if args is None:
+            from sys import argv
+            args = argv[1:]
+        parser = OptionParser()
+        parser.add_option('', '--group', help='Group', default=None)
+        parser.add_option('', '--fast', action="store_true", help='Enable fastmode', default=False)
+        options, self.testnames = parser.parse_args(args)
+        self.groupnames = None if options.group is None else [options.group]
+        self.fastMode = options.fast
+
 class TestRunner(object):
     def __init__(self):
         self._groups = []
@@ -141,10 +155,12 @@ class TestRunner(object):
     def addGroup(self, *args, **kwargs):
         self._groups.append(TestGroup(*args, **kwargs))
 
+    def parseArgs(self, args=None):
+        return TestArguments(args=args)
+
     def run(self, testnames=None, groupnames=None):
         t0 = time()
         testResult = TestResult()
-        quit = False
         groups = self._groups
         if groupnames:
             groups = (group for group in self._groups if group.name in groupnames)
@@ -153,7 +169,7 @@ class TestRunner(object):
             if not suite.countTestCases():
                 continue
             try:
-                group.setUp() 
+                group.setUp()
                 suite.run(result=testResult, state=group.state)
             except:
                 print_exc()
@@ -206,15 +222,15 @@ class TestLoader(UnitTestTestLoader):
 
         if type(obj) == types.ModuleType:
             return self.loadTestsFromModule(obj)
-        elif (isinstance(obj, (type, types.ClassType)) and 
+        elif (isinstance(obj, (type, types.ClassType)) and
               issubclass(obj, TestCase)):
             return self.loadTestsFromTestCase(obj)
-        elif (type(obj) == types.UnboundMethodType and 
-              isinstance(parent, (type, types.ClassType)) and 
+        elif (type(obj) == types.UnboundMethodType and
+              isinstance(parent, (type, types.ClassType)) and
               issubclass(parent, TestCase)):
             return TestSuite([parent(obj.__name__)])
         elif isinstance(obj, TestSuite):
-            return obj 
+            return obj
         elif hasattr(obj, '__call__'):
             test = obj()
             if isinstance(test, TestSuite):
