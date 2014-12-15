@@ -108,7 +108,9 @@ class MockServer(Thread):
                     Headers=Headers)
                 c.send(response.encode())
                 c.close()
+        self.shutdown()
 
+    def shutdown(self):
         self.socket.close()
 
     def buildResponse(self, **kwargs):

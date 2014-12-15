@@ -60,15 +60,17 @@ class MockServerTest(TestCase):
         self.assertEqual(3, len(self.ms.requests))
 
     def testHangupConnectionTimeout(self):
-        if PY_VERSION == '2.7' or PY_VERSION == '3.2':
-            expectedException = IOError
-        else:
-            expectedException = URLError
         ms = MockServer(port=PortNumberGenerator.next(), hangupConnectionTimeout=0.1)
         ms.start()
 
         t0 = time()
-        self.assertRaises(expectedException, lambda: urlopen(ms.myUrl).read())
+
+        try:
+            with urlopen(ms.myUrl) as strm:
+                strm.read()
+            self.fail()
+        except ConnectionResetError as e:
+            pass
         t1 = time()
         delta = t1 - t0
         self.assertTrue(0.09 < delta < 0.12, "Expected around 0.1, was %s" % delta)
@@ -77,4 +79,5 @@ class MockServerTest(TestCase):
 
     def tearDown(self):
         self.ms.halt = True
+        self.ms.shutdown()
         TestCase.tearDown(self)

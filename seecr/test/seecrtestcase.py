@@ -298,14 +298,14 @@ class CompareXml(object):
         resultAttrs = resultNode.attrib
         resultAttrsSet = set(resultAttrs.keys())
 
-        diff = expectedAttrsSet.difference(resultAttrsSet)
+        diff = sorted(expectedAttrsSet.difference(resultAttrsSet))
         if diff:
             raise AssertionError("Missing attributes %s at location: '%s'" % (
                     ', '.join(
                         (("'%s'" % a) for a in diff)),
                         self.xpathToHere(expectedNode, includeCurrent=True)
                 ))
-        diff = resultAttrsSet.difference(expectedAttrsSet)
+        diff = sorted(resultAttrsSet.difference(expectedAttrsSet))
         if diff:
             raise AssertionError("Unexpected attributes %s at location: '%s'" % (
                     ', '.join(
