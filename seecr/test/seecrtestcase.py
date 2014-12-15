@@ -140,14 +140,6 @@ class SeecrTestCase(TestCase):
                 return realpath(abspath(executablePath))
         raise ValueError("No executable found for '%s'" % executable)
 
-    def _getVmSize(self):
-        status = open('/proc/%d/status' % getpid()).read()
-        i = status.find('VmSize:') + len('VmSize:')
-        j = status.find('kB', i)
-        vmsize = int(status[i:j].strip())
-        return vmsize
-
-
 def diffXml(first, second, firstName='expected', secondName='result'):
     def canonical(xml):
         if not isinstance(xml, str) and not isinstance(xml, unicode):
