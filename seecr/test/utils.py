@@ -34,6 +34,8 @@ import sys
 from sys import getdefaultencoding
 from time import sleep
 from glob import glob
+from functools import partial
+from os.path import dirname, abspath, join, isdir
 
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
 _entities = {
@@ -131,16 +133,12 @@ def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=T
             '%(method)s %(requestString)s HTTP/%(httpVersion)s',
             'Content-Length: %(contentLength)s'
         ]
-<<<<<<< HEAD
         if host:
             httpVersion = '1.1'
             lines.append('Host: %(host)s')
         if contentType:
             lines.append('Content-Type: %(contentType)s')
-        lines += ["%s: %s" % (k, v) for k, v in additionalHeaders.items()]
-=======
         lines += ["%s: %s" % (k, v) for k, v in list(additionalHeaders.items())]
->>>>>>> HM: 2to3
         lines += ['', '']
         sendBuffer = ('\r\n'.join(lines) % locals()) + (data or '')
         totalBytesSent = 0
@@ -190,23 +188,6 @@ def createPostMultipartForm(boundary, formValues):
         strm.write('\r\n')
     strm.write('--' + boundary + '--\r\n')
     return strm.getvalue()
-
-
-<<<<<<< HEAD
-=======
-        request = 'GET %(requestString)s HTTP/1.0\r\n' % locals()
-        if host != None:
-            request = 'GET %(requestString)s HTTP/1.1\r\nHost: %(host)s\r\n' % locals()
-        if additionalHeaders != None:
-            for header in list(additionalHeaders.items()):
-                request += '%s: %s\r\n' % header
-        request += '\r\n'
-        sok.send(request)
-        header, body = splitHttpHeaderBody(receiveFromSocket(sok))
-        return createReturnValue(header, body, parse)
-    finally:
-        sok.close()
->>>>>>> HM: 2to3
 
 def receiveFromSocket(sok):
     response = ''
@@ -269,7 +250,7 @@ def findTag(tag, body, **attrs):
     try:
         xmlNode = parse_xml(StringIO(body), parser=HTMLParser()).getroot()
     except XMLSyntaxError:
-        print body
+        print(body)
         raise
 
     xpathExpr = "//%s" % tag
@@ -282,6 +263,5 @@ def findTag(tag, body, **attrs):
 
 def includeParentAndDeps(filename, systemPath=None, cleanup=True, additionalPaths=None):
     raise NotImplementedError("includeParentAndDeps moved to seecr.deps package. Change import to: 'from seecr.deps import includeParentAndDeps'")
-
 
 

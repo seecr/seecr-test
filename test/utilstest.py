@@ -97,20 +97,24 @@ Exception: xcptn\n"""
         self.assertEqual(['‘to the left <-’'], result.xpath('/html/body/text()'))
 
     def testFindTag(self):
-        self.assertEquals(1, len(list(findTag("input", "<input></input>"))))
-        self.assertEquals(1, len(list(findTag("input", "<input />"))))
-        self.assertEquals(1, len(list(findTag("input", "<input/>"))))
-        self.assertEquals(2, len(list(findTag("input", "<form><input/><input></input></form>"))))
-        self.assertEquals(2, len(list(findTag("input", "<form><input attr='value'/><input></input></form>"))))
-        self.assertEquals(2, len(list(findTag("input", "<form><input></input><input/></form>"))))
-        self.assertEquals(1, len(list(findTag("a", "<a><img/></a>"))))
-        self.assertEquals(1, len(list(findTag("a", "<a>&euro;</a>"))))
-        self.assertEquals(1, len(list(findTag("a", "<html><a/><a class='test'>text</a></html>", **{"class": "test"}))))
-        self.assertEquals(1, len(list(findTag("a", "<html><a a='1' b='2'/><a a='1'/></html>", **dict(a=1, b=2)))))
+        self.assertEqual(1, len(list(findTag("input", "<input></input>"))))
+        self.assertEqual(1, len(list(findTag("input", "<input />"))))
+        self.assertEqual(1, len(list(findTag("input", "<input/>"))))
+        self.assertEqual(2, len(list(findTag("input", "<form><input/><input></input></form>"))))
+        self.assertEqual(2, len(list(findTag("input", "<form><input attr='value'/><input></input></form>"))))
+        self.assertEqual(2, len(list(findTag("input", "<form><input></input><input/></form>"))))
+        self.assertEqual(1, len(list(findTag("a", "<a><img/></a>"))))
+        self.assertEqual(1, len(list(findTag("a", "<a>&euro;</a>"))))
+        self.assertEqual(1, len(list(findTag("a", "<html><a/><a class='test'>text</a></html>", **{"class": "test"}))))
+        self.assertEqual(1, len(list(findTag("a", "<html><a a='1' b='2'/><a a='1'/></html>", **dict(a=1, b=2)))))
 
     def testHeaderToDict(self):
         self.assertEquals(dict(a="1", b="2"), headerToDict("a: 1\r\nb: 2\r\n"))
         self.assertEquals(dict(a="1:2", b="2:3"), headerToDict("a: 1:2\r\nb: 2:3\r\n"))
 
+    def testHeaderToDict(self):
+        self.assertEqual(dict(a="1", b="2"), headerToDict("a: 1\r\nb: 2\r\n"))
+        self.assertEqual(dict(a="1:2", b="2:3"), headerToDict("a: 1:2\r\nb: 2:3\r\n"))
+    
 
 T_ADJUSTMENT = 1.5

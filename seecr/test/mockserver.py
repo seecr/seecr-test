@@ -54,7 +54,7 @@ class MockServer(Thread):
         self.hangupConnectionTimeout = hangupConnectionTimeout
 
     def run(self):
-        while True:
+        while True and not self.socket._closed:
             r,w,e = select([self.socket], [], [], 0.01)
             if self.halt:
                 break

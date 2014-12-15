@@ -27,8 +27,6 @@ from unittest import TestCase
 from types import GeneratorType
 from seecr.test import CallTrace
 from seecr.test.calltrace import TracedCall
-from meresco.core import Observable
-
 
 class CallTraceTest(TestCase):
     def testSimpleCall(self):
@@ -205,20 +203,3 @@ class CallTraceTest(TestCase):
         calltrace.methodOne('aap')
         calltrace.methodTwo('aap')
         self.assertEqual(['methodOne', 'methodTwo'], calltrace.calledMethodNames())
-
-    def testObservableCall(self):
-        o = Observable()
-        calltrace = CallTrace('calltrace')
-        o.addObserver(calltrace)
-
-        result = o.call.getSomething()
-        self.assertEqual(None, result)
-        self.assertEqual(['getSomething'], calltrace.calledMethodNames())
-        calltrace.calledMethods.reset()
-
-        calltrace.returnValues['getSomething'] = 'RESULT'
-        result = o.call.getSomething()
-        self.assertEqual('RESULT', result)
-        self.assertEqual(['getSomething'], calltrace.calledMethodNames())
-
-
