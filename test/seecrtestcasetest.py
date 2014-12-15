@@ -86,7 +86,7 @@ class SeecrTestCaseTest(SeecrTestCase):
         self.checkAssertEqualsLxmlFails(
             parseString('<xml/>'),
             parseString('<xml attr="" anotherattr="zz"/>'),
-            "Unexpected attributes 'attr', 'anotherattr' at location: 'xml'")
+            "Unexpected attributes 'anotherattr', 'attr' at location: 'xml'")
         # attrs left
         self.checkAssertEqualsLxmlFails(
             parseString('<xml a="" z=""/>'),

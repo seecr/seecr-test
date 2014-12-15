@@ -67,6 +67,11 @@ class CallTrace:
         #TODO: __str__ ook terug laten komen in calltrace
         return self.__repr__()
 
+    def __call__(self, *args, **kwargs):
+        if '__call__' in self.returnValues:
+            return self.returnValues['__call__']
+        raise TypeError("Object is not callable")
+
 
 class CallTraceMethod:
     def __init__(self, methodName, callTrace):
@@ -125,7 +130,7 @@ class TracedCall:
         <class 'calltracetest.IsObject'>
         calltracetest.NonObject
         """
-        objectOnlyRe = r'((?:\w+\.)*\w+)'
+        objectOnlyRe = r'((?:\s+\.)*\S+)'
         instanceRe = r'<%s instance at .*>' % objectOnlyRe
         objectRe = r'<%s object at .*>' % objectOnlyRe
         classRe = r"<class '%s'>" % objectOnlyRe
@@ -143,11 +148,15 @@ class TracedCall:
         typeName = str(something)
         match = objectsRe.match(typeName)
         if match:
-            return "<%s>" % list(filter(None, match.groups()))[0]
+            objectName = match.groups()[1]
+            objectName = '.'.join(objectName.split('.')[::objectName.count('.')])
+            return "<%s>" % objectName
 
         match = classesRe.match(typeName)
         if match:
-            return "<class %s>" % list(filter(None, match.groups()))[0]
+            objectName = match.groups()[0]
+            objectName = '.'.join(objectName.split('.')[::objectName.count('.')])
+            return "<class %s>" % objectName
 
         return typeName
 
