@@ -2,5 +2,4 @@ seecr-core (>= 1.0.1)
 seecr-core (<< 1.1)
 seecr-tools-core
 python-lxml
-bash-completion
 python-weightless-core
