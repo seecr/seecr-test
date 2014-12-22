@@ -1,5 +1,5 @@
 seecr-core (>= 1.0.1)
 seecr-core (<< 1.1)
-seecr-tools-core
+seecr-tools-core (>= 2.0)
 python-lxml
 python-weightless-core
