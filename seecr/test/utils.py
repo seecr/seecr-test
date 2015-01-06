@@ -274,7 +274,7 @@ def includeParentAndDeps(filename, systemPath=None, cleanup=True, additionalPath
         map(lambda path: systemPath.insert(0, path), additionalPaths)
     if cleanup:
         import sys
-        for moduleName in sys.modules.keys():
+        for moduleName in list(sys.modules.keys()):
             if moduleName.startswith("seecr.test") or moduleName == 'seecr':
                 del sys.modules[moduleName]
 
