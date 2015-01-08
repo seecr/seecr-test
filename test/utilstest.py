@@ -3,7 +3,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012-2014 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2015 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -109,22 +109,9 @@ Exception: xcptn\n"""
         self.assertEquals(1, len(list(findTag("a", "<html><a/><a class='test'>text</a></html>", **{"class": "test"}))))
         self.assertEquals(1, len(list(findTag("a", "<html><a a='1' b='2'/><a a='1'/></html>", **dict(a=1, b=2)))))
 
-    def testIncludeParentAndDeps(self):
-        makedirs(join(self.tempdir, "bin"))
-
-        systemPath = []
-        includeParentAndDeps(join(self.tempdir, "bin", "thefile.py"), systemPath=systemPath, cleanup=False)
-        self.assertEquals([self.tempdir], systemPath)
-
-        makedirs(join(self.tempdir, "deps.d", "dep_one"))
-        makedirs(join(self.tempdir, "deps.d", "dep_two"))
-        systemPath = []
-        includeParentAndDeps(join(self.tempdir, "bin", "thefile.py"), systemPath=systemPath, cleanup=False)
-        self.assertEquals(set([self.tempdir, join(self.tempdir, "deps.d", "dep_two"), join(self.tempdir, "deps.d", "dep_one")]), set(systemPath))
-
     def testHeaderToDict(self):
         self.assertEquals(dict(a="1", b="2"), headerToDict("a: 1\r\nb: 2\r\n"))
         self.assertEquals(dict(a="1:2", b="2:3"), headerToDict("a: 1:2\r\nb: 2:3\r\n"))
-    
+
 
 T_ADJUSTMENT = 1.5
