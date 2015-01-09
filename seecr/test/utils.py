@@ -3,7 +3,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012-2014 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2015 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -262,21 +262,4 @@ def findTag(tag, body, **attrs):
 
 
 def includeParentAndDeps(filename, systemPath=None, cleanup=True, additionalPaths=None):
-    if systemPath is None:
-        from sys import path as systemPath
-    parentDirectory = dirname(dirname(abspath(filename)))
-    depsDirectory = join(parentDirectory, "deps.d")
-    if isdir(depsDirectory):
-        for path in glob(join(depsDirectory, "*")):
-            systemPath.insert(0, path)
-    systemPath.insert(0, parentDirectory)
-    if additionalPaths:
-        map(lambda path: systemPath.insert(0, path), additionalPaths)
-    if cleanup:
-        import sys
-        for moduleName in list(sys.modules.keys()):
-            if moduleName.startswith("seecr.test") or moduleName == 'seecr':
-                del sys.modules[moduleName]
-
-
-
+    raise NotImplementedError("includeParentAndDeps moved to seecr.deps package. Change import to: 'from seecr.deps import includeParentAndDeps'")

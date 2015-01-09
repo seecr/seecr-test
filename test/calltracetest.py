@@ -78,6 +78,21 @@ class CallTraceTest(TestCase):
         except TestException as e:
             self.assertEqual('test', str(e))
 
+    def testTracedCallDictRepresentationOneArgument(self):
+        callTrace = CallTrace()
+        callTrace.simpleCall('argument one')
+        self.assertEqual({'name': "simpleCall", 'args': ('argument one', ), 'kwargs': {}}, callTrace.calledMethods[0].asDict())
+    
+    def testTracedCallDictRepresentationTwoArguments(self):
+        callTrace = CallTrace()
+        callTrace.simpleCall('argument one', 2)
+        self.assertEqual({'name': "simpleCall", 'args': ('argument one', 2), 'kwargs': {}}, callTrace.calledMethods[0].asDict())
+
+    def testTracedCallDictRepresentationWithKwargs(self):
+        callTrace = CallTrace()
+        callTrace.simpleCall(argument='one', second=2)
+        self.assertEqual({'name': "simpleCall", 'args': (), 'kwargs': {'argument': "one", 'second': 2}}, callTrace.calledMethods[0].asDict())
+
     def testTracedCallRepresentationOneArgument(self):
         callTrace = CallTrace()
         callTrace.simpleCall('argument one')

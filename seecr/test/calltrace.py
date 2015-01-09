@@ -116,6 +116,13 @@ class TracedCall:
 
         return returnValue
 
+    def asDict(self):
+        return {
+            'name': self.name,
+            'args': self.args,
+            'kwargs': self.kwargs
+        }
+
     def represent(self, something):
         """
         <calltracetest.NonObject instance at 0x2b02ba1075a8>
