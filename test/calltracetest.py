@@ -82,17 +82,17 @@ class CallTraceTest(TestCase):
     def testTracedCallDictRepresentationOneArgument(self):
         callTrace = CallTrace()
         callTrace.simpleCall('argument one')
-        self.assertEquals({'name': "simpleCall", 'args': ('argument one', ), 'kwargs': {}}, callTrace.calledMethods[0].asDict())
+        self.assertEqual({'name': "simpleCall", 'args': ('argument one', ), 'kwargs': {}}, callTrace.calledMethods[0].asDict())
     
     def testTracedCallDictRepresentationTwoArguments(self):
         callTrace = CallTrace()
         callTrace.simpleCall('argument one', 2)
-        self.assertEquals({'name': "simpleCall", 'args': ('argument one', 2), 'kwargs': {}}, callTrace.calledMethods[0].asDict())
+        self.assertEqual({'name': "simpleCall", 'args': ('argument one', 2), 'kwargs': {}}, callTrace.calledMethods[0].asDict())
 
     def testTracedCallDictRepresentationWithKwargs(self):
         callTrace = CallTrace()
         callTrace.simpleCall(argument='one', second=2)
-        self.assertEquals({'name': "simpleCall", 'args': (), 'kwargs': {'argument': "one", 'second': 2}}, callTrace.calledMethods[0].asDict())
+        self.assertEqual({'name': "simpleCall", 'args': (), 'kwargs': {'argument': "one", 'second': 2}}, callTrace.calledMethods[0].asDict())
 
     def testTracedCallRepresentationOneArgument(self):
         callTrace = CallTrace()
