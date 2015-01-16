@@ -142,9 +142,13 @@ class TracedCall:
 
         if isinstance(something, str):
             return "'%s'" % something
-        if type(something) == int or type(something) == float:
+
+        if type(something) in [int, float]:
             return str(something)
 
+        if type(something) is bytes:
+            return "b'%s'" % something.decode()
+        
         typeName = str(something)
         match = objectsRe.match(typeName)
         if match:
