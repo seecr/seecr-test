@@ -155,7 +155,8 @@ class TracedCall:
             objectName = match.groups()[1]
             objectName = '.'.join(objectName.split('.')[::objectName.count('.')])
             return "<%s>" % objectName
-
+        
+        typeName = str(type(something))
         match = classesRe.match(typeName)
         if match:
             objectName = match.groups()[0]
