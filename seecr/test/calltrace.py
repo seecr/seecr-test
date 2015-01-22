@@ -29,7 +29,7 @@ def emptyGenerator():
     return
     yield
 
-class CallTrace:
+class CallTrace(object):
     def __init__(self, name="CallTrace", verbose=False, returnValues=None, ignoredAttributes=[], methods=None, onlySpecifiedMethods=False, emptyGeneratorMethods=[]):
         self.calledMethods = CalledMethods()
         self.returnValues = returnValues or {}
@@ -45,7 +45,7 @@ class CallTrace:
         return [m.name for m in self.calledMethods]
 
     def __getattr__(self, attrname):
-        if attrname.startswith('__') and attrname.endswith('__') and not attrname in self.returnValues:
+        if attrname.startswith('__') and attrname.endswith('__') and not attrname in self.returnValues and attrname not in self.methods:
             return object.__getattr__(self, attrname)
         if attrname in self.ignoredAttributes:
             raise AttributeError("'CallTrace' is instructed to not have an attribute called '%s'" % attrname)
@@ -69,7 +69,7 @@ class CallTrace:
 
     def __call__(self, *args, **kwargs):
         if '__call__' in self.returnValues:
-            return self.returnValues['__call__']
+            return CallTraceMethod('__call__', self)(*args, **kwargs)
         raise TypeError("Object is not callable")
 
 
