@@ -29,7 +29,7 @@ def emptyGenerator():
     return
     yield
 
-class CallTrace(object):
+class CallTrace:
     def __init__(self, name="CallTrace", verbose=False, returnValues=None, ignoredAttributes=[], methods=None, onlySpecifiedMethods=False, emptyGeneratorMethods=[]):
         self.calledMethods = CalledMethods()
         self.returnValues = returnValues or {}
@@ -156,11 +156,13 @@ class TracedCall:
             objectName = '.'.join(objectName.split('.')[::objectName.count('.')])
             return "<%s>" % objectName
         
-        typeName = str(type(something))
+        typeName = str(something)
         match = classesRe.match(typeName)
         if match:
+            if match.groups()[0] is None:
+                match = classesRe.match(str(type(something)))
             objectName = match.groups()[0]
-            objectName = '.'.join(objectName.split('.')[::objectName.count('.')])
+            objectName = '.'.join(objectName.split('.')[::objectName.count('.') if '.' in objectName else 1])
             return "<class %s>" % objectName
 
         return typeName
