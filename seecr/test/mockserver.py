@@ -2,7 +2,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012, 2015 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -77,6 +77,7 @@ class MockServer(Thread):
                     if contentLength:
                         if contentLength > len(body):
                             request += c.recv(contentLength - len(body))
+                            header, body = request.split('\r\n\r\n')
                         break
                     header, body = request.split('\r\n\r\n')
                     for h in header.split('\r\n'):
@@ -108,7 +109,8 @@ class MockServer(Thread):
                     query=query,
                     fragments=fragments,
                     arguments=arguments,
-                    Headers=Headers)
+                    Headers=Headers,
+                    Body=body)
                 c.send(response)
                 c.close()
 
