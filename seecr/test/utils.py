@@ -140,7 +140,7 @@ def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=T
             lines.append('Content-Type: %(contentType)s')
         lines += ["%s: %s" % (k, v) for k, v in list(additionalHeaders.items())]
         lines += ['', '']
-        sendBuffer = ('\r\n'.join(lines) % locals()) + (data or '')
+        sendBuffer = ('\r\n'.join(lines) % locals()).encode() + (data or '').encode()
         totalBytesSent = 0
         bytesSent = 0
         while totalBytesSent != len(sendBuffer):
@@ -190,7 +190,7 @@ def createPostMultipartForm(boundary, formValues):
     return strm.getvalue()
 
 def receiveFromSocket(sok):
-    response = ''
+    response = b''
     part = sok.recv(1024)
     response += part
     while part != None:
@@ -198,7 +198,7 @@ def receiveFromSocket(sok):
         if not part:
             break
         response += part
-    return response
+    return response.decode()
 
 def splitHttpHeaderBody(response):
     try:
