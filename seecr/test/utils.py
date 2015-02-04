@@ -190,21 +190,24 @@ def createPostMultipartForm(boundary, formValues):
     return strm.getvalue()
 
 def receiveFromSocket(sok):
-    response = b''
-    part = sok.recv(1024)
-    response += part
+    response = part = sok.recv(1024)
     while part != None:
         part = sok.recv(1024)
         if not part:
             break
         response += part
-    return response.decode()
+    return response
 
 def splitHttpHeaderBody(response):
     try:
-        header, body = response.split('\r\n\r\n', 1)
+        header, body = response.split(b'\r\n\r\n', 1)
+        header = header.decode()
+        try:
+            body = body.decode()
+        except UnicodeDecodeError:
+            pass
     except ValueError as e:
-        raise ValueError("%s can not be split into a header and body" % repr(response))
+        raise VaelueError("%s can not be split into a header and body" % repr(response))
     else:
         return header, body
 

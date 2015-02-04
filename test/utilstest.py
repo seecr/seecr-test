@@ -27,7 +27,7 @@ from seecr.test import SeecrTestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, headerToDict
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, headerToDict, splitHttpHeaderBody
 from lxml.etree import XMLSyntaxError
 
 from time import time
@@ -111,6 +111,10 @@ Exception: xcptn\n"""
     def testHeaderToDict(self):
         self.assertEqual(dict(a="1", b="2"), headerToDict("a: 1\r\nb: 2\r\n"))
         self.assertEqual(dict(a="1:2", b="2:3"), headerToDict("a: 1:2\r\nb: 2:3\r\n"))
-    
+
+    def testSplitHttpHeaderBody(self):
+        self.assertEqual(("Headers", "Body"), splitHttpHeaderBody(b"Headers\r\n\r\nBody"))
+        self.assertEqual(("Headers", b'\xc1\x8b\xff\x10\x80'), splitHttpHeaderBody(b'Headers\r\n\r\n\xc1\x8b\xff\x10\x80'))
+
 
 T_ADJUSTMENT = 1.5
