@@ -140,7 +140,7 @@ def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=T
             lines.append('Content-Type: %(contentType)s')
         lines += ["%s: %s" % (k, v) for k, v in list(additionalHeaders.items())]
         lines += ['', '']
-        sendBuffer = ('\r\n'.join(lines) % locals()).encode() + (data or '').encode()
+        sendBuffer = ('\r\n'.join(lines) % locals()).encode() + (data or b'')
         totalBytesSent = 0
         bytesSent = 0
         while totalBytesSent != len(sendBuffer):
