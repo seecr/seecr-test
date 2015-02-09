@@ -207,7 +207,7 @@ def splitHttpHeaderBody(response):
         except UnicodeDecodeError:
             pass
     except ValueError as e:
-        raise VaelueError("%s can not be split into a header and body" % repr(response))
+        raise ValueError("%s can not be split into a header and body" % repr(response))
     else:
         return header, body
 
