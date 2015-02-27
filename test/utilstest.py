@@ -27,12 +27,12 @@ from seecr.test import SeecrTestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, headerToDict, splitHttpHeaderBody
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, headerToDict, splitHttpHeaderBody, mkdir
 from lxml.etree import XMLSyntaxError
 
 from time import time
 from os import makedirs
-from os.path import join
+from os.path import join, isdir
 
 class UtilsTest(SeecrTestCase):
     def testIgnoreLineNumber(self):
@@ -116,5 +116,12 @@ Exception: xcptn\n"""
         self.assertEqual(("Headers", "Body"), splitHttpHeaderBody(b"Headers\r\n\r\nBody"))
         self.assertEqual(("Headers", b'\xc1\x8b\xff\x10\x80'), splitHttpHeaderBody(b'Headers\r\n\r\n\xc1\x8b\xff\x10\x80'))
 
+    def testMkdir(self):
+        self.assertFalse(isdir(join(self.tempdir, "mkdir")))
+        self.assertEqual(join(self.tempdir, "mkdir"), mkdir(self.tempdir, "mkdir"))
+        self.assertTrue(isdir(join(self.tempdir, "mkdir")))
 
+        self.assertFalse(isdir(join(self.tempdir, "1", "2", "3", "4")))
+        mkdir(self.tempdir, "1", "2", "3", "4")
+        self.assertTrue(isdir(join(self.tempdir, "1", "2", "3", "4")))
 T_ADJUSTMENT = 1.5

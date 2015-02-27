@@ -35,6 +35,7 @@ from sys import getdefaultencoding
 from time import sleep
 from glob import glob
 from functools import partial
+from os import makedirs
 from os.path import dirname, abspath, join, isdir
 
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
@@ -268,3 +269,9 @@ def htmlXPath(xpathExpr, body):
 
 def includeParentAndDeps(filename, systemPath=None, cleanup=True, additionalPaths=None):
     raise NotImplementedError("includeParentAndDeps moved to seecr.deps package. Change import to: 'from seecr.deps import includeParentAndDeps'")
+
+def mkdir(*args):
+    path = join(*args)
+    if not isdir(path):
+        makedirs(path)
+    return path
