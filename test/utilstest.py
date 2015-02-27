@@ -27,12 +27,12 @@ from seecr.test import SeecrTestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, headerToDict
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, headerToDict, mkdir
 from lxml.etree import XMLSyntaxError
 
 from time import time
 from os import makedirs
-from os.path import join
+from os.path import join, isdir
 
 
 class UtilsTest(SeecrTestCase):
@@ -112,6 +112,15 @@ Exception: xcptn\n"""
     def testHeaderToDict(self):
         self.assertEquals(dict(a="1", b="2"), headerToDict("a: 1\r\nb: 2\r\n"))
         self.assertEquals(dict(a="1:2", b="2:3"), headerToDict("a: 1:2\r\nb: 2:3\r\n"))
+
+    def testMkdir(self):
+        self.assertFalse(isdir(join(self.tempdir, "mkdir")))
+        self.assertEquals(join(self.tempdir, "mkdir"), mkdir(self.tempdir, "mkdir"))
+        self.assertTrue(isdir(join(self.tempdir, "mkdir")))
+
+        self.assertFalse(isdir(join(self.tempdir, "1", "2", "3", "4")))
+        mkdir(self.tempdir, "1", "2", "3", "4")
+        self.assertTrue(isdir(join(self.tempdir, "1", "2", "3", "4")))
 
 
 T_ADJUSTMENT = 1.5

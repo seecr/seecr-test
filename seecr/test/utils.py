@@ -29,6 +29,7 @@ from re import DOTALL, compile, sub
 from StringIO import StringIO
 from time import sleep
 from os.path import abspath, dirname, isdir, join
+from os import makedirs
 from glob import glob
 from socket import socket
 from urllib import urlencode
@@ -266,5 +267,9 @@ def findTag(tag, body, **attrs):
 def includeParentAndDeps(filename, systemPath=None, cleanup=True, additionalPaths=None):
     raise NotImplementedError("includeParentAndDeps moved to seecr.deps package. Change import to: 'from seecr.deps import includeParentAndDeps'")
 
-
+def mkdir(*args):
+    path = join(*args)
+    if not isdir(path):
+        makedirs(path)
+    return path
 
