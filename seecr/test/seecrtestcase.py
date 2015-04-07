@@ -42,6 +42,8 @@ from difflib import unified_diff
 
 from lxml.etree import tostring, parse, Comment, PI, Entity, XMLParser
 
+from gc import get_objects
+from _io import FileIO, BufferedReader
 
 class SeecrTestCase(TestCase):
     def setUp(self):
@@ -55,6 +57,11 @@ class SeecrTestCase(TestCase):
         rmtree(self.tempdir)
         remove(self.tempfile)
         TestCase.tearDown(self)
+
+    def closeOpenFiles(self):
+        for f in (f for f in get_objects() 
+                if type(f) in [FileIO, BufferedReader] and type(f.name) is str and f.name.startswith(self.tempdir)):
+            f.close()
 
     def assertTiming(self, t0, t, t1):
         self.assertTrue(t0*T < t < t1*T, t/T)
