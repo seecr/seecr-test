@@ -2,7 +2,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012, 2014 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012, 2014-2015 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -148,9 +148,10 @@ class TestArguments(object):
         self.fastMode = options.fast
 
 class TestRunner(object):
-    def __init__(self):
+    def __init__(self, verbose=False):
         self._groups = []
         self._stream = stdout
+        self._verbosity = 2 if verbose else 1
 
     def addGroup(self, *args, **kwargs):
         self._groups.append(TestGroup(*args, **kwargs))
@@ -160,7 +161,7 @@ class TestRunner(object):
 
     def run(self, testnames=None, groupnames=None):
         t0 = time()
-        testResult = TestResult()
+        testResult = TestResult(verbosity=self._verbosity)
         groups = self._groups
         if groupnames:
             groups = (group for group in self._groups if group.name in groupnames)
