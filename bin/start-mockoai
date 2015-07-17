@@ -42,9 +42,8 @@ if __name__ == '__main__':
     from meresco.components import ParseArguments
     parser = ParseArguments()
     parser.addOption('', '--port', type=int, help='Port of the mock server')
-    parser.addOption('', '--dataDirFirst', type='str', help='An optional first datadir')
-    parser.addOption('', '--dataDir', type='str', help='The main datadir', mandatory=True)
-    parser.addOption('', '--dataDirLast', type='str', help='An opitonal last datadir')
+    parser.addOption('', '--jsonConfig', type='str', help='Configuration with directories and path; Or use dataDir', mandatory=False)
+    parser.addOption('', '--dataDir', type='str', action='append', help='The main datadir; Or use jsonConfig', mandatory=False)
     parser.addOption('', '--batchSize', type='int', help='The oai batch size')
     options, arguments =  parser.parse()
 

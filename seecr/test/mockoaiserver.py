@@ -40,6 +40,7 @@ from escaping import escapeFilename
 from weightless.core import compose, be
 from weightless.io import Reactor
 
+from meresco.components.json import JsonList
 from meresco.core import Observable
 from meresco.core.processtools import setSignalHandlers, registerShutdownHandler
 
@@ -58,42 +59,47 @@ def iterOaiData(dataDir):
 def allSets(dataDir):
     return set(setSpec for _,_,setSpecs in iterOaiData(dataDir) for setSpec in setSpecs)
 
-def dna(reactor, portNumber, dataDirs, tempDir, batchSize):
-    print 'DATADIRS', dataDirs
-    oaiSuspendRegister = SuspendRegister()
-    oaiJazz = be((OaiJazz(tempDir),
-        (oaiSuspendRegister,)
-    ))
-    oaiJazzOperations = {
-        'ADD': oaiJazz.addOaiRecord,
-        'DEL': oaiJazz.deleteOaiRecord
-    }
+def dna(reactor, portNumber, config, tempDir, batchSize):
+    print 'Config', config
+    httpServer = ObservableHttpServer(reactor, portNumber)
+
     storage = DataStorage()
-    for dataDir in dataDirs:
-        for action, filename, setSpecs in iterOaiData(dataDir):
+    for data in config:
+        oaiName = ''.join(data['path'].split('/'))
+        oaiSuspendRegister = SuspendRegister()
+        oaiJazz = be((OaiJazz(join(tempDir, oaiName)),
+            (oaiSuspendRegister,)
+        ))
+        oaiJazzOperations = {
+            'ADD': oaiJazz.addOaiRecord,
+            'DEL': oaiJazz.deleteOaiRecord
+        }
+
+        for action, filename, setSpecs in iterOaiData(data['dir']):
             identifier, metadataPrefix = filename.rsplit('.', 1)
             oaiJazzOperations[action](
                 identifier=identifier,
                 setSpecs=setSpecs,
                 metadataPrefixes=[metadataPrefix],
             )
-            storage.addFile(filename, join(dataDir, escapeFilename(filename)))
+            storage.addFile(filename, join(data['dir'], escapeFilename(filename)))
             sleep(0.000001)
-    oaiJazz.commit()
+        oaiJazz.commit()
+
+        tree = be((PathFilter(data['path'], excluding=['/ready']),
+            (IllegalFromFix(),
+                (OaiPmh(repositoryName='Mock', adminEmail='no@example.org', supportXWait=True, batchSize=batchSize),
+                    (oaiJazz,),
+                    (oaiSuspendRegister,),
+                    (storage,),
+                )
+            )
+        ))
+        httpServer.addObserver(tree)
 
     return \
         (Observable(),
-            (ObservableHttpServer(reactor, portNumber),
-                (PathFilter('/', excluding=['/ready']),
-                    (IllegalFromFix(),
-                        (OaiPmh(repositoryName='Mock', adminEmail='no@example.org', supportXWait=True, batchSize=batchSize),
-                            (LogComponent('OaiPmh'),),
-                            (oaiJazz,),
-                            (oaiSuspendRegister,),
-                            (storage,),
-                        )
-                    )
-                ),
+            (httpServer,
                 (PathFilter("/ready"),
                     (StringServer('yes', ContentTypePlainText),)
                 )
@@ -120,13 +126,17 @@ class DataStorage(object):
         yield open(self.filepathFor.get('%s.%s' % (identifier, name))).read()
 
 
-def startServer(port, dataDir, dataDirFirst=None, dataDirLast=None, batchSize=None):
+def startServer(port, dataDir=None, jsonConfig=None, batchSize=None):
     batchSize = batchSize or DEFAULT_BATCH_SIZE
     setSignalHandlers()
     tempDir = mkdtemp(prefix='mockoai-')
+
+    config = JsonList.loads(jsonConfig or '[]')
+    if dataDir:
+        config.append({'dir': dataDir, 'path': '/'})
     try:
         reactor = Reactor()
-        server = be(dna(reactor, port, dataDirs=[d for d in [dataDirFirst, dataDir, dataDirLast] if d], tempDir=tempDir, batchSize=batchSize))
+        server = be(dna(reactor, port, config=config, tempDir=tempDir, batchSize=batchSize))
         print 'Ready to rumble the mock plein server at', port
         list(compose(server.once.observer_init()))
         registerShutdownHandler(statePath=tempDir, server=server, reactor=reactor)
