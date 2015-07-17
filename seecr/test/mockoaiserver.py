@@ -75,15 +75,16 @@ def dna(reactor, portNumber, config, tempDir, batchSize):
             'DEL': oaiJazz.deleteOaiRecord
         }
 
-        for action, filename, setSpecs in iterOaiData(data['dir']):
-            identifier, metadataPrefix = filename.rsplit('.', 1)
-            oaiJazzOperations[action](
-                identifier=identifier,
-                setSpecs=setSpecs,
-                metadataPrefixes=[metadataPrefix],
-            )
-            storage.addFile(filename, join(data['dir'], escapeFilename(filename)))
-            sleep(0.000001)
+        for directory in data['dirs']:
+            for action, filename, setSpecs in iterOaiData(directory):
+                identifier, metadataPrefix = filename.rsplit('.', 1)
+                oaiJazzOperations[action](
+                    identifier=identifier,
+                    setSpecs=setSpecs,
+                    metadataPrefixes=[metadataPrefix],
+                )
+                storage.addFile(filename, join(directory, escapeFilename(filename)))
+                sleep(0.000001)
         oaiJazz.commit()
 
         tree = be((PathFilter(data['path'], excluding=['/ready']),
@@ -133,7 +134,7 @@ def startServer(port, dataDir=None, jsonConfig=None, batchSize=None):
 
     config = JsonList.loads(jsonConfig or '[]')
     if dataDir:
-        config.append({'dir': dataDir, 'path': '/'})
+        config.append({'dirs': dataDir, 'path': '/'})
     try:
         reactor = Reactor()
         server = be(dna(reactor, port, config=config, tempDir=tempDir, batchSize=batchSize))
