@@ -3,7 +3,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013, 2015 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -24,14 +24,22 @@
 ## end license ##
 
 from distutils.core import setup
+from os import walk
+from os.path import join
+
+scripts = []
+for path, dirs, files in walk('bin'):
+    for file in files:
+        scripts.append(join(path, file))
 
 setup(
     name='seecr-test',
     version='%VERSION%',
     packages=[
         'seecr',     # DO_NOT_DISTRIBUTE
-        'seecr.test', 
+        'seecr.test',
     ],
+    scripts=scripts,
     url='http://www.seecr.nl',
     author='Seecr',
     author_email='info@seecr.nl',

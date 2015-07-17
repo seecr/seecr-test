@@ -4,3 +4,7 @@ seecr-tools-core (>= 0.2.2)
 seecr-tools-core (<< 0.3)
 python-lxml
 python-weightless-core
+python-meresco-core
+python-meresco-components
+python-meresco-oai
+python-escaping
