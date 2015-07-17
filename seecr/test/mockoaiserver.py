@@ -44,8 +44,8 @@ from meresco.components.json import JsonList
 from meresco.core import Observable
 from meresco.core.processtools import setSignalHandlers, registerShutdownHandler
 
-from meresco.components.log import LogComponent
-from meresco.components.http import ObservableHttpServer, PathFilter, StringServer
+from meresco.components.log import LogComponent, LogCollector, ApacheLogWriter, HandleRequestLog
+from meresco.components.http import ObservableHttpServer, PathFilter, StringServer, ApacheLogger
 from meresco.components.http.utils import ContentTypePlainText
 from meresco.oai import OaiJazz, OaiPmh, SuspendRegister
 from meresco.oai.oaijazz import DEFAULT_BATCH_SIZE
@@ -61,7 +61,7 @@ def allSets(dataDir):
 
 def dna(reactor, portNumber, config, tempDir, batchSize):
     print 'Config', config
-    httpServer = ObservableHttpServer(reactor, portNumber)
+    root = HandleRequestLog()
 
     storage = DataStorage()
     for data in config:
@@ -96,13 +96,18 @@ def dna(reactor, portNumber, config, tempDir, batchSize):
                 )
             )
         ))
-        httpServer.addObserver(tree)
+        root.addObserver(tree)
 
     return \
         (Observable(),
-            (httpServer,
-                (PathFilter("/ready"),
-                    (StringServer('yes', ContentTypePlainText),)
+            (ObservableHttpServer(reactor, portNumber),
+                (LogCollector(),
+                    (ApacheLogWriter(stdout),),
+                    (root,
+                        (PathFilter("/ready"),
+                            (StringServer('yes', ContentTypePlainText),)
+                        )
+                    )
                 )
             )
         )
