@@ -67,7 +67,7 @@ def dna(reactor, portNumber, config, tempDir, batchSize):
     for data in config:
         oaiName = ''.join(data['path'].split('/'))
         oaiSuspendRegister = SuspendRegister()
-        oaiJazz = be((OaiJazz(join(tempDir, oaiName)),
+        oaiJazz = be((OaiJazz(join(tempDir, oaiName), preciseDatestamp=True),
             (oaiSuspendRegister,)
         ))
         oaiJazzOperations = {
