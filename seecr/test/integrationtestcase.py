@@ -3,7 +3,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012, 2014 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012, 2014-2015 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -90,7 +90,10 @@ class IntegrationState(object):
         for flag in flagOptions:
             args.append("--%s" % flag)
         for k,v in kwargs.items():
-            args.append("--%s=%s" % (k, str(v)))
+            if not hasattr(v, 'append'):
+                v = [v]
+            for x in v:
+                args.append("--%s=%s" % (k, str(x)))
         self._stdoutWrite("Starting service '%s', for state '%s'\n" % (serviceName, self.stateName))
         serverProcess = Popen(
             executable=executable,
