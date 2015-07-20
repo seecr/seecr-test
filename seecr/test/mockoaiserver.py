@@ -44,8 +44,8 @@ from meresco.components.json import JsonList
 from meresco.core import Observable
 from meresco.core.processtools import setSignalHandlers, registerShutdownHandler
 
-from meresco.components.log import LogComponent, LogCollector, ApacheLogWriter, HandleRequestLog
-from meresco.components.http import ObservableHttpServer, PathFilter, StringServer, ApacheLogger
+from meresco.components.log import LogCollector, ApacheLogWriter, HandleRequestLog
+from meresco.components.http import ObservableHttpServer, PathFilter, StringServer
 from meresco.components.http.utils import ContentTypePlainText
 from meresco.oai import OaiJazz, OaiPmh, SuspendRegister
 from meresco.oai.oaijazz import DEFAULT_BATCH_SIZE
