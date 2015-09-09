@@ -28,28 +28,46 @@
 # import the good test module.
 from sys import path
 import sys
-from os import environ
+from os import stat
+from os.path import expanduser, isfile
+from time import time
 
-temppath = []
-def pystones(*args, **kwargs):
-    from warnings import warn
-    warn("Python module 'test.pystone' not available. Will assume T=1.0")
-    return 1.0, "ignored"
 
-PYSTONES_OFF = environ.get('PYSTONES_OFF') is not None
-while not PYSTONES_OFF and len(path) > 0:
+def determineT():
+    def pystones(*args, **kwargs):
+        from warnings import warn
+        warn("Python module 'test.pystone' not available. Will assume T=1.0")
+        return 1.0, "ignored"
+
+    pystonesValueFile = expanduser('~/.seecr-test-pystones')
+    if isfile(pystonesValueFile):
+        age = time() - stat(pystonesValueFile).st_mtime
+        if age < 12 * 60 * 60:
+            return float(open(pystonesValueFile).read())
+
+    temppath = []
+    while len(path) > 0:
+        try:
+            if 'test' in sys.modules:
+                del sys.modules['test']
+            from test.pystone import pystones
+
+            break
+        except ImportError:
+            temppath.append(path[0])
+            del path[0]
+    for temp in reversed(temppath):
+        path.insert(0, temp)
+    del temppath
+    T, p = pystones(loops=50000)
     try:
-        if 'test' in sys.modules:
-            del sys.modules['test']
-        from test.pystone import pystones
-        break
-    except ImportError:
-        temppath.append(path[0])
-        del path[0]
+        with open(pystonesValueFile, 'w') as f:
+            f.write(str(T))
+    except IOError:
+        pass
+    return T
 
-T, p = pystones(loops=50000)
+T = determineT()
 print 'T=%.1fs' % T
+del determineT
 
-for temp in reversed(temppath):
-    path.insert(0, temp)
-del temppath
