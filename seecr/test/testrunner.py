@@ -153,7 +153,7 @@ class TestRunner(object):
         self._stream = stdout
         self._verbosity = 2 if verbose else 1
         self._args = self.parseArgs()
-        self.fastmode = self._args.fastmode
+        self.fastMode = self._args.fastMode
 
     def addGroup(self, *args, **kwargs):
         self._groups.append(TestGroup(*args, **kwargs))
