@@ -152,14 +152,21 @@ class TestRunner(object):
         self._groups = []
         self._stream = stdout
         self._verbosity = 2 if verbose else 1
+        self._args = self.parseArgs()
+        self.fastmode = self._args.fastmode
 
     def addGroup(self, *args, **kwargs):
         self._groups.append(TestGroup(*args, **kwargs))
 
-    def parseArgs(self, args=None):
+    @staticmethod
+    def parseArgs(args=None):
         return TestArguments(args=args)
 
-    def run(self, testnames=None, groupnames=None):
+    def run(self, testnames='?', groupnames='?'):
+        if groupnames == '?':
+            groupnames = self._args.groupnames
+        if testnames == '?':
+            testnames = self._args.testnames
         t0 = time()
         testResult = TestResult(verbosity=self._verbosity)
         groups = self._groups
@@ -180,6 +187,7 @@ class TestRunner(object):
         timeTaken = time() - t0
         testResult.printResult(timeTaken)
         exit(not testResult.wasSuccessful())
+
 
 
 class TestSuite(UnitTestTestSuite):
