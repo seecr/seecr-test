@@ -143,16 +143,20 @@ class TestArguments(object):
         parser = OptionParser()
         parser.add_option('', '--group', help='Group', default=None)
         parser.add_option('', '--fast', action="store_true", help='Enable fastmode', default=False)
+        parser.add_option('-v', '--verbose', action="store_true", help='Be more verbose', default=False)
         options, self.testnames = parser.parse_args(args)
         self.groupnames = None if options.group is None else [options.group]
         self.fastMode = options.fast
+        self.verbose = options.verbose
 
 class TestRunner(object):
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=None):
         self._groups = []
         self._stream = stdout
-        self._verbosity = 2 if verbose else 1
         self._args = self.parseArgs()
+        if verbose is None:
+            verbose = self._args.verbose
+        self._verbosity = 2 if verbose else 1
         self.fastMode = self._args.fastMode
 
     def addGroup(self, *args, **kwargs):
