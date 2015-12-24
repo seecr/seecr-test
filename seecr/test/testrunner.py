@@ -141,13 +141,15 @@ class TestArguments(object):
             from sys import argv
             args = argv[1:]
         parser = OptionParser()
-        parser.add_option('', '--group', help='Group', default=None)
+        parser.add_option('-g', '--group', help='Group', default=None)
+        parser.add_option('-l', '--list', default=False, action='store_true', help='List groups')
         parser.add_option('', '--fast', action="store_true", help='Enable fastmode', default=False)
         parser.add_option('-v', '--verbose', action="store_true", help='Be more verbose', default=False)
         options, self.testnames = parser.parse_args(args)
         self.groupnames = None if options.group is None else [options.group]
         self.fastMode = options.fast
         self.verbose = options.verbose
+        self.listGroups = options.list
 
 class TestRunner(object):
     def __init__(self, verbose=None):
@@ -174,6 +176,11 @@ class TestRunner(object):
         t0 = time()
         testResult = TestResult(verbosity=self._verbosity)
         groups = self._groups
+        if self._args.listGroups:
+            print 'Groups:'
+            for g in sorted(groups):
+                print ' -', g.name
+            exit(0)
         if groupnames:
             groups = (group for group in self._groups if group.name in groupnames)
         for group in groups:
