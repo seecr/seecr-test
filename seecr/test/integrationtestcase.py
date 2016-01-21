@@ -115,6 +115,7 @@ class IntegrationState(object):
             except IOError:
                 if serverProcess.poll() != None:
                     del self.pids[serviceName]
+                    self._clearServicesReadyMethods()
                     exit('Service "%s" died, check "%s"' % (serviceName, stdoutfile))
             return False
         self._servicesReadyMethods.append(serviceReady)
@@ -171,7 +172,6 @@ class IntegrationState(object):
             keepRunning = result is None
             if time() - t0 > timeoutInSeconds:
                 process.terminate()
-                self._clearServicesReadyMethods()
                 exit('Executable "%s" took more than %s seconds, check "%s"' % (basename(executable), timeoutInSeconds, stdoutfile))
 
         if expectedReturnCode is not None and result != expectedReturnCode:
