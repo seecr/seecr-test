@@ -3,7 +3,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012, 2014-2015 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012, 2014-2016 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -171,6 +171,7 @@ class IntegrationState(object):
             keepRunning = result is None
             if time() - t0 > timeoutInSeconds:
                 process.terminate()
+                self._clearServiceReadyMethods()
                 exit('Executable "%s" took more than %s seconds, check "%s"' % (basename(executable), timeoutInSeconds, stdoutfile))
 
         if expectedReturnCode is not None and result != expectedReturnCode:
@@ -190,7 +191,11 @@ class IntegrationState(object):
         for r in self._servicesReadyMethods:
             while not r():
                 pass
+        self._clearServicesReadyMethods()
+
+    def _clearServiceReadyMethods(self):
         del self._servicesReadyMethods[:]
+
 
     @staticmethod
     def _stdoutWrite(aString):
