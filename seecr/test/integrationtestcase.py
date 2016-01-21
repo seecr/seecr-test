@@ -171,7 +171,7 @@ class IntegrationState(object):
             keepRunning = result is None
             if time() - t0 > timeoutInSeconds:
                 process.terminate()
-                self._clearServiceReadyMethods()
+                self._clearServicesReadyMethods()
                 exit('Executable "%s" took more than %s seconds, check "%s"' % (basename(executable), timeoutInSeconds, stdoutfile))
 
         if expectedReturnCode is not None and result != expectedReturnCode:
@@ -193,7 +193,7 @@ class IntegrationState(object):
                 pass
         self._clearServicesReadyMethods()
 
-    def _clearServiceReadyMethods(self):
+    def _clearServicesReadyMethods(self):
         del self._servicesReadyMethods[:]
 
 
