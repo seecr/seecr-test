@@ -1,33 +1,33 @@
 ## begin license ##
-# 
-# "Seecr Test" provides test tools. 
-# 
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
-# 
+#
+# "Seecr Test" provides test tools.
+#
+# Copyright (C) 2012, 2016 Seecr (Seek You Too B.V.) http://seecr.nl
+#
 # This file is part of "Seecr Test"
-# 
+#
 # "Seecr Test" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Seecr Test" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Seecr Test"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
+from socket import socket, SO_LINGER, SOL_SOCKET
+from struct import pack
 from unittest import TestCase
 
 from seecr.test.portnumbergenerator import PortNumberGenerator
 
-from socket import socket, SO_LINGER, SOL_SOCKET, SHUT_RDWR
-from struct import pack
 
 class PortNumberGeneratorTest(TestCase):
     def testReasonableAmountOfUniquePortNumbers(self):
@@ -48,7 +48,6 @@ class PortNumberGeneratorTest(TestCase):
 
     def testFindProblemWithLockupAfterReuseQuickly(self):
         soks = []
-        nrs = set([])
         try:
             for i in range(10):
                 for j in xrange(950):
@@ -62,9 +61,18 @@ class PortNumberGeneratorTest(TestCase):
                     for s in reversed(soks):
                         s.close()
                         soks.remove(s)
-        except Exception, e:
+        except Exception:
             for s in reversed(soks):
                 s.close()
                 soks.remove(s)
             raise  # "[Errno 98] Address already in use" when misimplemented
 
+    def testClaimBlockOfPortNumbers(self):
+        ports = []
+        for i in xrange(20):
+            p = PortNumberGenerator.next(blockSize=3)
+            self.assertTrue(p in PortNumberGenerator._usedPorts)
+            self.assertTrue((p + 1) in PortNumberGenerator._usedPorts)
+            self.assertTrue((p + 2) in PortNumberGenerator._usedPorts)
+            ports.append(p)
+        self.assertEquals(20, len(ports))
