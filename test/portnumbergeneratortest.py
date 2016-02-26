@@ -76,3 +76,16 @@ class PortNumberGeneratorTest(TestCase):
             self.assertTrue((p + 2) in PortNumberGenerator._usedPorts)
             ports.append(p)
         self.assertEquals(20, len(ports))
+
+    def testReservePortNumbersGenerated(self):
+        self.fail()
+
+    def testReservePortNumberGiven(self):
+        self.fail()
+
+    def testFreePortNumber(self):
+        self.fail()
+
+    def testReserveIs_DualStack_Wildcard_NoReusePossible(self):
+        # TODO: port test from png.py!
+        pass

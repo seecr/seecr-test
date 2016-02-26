@@ -22,8 +22,11 @@
 #
 ## end license ##
 
+import socket as socketModule
+import sys
+from contextlib import closing
 from copy import copy
-from socket import socket, SO_LINGER, SOL_SOCKET, SO_REUSEADDR
+from socket import socket, getaddrinfo, error as socket_error, has_ipv6, SOL_SOCKET, SO_LINGER, SO_REUSEADDR, SOCK_STREAM, SOCK_DGRAM, IPPROTO_TCP, IPPROTO_UDP, AF_INET
 from struct import pack
 
 
@@ -48,6 +51,7 @@ class PortNumberGenerator(object):
                 blacklistedPorts=cls._usedPorts)
             if port:
                 cls._usedPorts.update(set(range(port, port + blockSize)))
+                cls._reservations.update(reservations)
                 return port
 
             continue
@@ -76,37 +80,123 @@ def attemptEphemeralBindings(blockSize, reserve, blacklistedPorts=None):
         if portNumberToBind is not 0 and portNumberToBind in blacklistedPorts:
             return None, None
 
-        aPort, sok = attemptBinding(port=portNumberToBind)
+        aPort, close = attemptBinding(bindPort=portNumberToBind)
 
         if aPort is None:
             return None, None
         elif aPort in blacklistedPorts:
-            sok.close()
+            close()
             return None, None
 
         if reserve is True:
-            reservations[aPort] = sok
+            reservations[aPort] = close
+        else:
+            close()
 
         if port is None:
             portNumberToBind = port = aPort
         portNumberToBind += 1
         togo -= 1
 
-    return port, []  # TODO: reservations!
+    return port, reservations
 
 
-def attemptBinding(port):
-     sok = socket()
-     sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 0, 0))
-     sok.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-     try:
-         sok.bind(('127.0.0.1', port))
-     except IOError, e:
-         if port is 0:
-             raise
-         return None, None
+#
+# Implementation for Dual-Stack or IPv4 below here.
+#
 
-     # Not needed when port != 0; but still *quicker* than testing port and returning it in Python.
-     ignoredHost, aPort = sok.getsockname()
+def has_dual_stack():
+    """Return True if kernel allows creating a socket which is able to
+    listen for both IPv4 and IPv6 connections.
+    """
+    # From: http://bugs.python.org/issue17561 - see also: http://code.activestate.com/recipes/578504-server-supporting-ipv4-and-ipv6/
+    if not has_ipv6 \
+            or not hasattr(socketModule, 'AF_INET6') \
+            or not hasattr(socketModule, 'IPV6_V6ONLY'):
+        return False
+    try:
+        with closing(socket(socketModule.AF_INET6, SOCK_STREAM)) as sock:
+            if not sock.getsockopt(socketModule.IPPROTO_IPV6, socketModule.IPV6_V6ONLY):
+                return True
+            else:
+                sock.setsockopt(socketModule.IPPROTO_IPV6, socketModule.IPV6_V6ONLY, False)
+                return True
+    except socket_error:
+        return False
 
-     return aPort, sok
+if has_dual_stack():
+    # Imports that could fail without IPv6 / Dual-Stack support.
+    from socket import AI_PASSIVE, AF_UNSPEC, AF_INET6, IPPROTO_IPV6, IPV6_V6ONLY
+
+    def attemptBinding(bindPort):
+        # Prepare TCP and UDP socket
+        sokT = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP)
+        setIPv6Options(sokT)
+        sokU = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)
+        setIPv6Options(sokU)
+
+        try:
+            sokT.bind(ipv6SocketAddr(bindPort))
+            _host, tcpPort, _flowInfo, _scopeId = sokT.getsockname()
+            sokU.bind(ipv6SocketAddr(tcpPort))  # Identical to bindPort iff port != 0; otherwise same as ephemeral tcpPort
+        except IOError:
+            return None, None
+
+        def close():
+            sokT.close()
+            sokU.close()
+
+        return tcpPort, close
+
+    def setIPv6Options(sok):
+        sok.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0) # Dual-Stack please.
+        sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 0, 0))
+        sok.setsockopt(SOL_SOCKET, SO_REUSEADDR, 0) # *No* re-use (it's usually the default, but anyways)!
+
+    def ipv6SocketAddr(port):
+        return (IPv6_WILDCARD_SOCKADDR[0], port, IPv6_WILDCARD_SOCKADDR[2], IPv6_WILDCARD_SOCKADDR[3])
+
+    def _determineIPv6WildcardSockAddr():
+        host = None
+        port = 0  # Ephemeral port by default
+        family = AF_UNSPEC
+        socktype = SOCK_STREAM  # SOCK_DGRAM would be fine too.
+        proto = 0               # TODO: Could this be IPPROTO_TCP ?!?
+        flags = AI_PASSIVE
+        # getaddrinfo(...) could theoretically fail (with socker.(gai)error); but should never for wildcard lookup.
+        # It gives: 2 results, 1 for IPv4 and one for IPv6 (both wildcards)
+        info = getaddrinfo(host, port, family, socktype, proto, flags)
+         # sockaddr for IPv6 consists of: (host, port, flow-information, scope-id)  -- The last 2 are quite impossible to guess (though possibly not that important); so using getaddrinfo result instead of hard-coded values.
+        family, socktype, proto, canonname, sockaddr = [i for i in info if i[0] == AF_INET6][0]
+        if not ((family, socktype, proto) == (AF_INET6, SOCK_STREAM, IPPROTO_TCP) and \
+                ('::', 0) == sockaddr[0:2] and \
+                type(sockaddr) == type(tuple())):
+            raise RuntimeError('Assumption failure.')
+        return sockaddr
+
+    # Format IPv6 Wildcard: ('::', <port-number>, <flow-information>, <scope-id>) - usually being: ('::', 0, 0, 0)
+    IPv6_WILDCARD_SOCKADDR = _determineIPv6WildcardSockAddr()
+
+else:
+    sys.stderr.write("\nSeecr-Test's PortNumberGenerator: Dual-Stack IP (IPv4 and IPv6 configurable on one socket) is not found!\n")
+    sys.stderr.write("  Falling back to IPv4 wildcard :-(\n")
+    sys.stderr.flush()
+
+    # TODO: write IPv4 impl. of binding
+
+    def attemptBinding(bindPort):
+        # FIXME: old impl!
+        sok = socket()
+        sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 0, 0))
+        sok.setsockopt(SOL_SOCKET, SO_REUSEADDR, 0)
+        try:
+            sok.bind(('127.0.0.1', bindPort))
+        except IOError, e:
+            if bindPort is 0:
+                raise
+            return None, None
+
+        # Not needed when bindPort != 0; but still *quicker* than testing bindPort and returning it in Python.
+        ignoredHost, aPort = sok.getsockname()
+
+        return aPort, sok.close
