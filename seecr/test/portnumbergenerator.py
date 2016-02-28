@@ -58,6 +58,19 @@ class PortNumberGenerator(object):
 
         raise RuntimeError('Not been able to get an new uniqe free port within a reasonable amount (%s) of tries.' % cls._maxTries)
 
+    @classmethod
+    def release(cls, port):
+        close = cls._reservations.pop(port, None)
+        if close is not None:
+            close()
+
+    @classmethod
+    def clear(cls):
+        for close in cls._reservations.values():
+            close()
+        cls._reservations.clear()
+        cls._usedPorts.clear()
+
 
 def attemptEphemeralBindings(blockSize, reserve, blacklistedPorts=None):
     """
@@ -139,7 +152,7 @@ if has_dual_stack():
             sokT.bind(ipv6SocketAddr(bindPort))
             _host, tcpPort, _flowInfo, _scopeId = sokT.getsockname()
             sokU.bind(ipv6SocketAddr(tcpPort))  # Identical to bindPort iff port != 0; otherwise same as ephemeral tcpPort
-        except IOError:
+        except (IOError, OverflowError):  # OverflowError can occur when port > 65535
             return None, None
 
         def close():
@@ -191,7 +204,7 @@ else:
         sok.setsockopt(SOL_SOCKET, SO_REUSEADDR, 0)
         try:
             sok.bind(('127.0.0.1', bindPort))
-        except IOError, e:
+        except (IOError, OverflowError):  # OverflowError can occur when port > 65535
             if bindPort is 0:
                 raise
             return None, None
