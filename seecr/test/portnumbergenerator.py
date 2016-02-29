@@ -32,37 +32,45 @@ from struct import pack
 
 class PortNumberGenerator(object):
     _ephemeralPortLow, _ephemeralPortHigh = [int(p) for p in open('/proc/sys/net/ipv4/ip_local_port_range', 'r').read().strip().split('\t', 1)]  # low\thigh
-    # TODO: read & exclude ip_local_reserved_ports; see: http://www.mjmwired.net/kernel/Documentation/networking/ip-sysctl.txt#774
-    # TODO: detect non-dual stack impl and either FIX or FAIL; FAIL easier in the short term...
     _maxTries = (_ephemeralPortHigh - _ephemeralPortLow) / 2
     _usedPorts = set([])
     _reservations = {}
 
     @classmethod
     def next(cls, blockSize=1, reserve=False):
-        blockSize = int(blockSize)
-        if blockSize < 1:
-            raise ValueError('blockSize smaller than 1')  # FIXME: Testme!
-
+        blockSize = verifyAndCoerseBlockSize(blockSize)
         for i in xrange(cls._maxTries):
-            port, reservations = attemptEphemeralBindings(
-                blockSize=blockSize,
-                reserve=reserve,
-                blacklistedPorts=cls._usedPorts)
+            port = cls._bindAttempt(0, blockSize, reserve)
             if port:
-                cls._usedPorts.update(set(range(port, port + blockSize)))
-                cls._reservations.update(reservations)
                 return port
-
-            continue
 
         raise RuntimeError('Not been able to get an new uniqe free port within a reasonable amount (%s) of tries.' % cls._maxTries)
 
     @classmethod
-    def release(cls, port):
-        close = cls._reservations.pop(port, None)
-        if close is not None:
-            close()
+    def release(cls, port, blockSize=1):
+        blockSize = verifyAndCoerseBlockSize(blockSize)
+        for p in range(port, port + blockSize):
+            close = cls._reservations.pop(p, None)
+            if close is not None:
+                close()
+
+    @classmethod
+    def reserve(cls, port, blockSize=1):
+        blockSize = verifyAndCoerseBlockSize(blockSize)
+        portsToReserve = set(range(port, port + blockSize))
+        if set(cls._reservations.keys()).intersection(portsToReserve):
+            raise RuntimeError('Port(s) already reserved')
+
+        usedPortsToBeReserved = cls._usedPorts.intersection(portsToReserve)
+        for p in usedPortsToBeReserved:
+            cls._usedPorts.discard(p)
+
+        port = cls._bindAttempt(port, blockSize, True)
+        if not port:
+            cls._usedPorts.update(usedPortsToBeReserved)
+            raise RuntimeError('Port(s) are not free!')
+
+        return port
 
     @classmethod
     def clear(cls):
@@ -71,10 +79,22 @@ class PortNumberGenerator(object):
         cls._reservations.clear()
         cls._usedPorts.clear()
 
+    @classmethod
+    def _bindAttempt(cls, port, blockSize, reserve):
+        port, reservations = attemptEphemeralBindings(
+            bindPort=port,
+            blockSize=blockSize,
+            reserve=reserve,
+            blacklistedPorts=cls._usedPorts)
+        if port:
+            cls._usedPorts.update(set(range(port, port + blockSize)))
+            cls._reservations.update(reservations)
+            return port
 
-def attemptEphemeralBindings(blockSize, reserve, blacklistedPorts=None):
+def attemptEphemeralBindings(bindPort, blockSize, reserve, blacklistedPorts=None):
     """
     Returns port and reservations if succesful; otherwise all None's.
+    If bindPort is 0; does ephemeral binding (first port) and the remaining ports explicitly.
 
     port:
         First port (of consequative ports iff blockSize > 1).
@@ -84,7 +104,7 @@ def attemptEphemeralBindings(blockSize, reserve, blacklistedPorts=None):
     blacklistedPorts = set() if blacklistedPorts is None else blacklistedPorts
 
     port = None
-    portNumberToBind = 0
+    portNumberToBind = bindPort
     togo = blockSize
     reservations = {}
     # togo > 0; but called quite often, so a quicker check.
@@ -113,13 +133,20 @@ def attemptEphemeralBindings(blockSize, reserve, blacklistedPorts=None):
 
     return port, reservations
 
+def verifyAndCoerseBlockSize(blockSize):
+    blockSize = int(blockSize)
+    if blockSize < 1:
+        raise ValueError('blockSize smaller than 1')
+    return blockSize
+
 
 #
 # Implementation for Dual-Stack or IPv4 below here.
 #
 
 def has_dual_stack():
-    """Return True if kernel allows creating a socket which is able to
+    """
+    Return True if kernel allows creating a socket which is able to
     listen for both IPv4 and IPv6 connections.
     """
     # From: http://bugs.python.org/issue17561 - see also: http://code.activestate.com/recipes/578504-server-supporting-ipv4-and-ipv6/
@@ -174,7 +201,7 @@ if has_dual_stack():
         port = 0  # Ephemeral port by default
         family = AF_UNSPEC
         socktype = SOCK_STREAM  # SOCK_DGRAM would be fine too.
-        proto = 0               # TODO: Could this be IPPROTO_TCP ?!?
+        proto = 0               # Could probably be IPPROTO_TCP (or _UDP too).
         flags = AI_PASSIVE
         # getaddrinfo(...) could theoretically fail (with socker.(gai)error); but should never for wildcard lookup.
         # It gives: 2 results, 1 for IPv4 and one for IPv6 (both wildcards)

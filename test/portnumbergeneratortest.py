@@ -85,6 +85,11 @@ class PortNumberGeneratorTest(TestCase):
             ports.append(p)
         self.assertEquals(20, len(ports))
 
+    def testBlockSizeMustBePositive(self):
+        self.assertRaises(ValueError, lambda: PortNumberGenerator.next(blockSize=0))
+        self.assertRaises(ValueError, lambda: PortNumberGenerator.next(blockSize=-1))
+        PortNumberGenerator.next(blockSize=1)
+
     def testReservePortNumbersGeneratedV4(self):
         p = PortNumberGenerator.next(reserve=True)
         self.assertTrue(0 < p < 65536)
@@ -106,9 +111,61 @@ class PortNumberGeneratorTest(TestCase):
                 self.assertNotBound(bindV4(ip='0.0.0.0', port=consequative_p, protocol='udp', reuse=reuse))
 
     def testReservePortNumberGivenV4(self):
-        # port, close = attemptBinding(bindPort=0); close()
-        # PortNumberGenerator.reserve
-        self.fail('Think!')
+        port, close = attemptBinding(bindPort=0); close()
+        PortNumberGenerator.reserve(port=port)
+        self.assertNotBound(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
+
+        PortNumberGenerator.release(port=port)
+        self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
+
+    def testReservePortRangeNumberGivenV4(self):
+        port = PortNumberGenerator.next(blockSize=2)
+        port2 = port + 1
+        PortNumberGenerator.reserve(port=port, blockSize=2)
+        self.assertNotBound(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
+        self.assertNotBound(bindV4(ip='127.0.0.1', port=port2, protocol='tcp', reuse=True))
+
+        PortNumberGenerator.release(port=port, blockSize=2)
+        self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
+        self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=port2, protocol='tcp', reuse=True))
+
+    def testReservePortNumberGivenIgnoresUsedPorts(self):
+        port = PortNumberGenerator.next()
+        PortNumberGenerator.reserve(port)
+        self.assertNotBound(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
+
+    def testReserveKeepsOldUsedPortsOnFailure(self):
+        port1 = PortNumberGenerator.next()
+        port2 = PortNumberGenerator.next(blockSize=2)
+        port3 = port2 + 1
+        PortNumberGenerator.reserve(port3)
+
+        # Overlap with already reserved port: port3.
+        self.assertEquals(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
+        self.assertEquals(set([port3]), set(PortNumberGenerator._reservations.keys()))
+        try:
+            PortNumberGenerator.reserve(port2, blockSize=2)
+        except RuntimeError, e:
+            self.assertEquals('Port(s) already reserved', str(e))
+        else: self.fail()
+
+        self.assertEquals(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
+        self.assertEquals(set([port3]), set(PortNumberGenerator._reservations.keys()))
+
+        # Overlap with bound port: port3.
+        PortNumberGenerator.release(port=port3)
+        _port, close = attemptBinding(bindPort=port3)
+        self.assertTrue(_port)
+        self.assertEquals(set(), set(PortNumberGenerator._reservations.keys()))
+        try:
+            PortNumberGenerator.reserve(port2, blockSize=2)
+        except RuntimeError, e:
+            self.assertEquals('Port(s) are not free!', str(e))
+        else: self.fail()
+
+        self.assertEquals(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
+        self.assertEquals(set(), set(PortNumberGenerator._reservations.keys()))
+        close()                 # Cleanup
 
     def testReleasePortNumberV4(self):
         p = PortNumberGenerator.next(reserve=True)
