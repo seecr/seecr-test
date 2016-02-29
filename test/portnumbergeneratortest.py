@@ -110,15 +110,19 @@ class PortNumberGeneratorTest(TestCase):
                 self.assertNotBound(bindV4(ip='0.0.0.0', port=consequative_p, protocol='tcp', reuse=reuse))
                 self.assertNotBound(bindV4(ip='0.0.0.0', port=consequative_p, protocol='udp', reuse=reuse))
 
-    def testReservePortNumberGivenV4(self):
+    def testReservePortNumberGiven(self):
         port, close = attemptBinding(bindPort=0); close()
         PortNumberGenerator.reserve(port=port)
         self.assertNotBound(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
+        if has_dual_stack():
+            self.assertNotBound(bindV6(ip='::1', port=port, protocol='tcp', reuse=True))
 
         PortNumberGenerator.release(port=port)
         self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
+        if has_dual_stack():
+            self.assertBoundAndRelease(bindV6(ip='::1', port=port, protocol='tcp', reuse=True))
 
-    def testReservePortRangeNumberGivenV4(self):
+    def testReservePortRangeNumberGiven(self):
         port = PortNumberGenerator.next(blockSize=2)
         port2 = port + 1
         PortNumberGenerator.reserve(port=port, blockSize=2)
@@ -134,7 +138,7 @@ class PortNumberGeneratorTest(TestCase):
         PortNumberGenerator.reserve(port)
         self.assertNotBound(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
 
-    def testReserveKeepsOldUsedPortsOnFailure(self):
+    def testReservePortNumberGivenKeepsOldUsedPortsOnFailure(self):
         port1 = PortNumberGenerator.next()
         port2 = PortNumberGenerator.next(blockSize=2)
         port3 = port2 + 1
@@ -209,12 +213,6 @@ class PortNumberGeneratorTest(TestCase):
                     self.assertNotBound(bindV6(ip='::', port=consequative_p, protocol=protocol, reuse=reuse))
                     self.assertNotBound(bindV6(ip='::1', port=consequative_p, protocol=protocol, reuse=reuse, ipV6Only=False))
                     self.assertNotBound(bindV6(ip='::', port=consequative_p, protocol=protocol, reuse=reuse, ipV6Only=False))
-
-    def testReservePortNumberGivenV6(self):
-        if not has_dual_stack():
-            return printDualStackSkipped()
-
-        self.fail()
 
     def testReleasePortNumberV6(self):
         if not has_dual_stack():
