@@ -198,18 +198,27 @@ else:
     # TODO: write IPv4 impl. of binding
 
     def attemptBinding(bindPort):
-        # FIXME: old impl!
-        sok = socket()
-        sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 0, 0))
-        sok.setsockopt(SOL_SOCKET, SO_REUSEADDR, 0)
+        # Prepare TCP and UDP socket
+        sokT = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
+        setIPv4Options(sokT)
+        sokU = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
+        setIPv4Options(sokU)
+
         try:
-            sok.bind(('127.0.0.1', bindPort))
+            sokT.bind((IPv4_WILDCARD, bindPort))
+            _host, tcpPort = sokT.getsockname()
+            sokU.bind((IPv4_WILDCARD, tcpPort))  # Identical to bindPort iff port != 0; otherwise same as ephemeral tcpPort
         except (IOError, OverflowError):  # OverflowError can occur when port > 65535
-            if bindPort is 0:
-                raise
             return None, None
 
-        # Not needed when bindPort != 0; but still *quicker* than testing bindPort and returning it in Python.
-        ignoredHost, aPort = sok.getsockname()
+        def close():
+            sokT.close()
+            sokU.close()
 
-        return aPort, sok.close
+        return tcpPort, close
+
+    def setIPv4Options(sok):
+        sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 0, 0))
+        sok.setsockopt(SOL_SOCKET, SO_REUSEADDR, 0) # *No* re-use (it's usually the default, but anyways)!
+
+    IPv4_WILDCARD = '0.0.0.0'
