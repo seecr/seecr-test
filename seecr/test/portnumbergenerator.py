@@ -40,7 +40,7 @@ class PortNumberGenerator(object):
     def next(cls, blockSize=1, reserve=False):
         blockSize = verifyAndCoerseBlockSize(blockSize)
         for i in xrange(cls._maxTries):
-            port = cls._bindAttempt(0, blockSize, reserve)
+            port = cls._bindAttempt(0, blockSize, reserve, cls._usedPorts)
             if port:
                 return port
 
@@ -61,13 +61,9 @@ class PortNumberGenerator(object):
         if set(cls._reservations.keys()).intersection(portsToReserve):
             raise RuntimeError('Port(s) already reserved')
 
-        usedPortsToBeReserved = cls._usedPorts.intersection(portsToReserve)
-        for p in usedPortsToBeReserved:
-            cls._usedPorts.discard(p)
-
-        port = cls._bindAttempt(port, blockSize, True)
+        usedPortsMinusToReserve = cls._usedPorts.difference(portsToReserve)
+        port = cls._bindAttempt(port, blockSize, True, usedPortsMinusToReserve)
         if not port:
-            cls._usedPorts.update(usedPortsToBeReserved)
             raise RuntimeError('Port(s) are not free!')
 
         return port
@@ -80,12 +76,12 @@ class PortNumberGenerator(object):
         cls._usedPorts.clear()
 
     @classmethod
-    def _bindAttempt(cls, port, blockSize, reserve):
+    def _bindAttempt(cls, port, blockSize, reserve, blacklistedPorts):
         port, reservations = attemptEphemeralBindings(
             bindPort=port,
             blockSize=blockSize,
             reserve=reserve,
-            blacklistedPorts=cls._usedPorts)
+            blacklistedPorts=blacklistedPorts)
         if port:
             cls._usedPorts.update(set(range(port, port + blockSize)))
             cls._reservations.update(reservations)
@@ -221,8 +217,6 @@ else:
     sys.stderr.write("\nSeecr-Test's PortNumberGenerator: Dual-Stack IP (IPv4 and IPv6 configurable on one socket) is not found!\n")
     sys.stderr.write("  Falling back to IPv4 wildcard :-(\n")
     sys.stderr.flush()
-
-    # TODO: write IPv4 impl. of binding
 
     def attemptBinding(bindPort):
         # Prepare TCP and UDP socket
