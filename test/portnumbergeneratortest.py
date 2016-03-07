@@ -90,8 +90,8 @@ class PortNumberGeneratorTest(TestCase):
         self.assertRaises(ValueError, lambda: PortNumberGenerator.next(blockSize=-1))
         PortNumberGenerator.next(blockSize=1)
 
-    def testReservePortNumbersGeneratedV4(self):
-        p = PortNumberGenerator.next(reserve=True)
+    def testBindPortNumbersGeneratedV4(self):
+        p = PortNumberGenerator.next(bind=True)
         self.assertTrue(0 < p < 65536)
         for reuse in [True, False]:
             self.assertNotBound(bindV4(ip='127.0.0.1', port=p, protocol='tcp', reuse=reuse))
@@ -99,9 +99,9 @@ class PortNumberGeneratorTest(TestCase):
             self.assertNotBound(bindV4(ip='0.0.0.0', port=p, protocol='tcp', reuse=reuse))
             self.assertNotBound(bindV4(ip='0.0.0.0', port=p, protocol='udp', reuse=reuse))
 
-    def testReservePortNumbersGenerated_withBlockSize_V4(self):
+    def testBindPortNumbersGenerated_withBlockSize_V4(self):
         blockSize = 3
-        p = PortNumberGenerator.next(reserve=True, blockSize=blockSize)
+        p = PortNumberGenerator.next(bind=True, blockSize=blockSize)
 
         for consequative_p in range(p, p + blockSize):
             for reuse in [False, True]:
@@ -110,83 +110,83 @@ class PortNumberGeneratorTest(TestCase):
                 self.assertNotBound(bindV4(ip='0.0.0.0', port=consequative_p, protocol='tcp', reuse=reuse))
                 self.assertNotBound(bindV4(ip='0.0.0.0', port=consequative_p, protocol='udp', reuse=reuse))
 
-    def testReservePortNumberGiven(self):
+    def testBindPortNumberGiven(self):
         port, close = attemptBinding(bindPort=0); close()
-        PortNumberGenerator.reserve(port=port)
+        PortNumberGenerator.bind(port=port)
         self.assertNotBound(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
         if has_dual_stack():
             self.assertNotBound(bindV6(ip='::1', port=port, protocol='tcp', reuse=True))
 
-        PortNumberGenerator.release(port=port)
-        self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
+        PortNumberGenerator.unbind(port=port)
+        self.assertBoundAndUnbind(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
         if has_dual_stack():
-            self.assertBoundAndRelease(bindV6(ip='::1', port=port, protocol='tcp', reuse=True))
+            self.assertBoundAndUnbind(bindV6(ip='::1', port=port, protocol='tcp', reuse=True))
 
-    def testReservePortRangeNumberGiven(self):
+    def testBindPortRangeNumberGiven(self):
         port = PortNumberGenerator.next(blockSize=2)
         port2 = port + 1
-        PortNumberGenerator.reserve(port=port, blockSize=2)
+        PortNumberGenerator.bind(port=port, blockSize=2)
         self.assertNotBound(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
         self.assertNotBound(bindV4(ip='127.0.0.1', port=port2, protocol='tcp', reuse=True))
 
-        PortNumberGenerator.release(port=port, blockSize=2)
-        self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
-        self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=port2, protocol='tcp', reuse=True))
+        PortNumberGenerator.unbind(port=port, blockSize=2)
+        self.assertBoundAndUnbind(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
+        self.assertBoundAndUnbind(bindV4(ip='127.0.0.1', port=port2, protocol='tcp', reuse=True))
 
-    def testReservePortNumberGivenIgnoresUsedPorts(self):
+    def testBindPortNumberGivenIgnoresUsedPorts(self):
         port = PortNumberGenerator.next()
-        PortNumberGenerator.reserve(port)
+        PortNumberGenerator.bind(port)
         self.assertNotBound(bindV4(ip='127.0.0.1', port=port, protocol='tcp', reuse=True))
 
-    def testReservePortNumberGivenKeepsOldUsedPortsOnFailure(self):
+    def testBindPortNumberGivenKeepsOldUsedPortsOnFailure(self):
         port1 = PortNumberGenerator.next()
         port2 = PortNumberGenerator.next(blockSize=2)
         port3 = port2 + 1
-        PortNumberGenerator.reserve(port3)
+        PortNumberGenerator.bind(port3)
 
-        # Overlap with already reserved port: port3.
+        # Overlap with already bind port: port3.
         self.assertEquals(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
-        self.assertEquals(set([port3]), set(PortNumberGenerator._reservations.keys()))
+        self.assertEquals(set([port3]), set(PortNumberGenerator._bound.keys()))
         try:
-            PortNumberGenerator.reserve(port2, blockSize=2)
+            PortNumberGenerator.bind(port2, blockSize=2)
         except RuntimeError, e:
-            self.assertEquals('Port(s) already reserved', str(e))
+            self.assertEquals('Port(s) already bound', str(e))
         else: self.fail()
 
         self.assertEquals(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
-        self.assertEquals(set([port3]), set(PortNumberGenerator._reservations.keys()))
+        self.assertEquals(set([port3]), set(PortNumberGenerator._bound.keys()))
 
         # Overlap with bound port: port3.
-        PortNumberGenerator.release(port=port3)
+        PortNumberGenerator.unbind(port=port3)
         _port, close = attemptBinding(bindPort=port3)
         self.assertTrue(_port)
-        self.assertEquals(set(), set(PortNumberGenerator._reservations.keys()))
+        self.assertEquals(set(), set(PortNumberGenerator._bound.keys()))
         try:
-            PortNumberGenerator.reserve(port2, blockSize=2)
+            PortNumberGenerator.bind(port2, blockSize=2)
         except RuntimeError, e:
             self.assertEquals('Port(s) are not free!', str(e))
         else: self.fail()
 
         self.assertEquals(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
-        self.assertEquals(set(), set(PortNumberGenerator._reservations.keys()))
+        self.assertEquals(set(), set(PortNumberGenerator._bound.keys()))
         close()                 # Cleanup
 
-    def testReleasePortNumberV4(self):
-        p = PortNumberGenerator.next(reserve=True)
+    def testUnbindPortNumberV4(self):
+        p = PortNumberGenerator.next(bind=True)
         self.assertNotBound(bindV4(ip='127.0.0.1', port=p, protocol='tcp', reuse=True))
 
-        PortNumberGenerator.release(port=p)
-        self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=p, protocol='tcp', reuse=False))
-        self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=p, protocol='tcp', reuse=False)) # Same IP-version, protocol, host, port combination: basically testing bindV4's close happened.
-        self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=p, protocol='udp', reuse=False))
-        self.assertBoundAndRelease(bindV4(ip='0.0.0.0', port=p, protocol='tcp', reuse=False))
-        self.assertBoundAndRelease(bindV4(ip='0.0.0.0', port=p, protocol='udp', reuse=False))
+        PortNumberGenerator.unbind(port=p)
+        self.assertBoundAndUnbind(bindV4(ip='127.0.0.1', port=p, protocol='tcp', reuse=False))
+        self.assertBoundAndUnbind(bindV4(ip='127.0.0.1', port=p, protocol='tcp', reuse=False)) # Same IP-version, protocol, host, port combination: basically testing bindV4's close happened.
+        self.assertBoundAndUnbind(bindV4(ip='127.0.0.1', port=p, protocol='udp', reuse=False))
+        self.assertBoundAndUnbind(bindV4(ip='0.0.0.0', port=p, protocol='tcp', reuse=False))
+        self.assertBoundAndUnbind(bindV4(ip='0.0.0.0', port=p, protocol='udp', reuse=False))
 
-    def testReservePortNumbersGeneratedV6(self):
+    def testBindPortNumbersGeneratedV6(self):
         if not has_dual_stack():
             return printDualStackSkipped()
 
-        p = PortNumberGenerator.next(reserve=True)
+        p = PortNumberGenerator.next(bind=True)
         self.assertTrue(0 < p < 65536)
         for protocol in ['tcp', 'udp']:
             for reuse in [True, False]:
@@ -197,12 +197,12 @@ class PortNumberGeneratorTest(TestCase):
                 self.assertNotBound(bindV6(ip='::1', port=p, protocol=protocol, reuse=reuse, ipV6Only=False))
                 self.assertNotBound(bindV6(ip='::', port=p, protocol=protocol, reuse=reuse, ipV6Only=False))
 
-    def testReservePortNumbersGenerated_withBlockSize_V6(self):
+    def testBindPortNumbersGenerated_withBlockSize_V6(self):
         if not has_dual_stack():
             return printDualStackSkipped()
 
         blockSize = 3
-        p = PortNumberGenerator.next(reserve=True, blockSize=blockSize)
+        p = PortNumberGenerator.next(bind=True, blockSize=blockSize)
 
         for consequative_p in range(p, p + blockSize):
             for protocol in ['tcp', 'udp']:
@@ -214,40 +214,40 @@ class PortNumberGeneratorTest(TestCase):
                     self.assertNotBound(bindV6(ip='::1', port=consequative_p, protocol=protocol, reuse=reuse, ipV6Only=False))
                     self.assertNotBound(bindV6(ip='::', port=consequative_p, protocol=protocol, reuse=reuse, ipV6Only=False))
 
-    def testReleasePortNumberV6(self):
+    def testUnbindPortNumberV6(self):
         if not has_dual_stack():
             return printDualStackSkipped()
 
-        p = PortNumberGenerator.next(reserve=True)
+        p = PortNumberGenerator.next(bind=True)
         self.assertNotBound(bindV4(ip='::1', port=p, protocol='tcp', reuse=True))
 
-        PortNumberGenerator.release(port=p)
+        PortNumberGenerator.unbind(port=p)
 
-        self.assertBoundAndRelease(bindV6(ip='::1', port=p, protocol='tcp', reuse=False)) # Same IP-version, protocol, host, port combination: basically testing bindV6's close happened.
+        self.assertBoundAndUnbind(bindV6(ip='::1', port=p, protocol='tcp', reuse=False)) # Same IP-version, protocol, host, port combination: basically testing bindV6's close happened.
         for protocol in ['tcp', 'udp']:
-            self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=p, protocol=protocol, reuse=False))
-            self.assertBoundAndRelease(bindV4(ip='0.0.0.0', port=p, protocol=protocol, reuse=False))
-            self.assertBoundAndRelease(bindV6(ip='::1', port=p, protocol=protocol, reuse=False))
-            self.assertBoundAndRelease(bindV6(ip='::', port=p, protocol=protocol, reuse=False))
-            self.assertBoundAndRelease(bindV6(ip='::1', port=p, protocol=protocol, reuse=False, ipV6Only=False))
-            self.assertBoundAndRelease(bindV6(ip='::', port=p, protocol=protocol, reuse=False, ipV6Only=False))
+            self.assertBoundAndUnbind(bindV4(ip='127.0.0.1', port=p, protocol=protocol, reuse=False))
+            self.assertBoundAndUnbind(bindV4(ip='0.0.0.0', port=p, protocol=protocol, reuse=False))
+            self.assertBoundAndUnbind(bindV6(ip='::1', port=p, protocol=protocol, reuse=False))
+            self.assertBoundAndUnbind(bindV6(ip='::', port=p, protocol=protocol, reuse=False))
+            self.assertBoundAndUnbind(bindV6(ip='::1', port=p, protocol=protocol, reuse=False, ipV6Only=False))
+            self.assertBoundAndUnbind(bindV6(ip='::', port=p, protocol=protocol, reuse=False, ipV6Only=False))
 
-    def testReleaseUnreservedPortNumber(self):
-        PortNumberGenerator.release(port=4321)
+    def testUnbindUnboundPortNumber(self):
+        PortNumberGenerator.unbind(port=4321)
 
     def testClear(self):
         ports = []
         ports.append(PortNumberGenerator.next())
         _p = PortNumberGenerator.next(blockSize=2)
         ports.extend([_p, _p + 1])
-        aBoundPort = PortNumberGenerator.next(reserve=True)
+        aBoundPort = PortNumberGenerator.next(bind=True)
         ports.append(aBoundPort)
-        _p = PortNumberGenerator.next(blockSize=2, reserve=True)
+        _p = PortNumberGenerator.next(blockSize=2, bind=True)
         ports.extend([_p, _p + 1])
 
         self.assertEquals(6, len(ports))
         self.assertEquals(set(ports), PortNumberGenerator._usedPorts)
-        reservationKeys = PortNumberGenerator._reservations.keys()
+        reservationKeys = PortNumberGenerator._bound.keys()
         self.assertEquals(3, len(reservationKeys))
         self.assertTrue(set(reservationKeys).issubset(set(ports)))
         self.assertNotBound(bindV4(ip='127.0.0.1', port=aBoundPort, protocol='tcp', reuse=False))
@@ -255,15 +255,15 @@ class PortNumberGeneratorTest(TestCase):
         PortNumberGenerator.clear()
 
         self.assertEquals(0, len(PortNumberGenerator._usedPorts))
-        reservationKeys = PortNumberGenerator._reservations.keys()
+        reservationKeys = PortNumberGenerator._bound.keys()
         self.assertEquals(0, len(reservationKeys))
-        self.assertBoundAndRelease(bindV4(ip='127.0.0.1', port=aBoundPort, protocol='tcp', reuse=False))
+        self.assertBoundAndUnbind(bindV4(ip='127.0.0.1', port=aBoundPort, protocol='tcp', reuse=False))
 
     ## helpers ##
     def assertNotBound(self, bindResult):
         self.assertEquals((None, None), bindResult)
 
-    def assertBoundAndRelease(self, bindResult):
+    def assertBoundAndUnbind(self, bindResult):
         sok, boundPort = bindResult
         if sok is not None:
             sok.close()

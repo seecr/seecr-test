@@ -34,35 +34,35 @@ class PortNumberGenerator(object):
     _ephemeralPortLow, _ephemeralPortHigh = [int(p) for p in open('/proc/sys/net/ipv4/ip_local_port_range', 'r').read().strip().split('\t', 1)]  # low\thigh
     _maxTries = (_ephemeralPortHigh - _ephemeralPortLow) / 2
     _usedPorts = set([])
-    _reservations = {}
+    _bound = {}
 
     @classmethod
-    def next(cls, blockSize=1, reserve=False):
+    def next(cls, blockSize=1, bind=False):
         blockSize = verifyAndCoerseBlockSize(blockSize)
         for i in xrange(cls._maxTries):
-            port = cls._bindAttempt(0, blockSize, reserve, cls._usedPorts)
+            port = cls._bindAttempt(0, blockSize, bind, cls._usedPorts)
             if port:
                 return port
 
         raise RuntimeError('Not been able to get an new uniqe free port within a reasonable amount (%s) of tries.' % cls._maxTries)
 
     @classmethod
-    def release(cls, port, blockSize=1):
+    def unbind(cls, port, blockSize=1):
         blockSize = verifyAndCoerseBlockSize(blockSize)
         for p in range(port, port + blockSize):
-            close = cls._reservations.pop(p, None)
+            close = cls._bound.pop(p, None)
             if close is not None:
                 close()
 
     @classmethod
-    def reserve(cls, port, blockSize=1):
+    def bind(cls, port, blockSize=1):
         blockSize = verifyAndCoerseBlockSize(blockSize)
-        portsToReserve = set(range(port, port + blockSize))
-        if set(cls._reservations.keys()).intersection(portsToReserve):
-            raise RuntimeError('Port(s) already reserved')
+        portsToBind = set(range(port, port + blockSize))
+        if set(cls._bound.keys()).intersection(portsToBind):
+            raise RuntimeError('Port(s) already bound')
 
-        usedPortsMinusToReserve = cls._usedPorts.difference(portsToReserve)
-        port = cls._bindAttempt(port, blockSize, True, usedPortsMinusToReserve)
+        usedPortsMinusToBind = cls._usedPorts.difference(portsToBind)
+        port = cls._bindAttempt(port, blockSize, True, usedPortsMinusToBind)
         if not port:
             raise RuntimeError('Port(s) are not free!')
 
@@ -70,39 +70,39 @@ class PortNumberGenerator(object):
 
     @classmethod
     def clear(cls):
-        for close in cls._reservations.values():
+        for close in cls._bound.values():
             close()
-        cls._reservations.clear()
+        cls._bound.clear()
         cls._usedPorts.clear()
 
     @classmethod
-    def _bindAttempt(cls, port, blockSize, reserve, blacklistedPorts):
-        port, reservations = attemptEphemeralBindings(
+    def _bindAttempt(cls, port, blockSize, bind, blacklistedPorts):
+        port, bound = attemptEphemeralBindings(
             bindPort=port,
             blockSize=blockSize,
-            reserve=reserve,
+            bind=bind,
             blacklistedPorts=blacklistedPorts)
         if port:
             cls._usedPorts.update(set(range(port, port + blockSize)))
-            cls._reservations.update(reservations)
+            cls._bound.update(bound)
             return port
 
-def attemptEphemeralBindings(bindPort, blockSize, reserve, blacklistedPorts=None):
+def attemptEphemeralBindings(bindPort, blockSize, bind, blacklistedPorts=None):
     """
-    Returns port and reservations if succesful; otherwise all None's.
+    Returns port and bound if succesful; otherwise all None's.
     If bindPort is 0; does ephemeral binding (first port) and the remaining ports explicitly.
 
     port:
         First port (of consequative ports iff blockSize > 1).
-    reservations:
-        Dictionary of port-numbers to bond socket objects (.close() to release the "reservation") - if reserve is False, empty.
+    bound:
+        Dictionary of port-numbers to a close function; representing the bond socket objects .close() - if bind is False, empty.
     """
     blacklistedPorts = set() if blacklistedPorts is None else blacklistedPorts
 
     port = None
     portNumberToBind = bindPort
     togo = blockSize
-    reservations = {}
+    bound = {}
     # togo > 0; but called quite often, so a quicker check.
     while togo is not 0:
         # portNumberToBind > 0; but called quite often, so a quicker check.
@@ -117,8 +117,8 @@ def attemptEphemeralBindings(bindPort, blockSize, reserve, blacklistedPorts=None
             close()
             return None, None
 
-        if reserve is True:
-            reservations[aPort] = close
+        if bind is True:
+            bound[aPort] = close
         else:
             close()
 
@@ -127,7 +127,7 @@ def attemptEphemeralBindings(bindPort, blockSize, reserve, blacklistedPorts=None
         portNumberToBind += 1
         togo -= 1
 
-    return port, reservations
+    return port, bound
 
 def verifyAndCoerseBlockSize(blockSize):
     blockSize = int(blockSize)
