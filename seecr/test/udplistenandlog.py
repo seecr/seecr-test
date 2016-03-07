@@ -22,7 +22,7 @@
 #
 ## end license ##
 
-from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_REUSEADDR, SO_LINGER
+from socket import socket, AF_INET, SOCK_DGRAM, IPPROTO_UDP, SOL_SOCKET, SO_REUSEADDR, SO_LINGER
 from struct import pack
 from threading import Thread, Semaphore
 
@@ -64,9 +64,8 @@ class UdpListenAndLog(object):
             self._semaphore.release()
 
 def createSocket(port):
-    sok = socket(AF_INET, SOCK_DGRAM)
+    sok = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
     sok.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 0, 0))
     sok.bind(('0.0.0.0', port))
     return sok
-

@@ -23,7 +23,7 @@
 ## end license ##
 
 from sys import stdout
-from socket import socket, SOL_SOCKET, SO_REUSEADDR, SO_LINGER
+from socket import socket, SOL_SOCKET, SO_REUSEADDR, SO_LINGER, AF_INET, SOCK_STREAM, IPPROTO_TCP
 from struct import pack
 from select import select
 from time import sleep
@@ -39,7 +39,7 @@ class MockServer(Thread):
         Thread.__init__(self)
         self.daemon = True
         address = (ipAddress, port)
-        self.socket = socket()
+        self.socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
         self.socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.socket.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 0, 0))
         self.socket.bind(address)
@@ -121,4 +121,3 @@ class MockServer(Thread):
         if self.responses:
             return self.responses.pop(0)
         return 'HTTP/1.0 500 Internal server error\r\n\r\nMockServer ran out of responses.'
-

@@ -31,7 +31,7 @@ from time import sleep
 from os.path import abspath, dirname, isdir, join
 from os import makedirs
 from glob import glob
-from socket import socket
+from socket import socket, AF_INET, SOCK_STREAM, IPPROTO_TCP
 from urllib import urlencode
 from functools import partial
 
@@ -108,7 +108,7 @@ def assertNotSubstring(value, s):
 
 
 def _socket(port, timeOutInSeconds):
-    sok = socket()
+    sok = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
     sok.connect(('localhost', port))
     sok.settimeout(5.0 if timeOutInSeconds is None else timeOutInSeconds)
     return sok
@@ -272,4 +272,3 @@ def mkdir(*args):
     if not isdir(path):
         makedirs(path)
     return path
-
