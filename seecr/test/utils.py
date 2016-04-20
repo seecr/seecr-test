@@ -250,18 +250,21 @@ def openConsole():
     i.interact(message)
 
 def findTag(tag, body, **attrs):
-    try:
-        xmlNode = parse_xml(StringIO(body), parser=HTMLParser()).getroot()
-    except XMLSyntaxError:
-        print body
-        raise
-
     xpathExpr = "//%s" % tag
     if attrs:
         xpathExpr += "[%s]" % ' and '.join('@%s="%s"' % item for item in attrs.items())
 
-    for tag in xmlNode.xpath(xpathExpr):
-        yield tag
+    return htmlXPath(xpathExpr, body)    
+
+def htmlXPath(xpathExpr, body):
+    try:
+        xmlNode = parse_xml(StringIO(body), parser=HTMLParser()).getroot()
+    except XMLSyntaxError:
+        print(body)
+        raise
+
+    for result in xmlNode.xpath(xpathExpr):
+        yield result
 
 
 def includeParentAndDeps(filename, systemPath=None, cleanup=True, additionalPaths=None):
