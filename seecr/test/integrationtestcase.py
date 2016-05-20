@@ -123,7 +123,10 @@ class IntegrationState(object):
             self.waitForServicesStarted()
 
     def _stopServer(self, serviceName, waitInSeconds=20.0):
-        kill(self.pids[serviceName], SIGTERM)
+        try:
+            kill(self.pids[serviceName], SIGTERM)
+        except OSError:
+            self._stdoutWrite("Server with servicename '%s' and pid '%s' was already stopped.\n" % (serviceName, self.pids[serviceName]))
 
         for i in xrange(int(waitInSeconds * 200)):
             try:
