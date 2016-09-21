@@ -67,6 +67,7 @@ class IntegrationState(object):
             system('rm -rf ' + self.integrationTempdir)
             system('mkdir --parents '+ self.integrationTempdir)
         self._servicesReadyMethods = []
+        self.appendToStdOutErrLogs = False
 
     def addToTestRunner(self, testRunner):
         testRunner.addGroup(
@@ -82,7 +83,7 @@ class IntegrationState(object):
 
     def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, env=None, waitForStart=True, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
-        stdouterrlog = open(stdoutfile, 'w')
+        stdouterrlog = open(stdoutfile, 'a' if self.appendToStdOutErrLogs else 'w')
         args = executable if isinstance(executable, list) else [executable]
         executable = args[0]
         fileno = stdouterrlog.fileno() if redirect else None
