@@ -4,7 +4,7 @@
 # "Seecr Test" provides test tools.
 #
 # Copyright (C) 2005-2009 Seek You Too (CQ2) http://www.cq2.nl
-# Copyright (C) 2012-2014 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2014, 2016 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -89,6 +89,16 @@ class SeecrTestCase(TestCase):
             showContext=showContext,
         )
         compare.compare()
+
+    def assertEqualText(self, expected, result):
+        diff = '\n'.join(unified_diff(
+                expected.split('\n'),
+                result.split('\n'),
+                fromfile='expected',
+                tofile='result',
+                lineterm=''
+            ))
+        self.assertEqual('', diff, diff)
 
     def assertDictEqual(self, d1, d2, msg=None):
         # 'borrowed' from python2.7's unittest.
