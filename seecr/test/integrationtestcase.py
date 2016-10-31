@@ -81,10 +81,10 @@ class IntegrationState(object):
     def binPath(self, executable, binDirs=None):
         return SeecrTestCase.binPath(executable, binDirs=[self.binDir()] + (binDirs or []))
 
-    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, env=None, waitForStart=True, **kwargs):
+    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, env=None, waitForStart=True, args=None, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
         stdouterrlog = open(stdoutfile, 'a' if self.appendToStdOutErrLogs else 'w')
-        args = executable if isinstance(executable, list) else [executable]
+        args = executable if isinstance(executable, list) else [executable] + (args if not args is None else [])
         executable = args[0]
         fileno = stdouterrlog.fileno() if redirect else None
         flagOptions = flagOptions if flagOptions else []

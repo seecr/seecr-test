@@ -4,7 +4,7 @@
 # "Seecr Test" provides test tools.
 #
 # Copyright (C) 2005-2009 Seek You Too (CQ2) http://www.cq2.nl
-# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013, 2016 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -31,7 +31,7 @@ import re
 
 # TODO:
 #   lxmltostring stuff ...
-from lxml.etree import parse, tostring, Comment, XMLParser
+from lxml.etree import parse, tostring, XMLParser
 
 # whiteboxing:
 from seecr.test.seecrtestcase import CompareXml, refindLxmlNodeCallback
@@ -42,7 +42,7 @@ class SeecrTestCaseTest(SeecrTestCase):
     def checkAssertEqualsWSFails(self, s1, s2):
         try:
             self.assertEqualsWS(s1, s2)
-        except AssertionError, e:
+        except AssertionError:
             return
         self.fail("%s should not equal %s" % (s1, s2))
 
@@ -398,7 +398,7 @@ newlines?>'''
             parseString('<r>\n  <y/>\n</r>'),
             """Tags do not match 'x' != 'y' at location: 'r'
 === expected (line 10, sourceline 12) ===
- 9- 
+ 9-
 10:   <x/>
 11- </r>
 === result (line 2) ===
@@ -417,7 +417,7 @@ newlines?>'''
             self.assertEquals("""\
 Tags do not match 'x' != 'y' at location: 'r'
 === expected (line 10, sourceline 12) ===
- 9- 
+ 9-
 \033[31m10:   <x/>\033[0m
 11- </r>
 === result (line 2) ===
@@ -441,7 +441,7 @@ Tags do not match 'y' != 'x' at location: 'r'
 === result (line 2, sourceline 4) ===
 1- <r>
 2:   <x/>
-3- 
+3-
 =====================================
 """, showContext=1)
 
