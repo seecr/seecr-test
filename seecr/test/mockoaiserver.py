@@ -64,9 +64,15 @@ def dna(reactor, portNumber, config, tempDir, batchSize):
     for data in config:
         oaiName = ''.join(data['path'].split('/'))
         oaiSuspendRegister = SuspendRegister()
-        oaiJazz = be((OaiJazz(join(tempDir, oaiName), preciseDatestamp=True),
-            (oaiSuspendRegister,)
-        ))
+        try:
+            oaiJazz = OaiJazz(join(tempDir, oaiName), preciseDatestamp=True)  # needed for backwards compatibility with meresco-oai versions preceding 5.16
+        except TypeError:
+            oaiJazz = OaiJazz(join(tempDir, oaiName))
+        oaiJazz = be(
+            (oaiJazz,
+                (oaiSuspendRegister,)
+            )
+        )
         oaiJazzOperations = {
             'ADD': oaiJazz.addOaiRecord,
             'DEL': oaiJazz.deleteOaiRecord
@@ -84,15 +90,21 @@ def dna(reactor, portNumber, config, tempDir, batchSize):
                 sleep(0.000001)
         oaiJazz.commit()
 
-        tree = be((PathFilter(data['path'], excluding=['/ready']),
-            (IllegalFromFix(),
-                (OaiPmh(repositoryName='Mock', adminEmail='no@example.org', supportXWait=True, batchSize=batchSize),
-                    (oaiJazz,),
-                    (oaiSuspendRegister,),
-                    (storage,),
+        try:
+            oaiPmh = OaiPmh(repositoryName='Mock', adminEmail='no@example.org', supportXWait=True, batchSize=batchSize, preciseDatestamp=True)
+        except TypeError:
+            oaiPmh = OaiPmh(repositoryName='Mock', adminEmail='no@example.org', supportXWait=True, batchSize=batchSize)  # needed for backwards compatibility with meresco-oai versions preceding 5.16
+        tree = be(
+            (PathFilter(data['path'], excluding=['/ready']),
+                (IllegalFromFix(),
+                    (oaiPmh,
+                        (oaiJazz,),
+                        (oaiSuspendRegister,),
+                        (storage,),
+                    )
                 )
             )
-        ))
+        )
         root.addObserver(tree)
 
     return \
