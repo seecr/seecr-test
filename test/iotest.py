@@ -31,7 +31,7 @@ import sys
 from StringIO import StringIO
 from traceback import print_exc
 
-from seecr.test.io import stdout_replaced, stderr_replaced, stdin_replaced, stdin_replaced_decorator
+from seecr.test.io import stdout_replaced, stderr_replaced, stdin_replaced
 
 
 class IOTest(TestCase):
@@ -46,7 +46,7 @@ class IOTest(TestCase):
         self.assertEquals(idStdin, id(sys.stdin))
 
         _in = StringIO('string\nio\n')
-        @stdin_replaced_decorator(_in) # Cannot reuse same fn because decoration needs to be distinguishable from args-usage.
+        @stdin_replaced(_in)
         def f():
             self.assertNotEqual(idStdin, id(sys.stdin))
             self.assertEquals(['string\n', 'io\n'], sys.stdin.readlines())
@@ -64,7 +64,7 @@ class IOTest(TestCase):
 
         self.assertEquals(idStdin, id(sys.stdin))
 
-        @stdin_replaced_decorator() # Cannot reuse same fn because decoration needs to be distinguishable from args-usage.
+        @stdin_replaced()
         def f():
             sys.stdin.write('li') # Won't normally work, but - long live mocking
             sys.stdin.write('ne1\nline2\n')

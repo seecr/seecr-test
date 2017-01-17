@@ -30,27 +30,6 @@ from functools import wraps
 from StringIO import StringIO
 
 
-def _replace_stream_factory(name):
-    @contextmanager
-    def stream_replace_contextmanager():
-        mockStream, back = _set_replaced_stream(name)
-        try:
-            yield mockStream
-        finally:
-            back()
-
-    def stream_replace(func=None):
-        if func:
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                with stream_replace_contextmanager():
-                    return func(*args, **kwargs)
-            return wrapper
-
-        return stream_replace_contextmanager()
-
-    return stream_replace
-
 def _set_replaced_stream(name, replacement=None):
     stream = getattr(sys, name)
     def andBackAgain():
@@ -60,22 +39,37 @@ def _set_replaced_stream(name, replacement=None):
     setattr(sys, name, streamReplacement)
     return streamReplacement, andBackAgain
 
-@contextmanager
-def stdin_replaced(inStream=None):
-    mockStream, back = _set_replaced_stream('stdin', inStream)
-    try:
-        yield mockStream
-    finally:
-        back()
 
-def stdin_replaced_decorator(inStream=None):
-    def w(func):
+class _ContextMngrOrDecorated(object):
+    def __init__(self, streamName, replacement=None):
+        self._streamName = streamName
+        self._replacement = replacement
+
+    def __call__(self, func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            with stdin_replaced(inStream):
+            with self:
                 return func(*args, **kwargs)
         return wrapper
-    return w
 
-stderr_replaced = _replace_stream_factory('stderr')
-stdout_replaced = _replace_stream_factory('stdout')
+    def __enter__(self):
+        mockStream, self._back = _set_replaced_stream(self._streamName, self._replacement)
+        return mockStream
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._back()
+        return False
+
+
+def stderr_replaced(*func_arg):
+    if func_arg:
+        return _ContextMngrOrDecorated(streamName='stderr')(*func_arg)
+    return _ContextMngrOrDecorated(streamName='stderr')
+
+def stdout_replaced(*func_arg):
+    if func_arg:
+        return _ContextMngrOrDecorated(streamName='stdout')(*func_arg)
+    return _ContextMngrOrDecorated(streamName='stdout')
+
+def stdin_replaced(inStream=None):
+    return _ContextMngrOrDecorated(streamName='stdin', replacement=inStream)
