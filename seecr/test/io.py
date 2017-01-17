@@ -2,7 +2,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013, 2017 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -51,15 +51,31 @@ def _replace_stream_factory(name):
 
     return stream_replace
 
-def _set_replaced_stream(name):
+def _set_replaced_stream(name, replacement=None):
     stream = getattr(sys, name)
     def andBackAgain():
         setattr(sys, name, stream)
 
-    streamReplacement = StringIO()
+    streamReplacement = StringIO() if replacement is None else replacement
     setattr(sys, name, streamReplacement)
     return streamReplacement, andBackAgain
 
+@contextmanager
+def stdin_replaced(inStream=None):
+    mockStream, back = _set_replaced_stream('stdin', inStream)
+    try:
+        yield mockStream
+    finally:
+        back()
+
+def stdin_replaced_decorator(inStream=None):
+    def w(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            with stdin_replaced(inStream):
+                return func(*args, **kwargs)
+        return wrapper
+    return w
+
 stderr_replaced = _replace_stream_factory('stderr')
 stdout_replaced = _replace_stream_factory('stdout')
-
