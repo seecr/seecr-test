@@ -4,7 +4,7 @@
 # "Seecr Test" provides test tools.
 #
 # Copyright (C) 2005-2009 Seek You Too (CQ2) http://www.cq2.nl
-# Copyright (C) 2012-2013, 2016 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013, 2016-2017 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -38,6 +38,8 @@ from seecr.test.seecrtestcase import CompareXml, refindLxmlNodeCallback
 
 
 class SeecrTestCaseTest(SeecrTestCase):
+    longMessage = True
+    maxDiff = None
 
     def checkAssertEqualsWSFails(self, s1, s2):
         try:
@@ -58,7 +60,7 @@ class SeecrTestCaseTest(SeecrTestCase):
         try:
             self.assertEqualsLxml(expected=x1, result=x2, showContext=showContext)
         except AssertionError, e:
-            self.assertEquals(message, stripColor(str(e)))
+            self.assertMultiLineEqual(message, stripColor(str(e)))
             return
         self.fail("Fail!\n%s should not equal:\n%s" % (tostring(x1, encoding='UTF-8', pretty_print=True), tostring(x2, encoding='UTF-8', pretty_print=True)))
 
@@ -414,7 +416,7 @@ newlines?>'''
                 parseString('<r>\n  <y/>\n</r>')
                 , showContext=1)
         except AssertionError, e:
-            self.assertEquals("""\
+            self.assertMultiLineEqual("""\
 Tags do not match 'x' != 'y' at location: 'r'
 === expected (line 10, sourceline 12) ===
  9-

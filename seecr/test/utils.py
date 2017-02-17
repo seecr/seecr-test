@@ -62,23 +62,23 @@ def parseHtmlAsXml(body):
         print body
         raise
 
-def getPage(port, path, arguments=None, expectedStatus="200", sessionId=None):
-    additionalHeaders = {}
+def getPage(port, path, arguments=None, expectedStatus="200", sessionId=None, headers=None):
+    headers = headers or {}
     if sessionId:
-        additionalHeaders['Cookie'] = 'session=' + sessionId
+        headers['Cookie'] = 'session=' + sessionId
     header, body = getRequest(
         port=port,
         path=path,
         arguments=arguments,
         parse=False,
-        additionalHeaders=additionalHeaders)
+        additionalHeaders=headers)
     assertHttpOK(header, body, expectedStatus=expectedStatus)
     return header, body
 
-def postToPage(port, path, data, expectedStatus="302", sessionId=None):
-    additionalHeaders = {}
+def postToPage(port, path, data, expectedStatus="302", sessionId=None, headers=None):
+    headers = headers or {}
     if sessionId:
-        additionalHeaders['Cookie'] = 'session=' + sessionId
+        headers['Cookie'] = 'session=' + sessionId
     postBody = urlencode(data, doseq=True)
     header, body = postRequest(
         port=port,
@@ -86,7 +86,7 @@ def postToPage(port, path, data, expectedStatus="302", sessionId=None):
         data=postBody,
         contentType='application/x-www-form-urlencoded',
         parse=False,
-        additionalHeaders=additionalHeaders)
+        additionalHeaders=headers)
     assertHttpOK(header, body, expectedStatus=expectedStatus)
     return header, body
 
@@ -147,7 +147,8 @@ def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=T
         while totalBytesSent != len(sendBuffer):
             bytesSent = sok.send(sendBuffer[totalBytesSent:])
             totalBytesSent += bytesSent
-        header, body = splitHttpHeaderBody(receiveFromSocket(sok))
+        response = receiveFromSocket(sok)
+        header, body = splitHttpHeaderBody(response)
         return createReturnValue(header, body, parse)
     finally:
         sok.close()
@@ -254,7 +255,7 @@ def findTag(tag, body, **attrs):
     if attrs:
         xpathExpr += "[%s]" % ' and '.join('@%s="%s"' % item for item in attrs.items())
 
-    return htmlXPath(xpathExpr, body)    
+    return htmlXPath(xpathExpr, body)
 
 def htmlXPath(xpathExpr, body):
     try:
