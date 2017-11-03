@@ -24,16 +24,18 @@
 ## end license ##
 
 import sys
-from sys import getdefaultencoding
-from re import DOTALL, compile, sub
-from StringIO import StringIO
-from time import sleep
-from os.path import abspath, dirname, isdir, join
-from os import makedirs
-from glob import glob
-from socket import socket, AF_INET, SOCK_STREAM, IPPROTO_TCP
-from urllib import urlencode
+from ast import parse, ClassDef
 from functools import partial
+from glob import glob
+from imp import load_module, get_suffixes
+from os import makedirs, walk
+from os.path import abspath, dirname, isdir, join, splitext
+from re import DOTALL, compile, sub
+from socket import socket, AF_INET, SOCK_STREAM, IPPROTO_TCP
+from StringIO import StringIO
+from sys import getdefaultencoding
+from time import sleep
+from urllib import urlencode
 
 from lxml.etree import parse as parse_xml, XMLSyntaxError, XMLParser, HTMLParser
 
@@ -267,7 +269,6 @@ def htmlXPath(xpathExpr, body):
     for result in xmlNode.xpath(xpathExpr):
         yield result
 
-
 def includeParentAndDeps(filename, systemPath=None, cleanup=True, additionalPaths=None):
     raise NotImplementedError("includeParentAndDeps moved to seecr.deps package. Change import to: 'from seecr.deps import includeParentAndDeps'")
 
@@ -276,3 +277,18 @@ def mkdir(*args):
     if not isdir(path):
         makedirs(path)
     return path
+
+def loadTestsFromPath(testRoot, _globals=None):
+    _globals = _globals if _globals else globals()
+    pySuffix = [(suffix, mode, suffixType) for (suffix, mode, suffixType) in get_suffixes() if suffix == ".py"][0]
+    for path, dirs, files in walk(testRoot):
+        for filename in [join(path, filename) for filename in files if splitext(filename)[-1] == '.py']:
+            tree = parse(open(filename).read())
+
+            for each in tree.body:
+                if type(each) is ClassDef and each.bases[0].id in ['TestCase', 'SeecrTestCase']:
+                    fullFilename = join(path, filename)
+                    with open(fullFilename) as fp:
+                        mod = load_module(each.name, fp, fullFilename, pySuffix)
+                        _globals[each.name] = getattr(mod, each.name)
+
