@@ -27,7 +27,7 @@ from seecr.test import SeecrTestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, headerToDict, mkdir
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, headerToDict, mkdir, loadTestsFromPath
 from lxml.etree import XMLSyntaxError
 
 from time import time
@@ -122,5 +122,30 @@ Exception: xcptn\n"""
         mkdir(self.tempdir, "1", "2", "3", "4")
         self.assertTrue(isdir(join(self.tempdir, "1", "2", "3", "4")))
 
+    def testLoadTestFromPath(self):
+        g = {}
+        loadTestsFromPath(self.tempdir, _globals=g)
+        self.assertEqual({}, g)
+        with open(join(self.tempdir, "sometest.py"), "w") as fp:
+            fp.write(TEST_TEMPLATE)
+        loadTestsFromPath(self.tempdir, _globals=g)
+        self.assertTrue('SomeTest' in g, g)
+
+    def testLoadTestFromPathSubDirs(self):
+        with open(join(self.tempdir, "sometest.py"), "w") as fp:
+            fp.write(TEST_TEMPLATE)
+        
+        with open(join(mkdir(self.tempdir, "sub"), "sometest.py"), "w") as fp:
+            fp.write(TEST_TEMPLATE)
+
+        g = {}
+        loadTestsFromPath(self.tempdir, _globals=g)
+        self.assertEqual(2, len(g))
+        self.assertEqual({'sub.SomeTest', 'SomeTest'}, set(g.keys()))
+
+TEST_TEMPLATE = """from seecr.test import SeecrTestCase
+class SomeTest(SeecrTestCase):
+    def testOne(self):
+        pass"""
 
 T_ADJUSTMENT = 1.5

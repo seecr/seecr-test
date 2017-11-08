@@ -26,10 +26,9 @@
 import sys
 from ast import parse, ClassDef
 from functools import partial
-from glob import glob
 from imp import load_module, get_suffixes
 from os import makedirs, walk
-from os.path import abspath, dirname, isdir, join, splitext
+from os.path import abspath, dirname, isdir, join, splitext, basename
 from re import DOTALL, compile, sub
 from socket import socket, AF_INET, SOCK_STREAM, IPPROTO_TCP
 from StringIO import StringIO
@@ -37,7 +36,7 @@ from sys import getdefaultencoding
 from time import sleep
 from urllib import urlencode
 
-from lxml.etree import parse as parse_xml, XMLSyntaxError, XMLParser, HTMLParser
+from lxml.etree import parse as parse_xml, XMLSyntaxError, HTMLParser
 
 
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
@@ -279,7 +278,9 @@ def mkdir(*args):
     return path
 
 def loadTestsFromPath(testRoot, _globals=None):
-    _globals = _globals if _globals else globals()
+    if not isdir(testRoot):
+        testRoot = dirname(abspath(testRoot))
+    _globals = globals() if _globals is None else _globals
     pySuffix = [(suffix, mode, suffixType) for (suffix, mode, suffixType) in get_suffixes() if suffix == ".py"][0]
     for path, dirs, files in walk(testRoot):
         for filename in [join(path, filename) for filename in files if splitext(filename)[-1] == '.py']:
@@ -290,5 +291,7 @@ def loadTestsFromPath(testRoot, _globals=None):
                     fullFilename = join(path, filename)
                     with open(fullFilename) as fp:
                         mod = load_module(each.name, fp, fullFilename, pySuffix)
-                        _globals[each.name] = getattr(mod, each.name)
-
+                        key = each.name
+                        if key in _globals:
+                            key = "{}.{}".format(basename(path), key)
+                        _globals[key] = getattr(mod, each.name)
