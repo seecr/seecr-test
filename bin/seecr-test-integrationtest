@@ -27,7 +27,7 @@ DIRECTORY=$(pwd)
 PY_FILE=${DIRECTORY}/_integrationtest.py
 test -f ${PY_FILE} || { echo "_integrationtest.py not find in current directory."; exit 1; }
 
-test -d ${DIRECTORY}/_integration || "_integration directory not found in current directory."; exit 1; }
+test -d ${DIRECTORY}/_integration || { "_integration directory not found in current directory."; exit 1; }
 
 # Scan up for 'test' directory or stop at root
 TEST_OPTIONS=""
