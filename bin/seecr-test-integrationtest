@@ -25,6 +25,7 @@
 
 INTEGRATION=_integration
 if [ "$1" == "--system" ]; then
+    shift
     INTEGRATION=_system
 fi
 
