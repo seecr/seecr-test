@@ -23,11 +23,16 @@
 #
 ## end license ##
 
-DIRECTORY=$(pwd)
-PY_FILE=${DIRECTORY}/_integrationtest.py
-test -f ${PY_FILE} || { echo "_integrationtest.py not find in current directory."; exit 1; }
+INTEGRATION=_integration
+if [ "$1" == "--system" ]; then
+    INTEGRATION=_system
+fi
 
-test -d ${DIRECTORY}/_integration || { "_integration directory not found in current directory."; exit 1; }
+DIRECTORY=$(pwd)
+PY_FILE=${DIRECTORY}/${INTEGRATION}test.py
+test -f ${PY_FILE} || { echo "${INTEGRATION}test.py not find in current directory."; exit 1; }
+
+test -d ${DIRECTORY}/${INTEGRATION} || { "${INTEGRATION} directory not found in current directory."; exit 1; }
 
 # Scan up for 'test' directory or stop at root
 TEST_OPTIONS=""
