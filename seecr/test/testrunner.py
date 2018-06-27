@@ -65,6 +65,20 @@ class TestResult(UnitTestResult):
         elif self.dots:
             self._errWrite('.')
 
+    def addSkip(self, test, reason):
+        UnitTestResult.addSkip(self, test, reason)
+        if self.showAll:
+            self._errWrite('skip {0!r}\n'.format(reason))
+        elif self.dots:
+            self._errWrite('s')
+
+    def addExpectedFailure(self, test, err):
+        UnitTestResult.addExpectedFailure(self, test, err)
+        if self.showAll:
+            self._errWrite('expected failure\n')
+        elif self.dots:
+            self._errWrite('e')
+
     def printResult(self, timeTaken):
         self._write('\n')
         self._printErrorList('ERROR', self.errors)
