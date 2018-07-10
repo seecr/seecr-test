@@ -1,0 +1,28 @@
+#!/bin/bash
+
+DIRECTORY=$(pwd)
+
+export UI_TEST_PORT=${UI_TEST_PORT:-9515}
+DRIVER=${DRIVER:-chromedriver}
+LOCAL_LAPTOP_VPN_IP=$(echo $SSH_CLIENT | cut -d' ' -f1)
+
+test -z "${REMOTE_USERNAME}" && { echo "REMOTE_USERNAME not set, login using seecr-login"; exit 1; }
+
+test -z "${LOCAL_LAPTOP_VPN_IP}" && { echo "LOCAL_LAPTOP_VPN_IP not set, login through VPN"; exit 1; }
+
+ssh \
+	-t -t \
+	-o UserKnownHostsFile=/dev/null \
+	-o StrictHostKeyChecking=no \
+	${REMOTE_USERNAME}@${LOCAL_LAPTOP_VPN_IP} \
+	-L ${UI_TEST_PORT}:127.0.0.1:${UI_TEST_PORT} \
+	/usr/local/bin/${DRIVER} --port=${UI_TEST_PORT} &
+PID=$!
+
+function close_ssh {
+	kill ${PID}
+}
+trap close_ssh EXIT
+sleep 2
+
+python ${DIRECTORY}/_guitests.py "$@"

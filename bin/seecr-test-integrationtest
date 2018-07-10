@@ -23,7 +23,7 @@
 #
 ## end license ##
 
-INTEGRATION=_integration
+test -z "${INTEGRATION}" && INTEGRATION=_integration
 if [ "$1" == "--system" ]; then
     shift
     INTEGRATION=_system
