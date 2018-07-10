@@ -1,7 +1,6 @@
 #!/bin/bash
 
 DIRECTORY=$(pwd)
-
 export UI_TEST_PORT=${UI_TEST_PORT:-9515}
 DRIVER=${DRIVER:-chromedriver}
 LOCAL_LAPTOP_VPN_IP=$(echo $SSH_CLIENT | cut -d' ' -f1)
@@ -9,6 +8,26 @@ LOCAL_LAPTOP_VPN_IP=$(echo $SSH_CLIENT | cut -d' ' -f1)
 test -z "${REMOTE_USERNAME}" && { echo "REMOTE_USERNAME not set, login using seecr-login"; exit 1; }
 
 test -z "${LOCAL_LAPTOP_VPN_IP}" && { echo "LOCAL_LAPTOP_VPN_IP not set, login through VPN"; exit 1; }
+
+# Scan up for 'test' directory or stop at root
+TEST_OPTIONS=""
+while [ ${DIRECTORY} != "test" -a  ${DIRECTORY} != "/" ]
+do
+    if [ -f "${DIRECTORY}/_testoptions.sh" ]
+    then
+        TEST_OPTIONS=${DIRECTORY}/_testoptions.sh
+        break
+    fi
+    DIRECTORY=$(dirname ${DIRECTORY})
+done
+
+if [ -z "${TEST_OPTIONS}" ];
+then
+    echo "No testoptions found"
+else
+    echo "Using test options found in ${DIRECTORY}"
+    source ${TEST_OPTIONS}
+fi
 
 ssh \
 	-t -t \
@@ -24,5 +43,8 @@ function close_ssh {
 }
 trap close_ssh EXIT
 sleep 2
+
+export LANG=en_US.UTF-8
+export PYTHONPATH=.:${PYTHONPATH}
 
 python ${DIRECTORY}/_guitests.py "$@"
