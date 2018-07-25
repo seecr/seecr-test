@@ -81,7 +81,7 @@ class IntegrationState(object):
     def binPath(self, executable, binDirs=None):
         return SeecrTestCase.binPath(executable, binDirs=[self.binDir()] + (binDirs or []))
 
-    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, env=None, waitForStart=True, args=None, **kwargs):
+    def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, env=None, waitForStart=True, args=None, debugInfo=False, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
         stdouterrlog = open(stdoutfile, 'a' if self.appendToStdOutErrLogs else 'w')
         args = executable if isinstance(executable, list) else [executable] + (args if not args is None else [])
@@ -94,8 +94,17 @@ class IntegrationState(object):
             if not hasattr(v, 'append'):
                 v = [v]
             for x in v:
-                args.append("--%s=%s" % (k, str(x)))
+                if '-' in k:
+                    args.append(k)
+                    args.append(str(x))
+                else:
+                    args.append("--%s=%s" % (k, str(x)))
         self._stdoutWrite("Starting service '%s', for state '%s'\n" % (serviceName, self.stateName))
+        if debugInfo:
+            print "-----StartServer-----"
+            print args
+            print "-"*21
+            print
         serverProcess = Popen(
             executable=executable,
             args=args,

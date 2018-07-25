@@ -27,7 +27,7 @@
 from unittest import TestCase
 from StringIO import StringIO
 from functools import partial
-from itertools import chain, ifilter
+from itertools import chain, ifilter, izip_longest
 from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
 from shutil import rmtree
@@ -37,11 +37,11 @@ from tempfile import mkdtemp, mkstemp
 from timing import T
 
 import pprint
-import difflib
-from difflib import unified_diff
+from difflib import unified_diff, ndiff
 
 from lxml.etree import tostring, parse, Comment, PI, Entity, XMLParser
 
+XPATH_IS_ONE_BASED = 1
 
 class SeecrTestCase(TestCase):
     def setUp(self):
@@ -107,7 +107,7 @@ class SeecrTestCase(TestCase):
 
         if d1 != d2:
             standardMsg = '%s != %s' % (safe_repr(d1, True), safe_repr(d2, True))
-            diff = ('\n' + '\n'.join(difflib.ndiff(
+            diff = ('\n' + '\n'.join(ndiff(
                        pprint.pformat(dict(d1)).splitlines(),
                        pprint.pformat(dict(d2)).splitlines())))
             standardMsg += diff
@@ -481,46 +481,6 @@ def elementAsRepresentation(el):
     return tagName
 
 
-XPATH_IS_ONE_BASED = 1
-
-
-try:
-    from itertools import izip_longest
-except ImportError:
-    # Added for Python 2.5 compatibility
-    from itertools import repeat, chain
-    _SENTINEL = object()
-    def next(iterable, default=_SENTINEL):
-        try:
-            retval = iterable.next()
-        except StopIteration:
-            if default is _SENTINEL:
-                raise
-            retval = default
-        return retval
-
-    # izip_longest code below from:
-    #    http://docs.python.org/2/library/itertools.html#itertools.izip_longest
-    #    For it's license see: http://docs.python.org/2/license.html#history-and-license
-    class ZipExhausted(Exception):
-        pass
-
-    def izip_longest(*args, **kwds):
-        # izip_longest('ABCD', 'xy', fillvalue='-') --> Ax By C- D-
-        fillvalue = kwds.get('fillvalue')
-        counter = [len(args) - 1]
-        def sentinel():
-            if not counter[0]:
-                raise ZipExhausted
-            counter[0] -= 1
-            yield fillvalue
-        fillers = repeat(fillvalue)
-        iterators = [chain(it, sentinel(), fillers) for it in args]
-        try:
-            while iterators:
-                yield tuple(map(next, iterators))
-        except ZipExhausted:
-            pass
 
 
 _MAX_LENGTH = 80

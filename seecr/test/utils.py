@@ -27,7 +27,7 @@ import sys
 from ast import parse, ClassDef
 from functools import partial
 from imp import load_module, get_suffixes
-from os import makedirs, walk
+from os import makedirs, walk, popen
 from os.path import abspath, dirname, isdir, join, splitext, basename
 from re import DOTALL, compile, sub
 from socket import socket, AF_INET, SOCK_STREAM, IPPROTO_TCP
@@ -95,7 +95,7 @@ def assertHttpOK(header, body, expectedStatus="200"):
     try:
         assertSubstring("HTTP/1.0 %s" % expectedStatus, header)
         assertNotSubstring("Traceback", header + "\r\n\r\n" + body)
-    except AssertionError, e:
+    except AssertionError:
         print header, body
         raise
 
@@ -192,8 +192,6 @@ def createPostMultipartForm(boundary, formValues):
     strm.write('--' + boundary + '--\r\n')
     return strm.getvalue()
 
-
-
 def receiveFromSocket(sok):
     response = ''
     part = sok.recv(1024)
@@ -208,7 +206,7 @@ def receiveFromSocket(sok):
 def splitHttpHeaderBody(response):
     try:
         header, body = response.split('\r\n\r\n', 1)
-    except ValueError, e:
+    except ValueError:
         raise ValueError("%s can not be split into a header and body" % repr(response))
     else:
         return header, body
@@ -295,3 +293,9 @@ def loadTestsFromPath(testRoot, _globals=None):
                         if key in _globals:
                             key = "{}.{}".format(basename(path), key)
                         _globals[key] = getattr(mod, each.name)
+
+
+def vpnIp():
+    for line in popen('ip addr show eth0').readlines():
+        if 'inet 10.9.' in line:
+            return line.strip().split(' ')[1].split('/')[0]
