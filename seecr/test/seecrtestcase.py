@@ -124,6 +124,7 @@ class SeecrTestCase(TestCase):
     def assertXmlEquals(self, expected, value, expectedName='expected', valueName='result'):
         d = diffXml(expected, value, firstName=expectedName, secondName=valueName)
         self.assertEquals('', d, d)
+    assertXmlEqual = assertXmlEquals
 
     @staticmethod
     def binPath(executable, binDirs=None):
