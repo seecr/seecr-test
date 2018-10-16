@@ -2,7 +2,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012, 2014-2015 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012, 2014-2015, 2018 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -96,10 +96,13 @@ class TestResult(UnitTestResult):
             if errored:
                 if failed: output += ", "
                 output += "errors=%d" % errored
-            self._write(output + ")\n")
+            self._write(output + ")")
         else:
-            self._write("OK\n")
-        self._write('\033[0m')
+            self._write("OK")
+        skipped = len(self.skipped)
+        if skipped:
+            self._write(' skipped=%d' % skipped)
+        self._write('\n\033[0m')
 
     def _printErrorList(self, flavour, errors):
         for test, err in errors:
