@@ -3,7 +3,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012, 2014-2016 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012, 2014-2016, 2018 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -67,7 +67,6 @@ class IntegrationState(object):
             system('rm -rf ' + self.integrationTempdir)
             system('mkdir --parents '+ self.integrationTempdir)
         self._servicesReadyMethods = []
-        self.appendToStdOutErrLogs = False
 
     def addToTestRunner(self, testRunner):
         testRunner.addGroup(
@@ -83,7 +82,7 @@ class IntegrationState(object):
 
     def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, env=None, waitForStart=True, args=None, debugInfo=False, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
-        stdouterrlog = open(stdoutfile, 'a' if self.appendToStdOutErrLogs else 'w')
+        stdouterrlog = open(stdoutfile, 'a')
         args = executable if isinstance(executable, list) else [executable] + (args if not args is None else [])
         executable = args[0]
         fileno = stdouterrlog.fileno() if redirect else None
