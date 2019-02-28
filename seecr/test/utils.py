@@ -37,7 +37,7 @@ from time import sleep
 from urllib import urlencode
 
 from lxml.etree import parse as parse_xml, XMLSyntaxError, HTMLParser
-
+from lxml.etree import HTMLParser, HTML
 
 _scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
 _entities = {
@@ -116,7 +116,15 @@ def _socket(port, timeOutInSeconds):
 
 def createReturnValue(header, body, parse):
     if parse and body.strip() != '':
-        body = parse_xml(StringIO(body))
+        try:
+            body = parse_xml(StringIO(body))
+        except:
+            try:
+                body = HTML(body, HTMLParser(recover=True))
+            except:
+                print "Exception parsing:"
+                print body
+                raise
     return header, body
 
 
