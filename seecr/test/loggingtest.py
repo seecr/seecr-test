@@ -113,5 +113,8 @@ def readTestFile(*pathparts):
 def runUnitTests(loggingFilepath=None):
     logStream = StringIO() if loggingFilepath is None else open(loggingFilepath, 'w')
     testStream = LoggingTestStream(stream=stderr, logStream=logStream)
-    LoggingTestProgram(testRunner=LoggingTestRunner(stream=testStream))
+    try:
+        LoggingTestProgram(testRunner=LoggingTestRunner(stream=testStream))
+    finally:
+        logStream.close()
 

@@ -29,8 +29,8 @@ from seecrdeps import includeParentAndDeps, cleanup  #DO_NOT_DISTRIBUTE
 includeParentAndDeps(__file__, scanForDeps=True)     #DO_NOT_DISTRIBUTE
 cleanup(__file__)                                    #DO_NOT_DISTRIBUTE
 
-from unittest import main
 
+from os.path import join, dirname
 from calltracetest import CallTraceTest
 from iotest import IOTest
 from mockservertest import MockServerTest
@@ -41,4 +41,7 @@ from udplistenandlogtest import UdpListenAndLogTest
 
 
 if __name__ == '__main__':
-    main()
+    from seecr.test.loggingtest import runUnitTests
+    testFile = None
+    testFile = join(dirname(__file__), 'testresults.txt') #DO_NOT_DISTRIBUTE
+    runUnitTests(testFile)
