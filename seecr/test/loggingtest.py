@@ -105,10 +105,13 @@ def formatTestname(testname):
     return ' '.join([part.lower() for part in testNameRe.split(testname) if part and part != 'test']).capitalize()
 
 def readTestFile(*pathparts):
-    fullFilename = join(*path)
+    fullFilename = join(*pathparts)
     if not isfile(fullFilename):
-        return "", ""
-    return strftime("%Y-%m-%d %H:%M:%S", localtime(stat(fullFilename)[ST_MTIME])), open(fullFilename).read()
+        return {}
+    def l(testname, classname, _, status):
+        return dict(testname=testname, classname=classname.replace('(', '').replace(')', ''), status=status)
+    return {'timestamp':strftime("%Y-%m-%d %H:%M:%S", localtime(stat(fullFilename)[ST_MTIME])), 'tests': [
+        l(*line.strip().split()) for line in open(fullFilename) if line.strip()]}
 
 def runUnitTests(loggingFilepath=None):
     logStream = StringIO() if loggingFilepath is None else open(loggingFilepath, 'w')

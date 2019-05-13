@@ -1,0 +1,3 @@
+testCallTraceAsMethod (calltracetest.CallTraceTest) ... ok
+testCallWithArguments (calltracetest.CallTraceTest) ... ok
+testParseHtmlAsXml (utilstest.UtilsTest) ... ok

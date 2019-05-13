@@ -2,7 +2,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012, 2014 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012, 2014, 2019 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -30,7 +30,7 @@ includeParentAndDeps(__file__, scanForDeps=True)     #DO_NOT_DISTRIBUTE
 cleanup(__file__)                                    #DO_NOT_DISTRIBUTE
 
 
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 from calltracetest import CallTraceTest
 from iotest import IOTest
 from mockservertest import MockServerTest
@@ -38,10 +38,11 @@ from portnumbergeneratortest import PortNumberGeneratorTest
 from seecrtestcasetest import SeecrTestCaseTest
 from utilstest import UtilsTest
 from udplistenandlogtest import UdpListenAndLogTest
+from loggingtest import LoggingTest
 
 
 if __name__ == '__main__':
     from seecr.test.loggingtest import runUnitTests
     testFile = None
-    testFile = join(dirname(__file__), 'testresults.txt') #DO_NOT_DISTRIBUTE
+    testFile = join(dirname(abspath(__file__)), 'testresults.txt') #DO_NOT_DISTRIBUTE
     runUnitTests(testFile)
