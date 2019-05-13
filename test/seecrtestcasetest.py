@@ -400,14 +400,14 @@ newlines?>'''
             parseString('<r>\n  <y/>\n</r>'),
             """Tags do not match 'x' != 'y' at location: 'r'
 === expected (line 10, sourceline 12) ===
- 9-
+ 9-SPACE
 10:   <x/>
 11- </r>
 === result (line 2) ===
 1- <r>
 2:   <y/>
 3- </r>
-=======================\n""", showContext=1)
+=======================\n""".replace('SPACE', ' '), showContext=1)
 
         # Small diff, with ANSI Color stuff
         try:
@@ -419,14 +419,14 @@ newlines?>'''
             self.assertMultiLineEqual("""\
 Tags do not match 'x' != 'y' at location: 'r'
 === expected (line 10, sourceline 12) ===
- 9-
+ 9-SPACE
 \033[31m10:   <x/>\033[0m
 11- </r>
 === result (line 2) ===
 1- <r>
 \033[32m2:   <y/>\033[0m
 3- </r>
-=======================\n""", str(e))
+=======================\n""".replace('SPACE', ' '), str(e))
         else:
             self.fail()
 
@@ -443,9 +443,9 @@ Tags do not match 'y' != 'x' at location: 'r'
 === result (line 2, sourceline 4) ===
 1- <r>
 2:   <x/>
-3-
+3-SPACE
 =====================================
-""", showContext=1)
+""".replace('SPACE', ' '), showContext=1)
 
         # Pre-root diff
         self.checkAssertEqualsLxmlFails(
