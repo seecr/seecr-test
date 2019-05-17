@@ -41,63 +41,75 @@ class LoggingTestProgram(TestProgram):
         exit(not result.wasSuccessful())
 
 
-class LoggingTestRunner(TextTestRunner):
-    def _makeResult(self):
-        return _LoggingTextTestResult(self.stream, self.descriptions, self.verbosity)
+class TestLogger(object):
+    def __init__(self, logstream):
+        self._stream = logstream
 
+    def startTest(self, test):
+        self._stream.write(str(test)) #self.getDescription(..) also returns docstring. Not wanted for now.
+        self._stream.write(" ... ")
+        self._stream.flush()
+
+    def addSuccess(self, test):
+        self._stream.write("ok\n")
+        self._stream.flush()
+
+    def addError(self, test, err):
+        self._stream.write("ERROR\n")
+        self._stream.flush()
+
+    def addFailure(self, test, err):
+        self._stream.write("FAIL\n")
+        self._stream.flush()
+
+    def addSkip(self, test, reason):
+        self._stream.write("skipped\n")
+        self._stream.flush()
+
+class NoneLogger(object):
+    def nothing(self, *args, **kwargs):
+        pass
+    startTest = nothing
+    addSuccess = nothing
+    addFailure = nothing
+    addError = nothing
+    addSkip = nothing
+
+def wrapTestResult(result, logger):
+    for m in ['startTest', 'addSuccess', 'addSkip', 'addFailure', 'addError']:
+        def _m(orig, *args, **kwargs):
+            getattr(logger, m)(*args, **kwargs)
+            return orig(*args, **kwarg)
+        setattr(result, m, _m(getattr(result, m)))
 
 class _LoggingTextTestResult(TextTestResult):
+    def __init__(self, *args, **kwargs):
+        self._testLogger = kwargs.pop('testLogger', NoneLogger())
+        TextTestResult.__init__(self, *args, **kwargs)
+
     def startTest(self, test):
         TextTestResult.startTest(self, test)
-        self.stream.log.write(self.getDescription(test))
-        self.stream.log.write(" ... ")
-        self.stream.log.flush()
+        self._testLogger.startTest(test)
 
     def addSuccess(self, test):
         TextTestResult.addSuccess(self, test)
-        self.stream.log.write("ok\n")
-        self.stream.log.flush()
+        self._testLogger.addSuccess(test)
 
     def addError(self, test, err):
         TextTestResult.addError(self, test, err)
-        self.stream.log.write("ERROR\n")
-        self.stream.log.flush()
+        self._testLogger.addError(test, err)
 
     def addFailure(self, test, err):
         TextTestResult.addFailure(self, test, err)
-        self.stream.log.write("FAIL\n")
-        self.stream.log.flush()
+        self._testLogger.addFailure(test, err)
 
     def addSkip(self, test, reason):
         TextTestResult.addSkip(self, test, reason)
-        self.stream.log.write("skipped\n")
-        self.stream.log.flush()
+        self._testLogger.addSkip(test, reason)
 
     def printResult(self, timeTaken):
         pass
 
-
-class LoggingTestStream(object):
-    def __init__(self, stream, logStream):
-        self._stream = stream
-        self._logStream = logStream
-
-    @property
-    def default(self):
-        return self._stream
-
-    @property
-    def log(self):
-        return self._logStream
-
-    def write(self, aString):
-        self.default.write(aString)
-
-    def writeln(self, aString):
-        self.default.writeln(aString)
-
-    def flush(self):
-        self.default.flush()
 
 
 testNameRe = compile("([A-Z]+[a-z0-9]*)")
@@ -115,7 +127,6 @@ def readTestFile(*pathparts):
 
 def runUnitTests(loggingFilepath=None):
     logStream = StringIO() if loggingFilepath is None else open(loggingFilepath, 'w')
-    testStream = LoggingTestStream(stream=stderr, logStream=logStream)
     try:
         LoggingTestProgram(testRunner=LoggingTestRunner(stream=testStream))
     finally:

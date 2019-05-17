@@ -31,21 +31,24 @@ from optparse import OptionParser
 
 
 class TestResult(UnitTestResult):
-    def __init__(self, stream=stdout, errStream=stderr, verbosity=1):
+    def __init__(self, stream=stdout, errStream=stderr, verbosity=1, testLogger=NoneLogger()):
         UnitTestResult.__init__(self)
         self.showAll = verbosity > 1
         self.dots = verbosity == 1
         self._errStream = errStream
         self._stream = stream
+        self._testLogger = testLogger
 
     def startTest(self, test):
         UnitTestResult.startTest(self, test)
+        self._testLogger.startTest(test)
         if self.showAll:
             self._errWrite(str(test))
             self._errWrite(' ... ')
 
     def addError(self, test, err):
         UnitTestResult.addError(self, test, err)
+        self._testLogger.addError(test, err)
         if self.showAll:
             self._errWrite('ERROR\n')
         elif self.dots:
@@ -53,6 +56,7 @@ class TestResult(UnitTestResult):
 
     def addFailure(self, test, err):
         UnitTestResult.addFailure(self, test, err)
+        self._testLogger.addFailure(test, err)
         if self.showAll:
             self._errWrite('FAIL\n')
         elif self.dots:
@@ -60,6 +64,7 @@ class TestResult(UnitTestResult):
 
     def addSuccess(self, test):
         UnitTestResult.addSuccess(self, test)
+        self._testLogger.addSuccess(test)
         if self.showAll:
             self._errWrite('ok\n')
         elif self.dots:
@@ -67,6 +72,7 @@ class TestResult(UnitTestResult):
 
     def addSkip(self, test, reason):
         UnitTestResult.addSkip(self, test, reason)
+        self._testLogger.addSkip(test, reason)
         if self.showAll:
             self._errWrite('skip {0!r}\n'.format(reason))
         elif self.dots:
@@ -191,7 +197,7 @@ class TestRunner(object):
         if testnames == '?':
             testnames = self._args.testnames
         t0 = time()
-        testResult = TestResult(verbosity=self._verbosity)
+        testResult = TestResult(verbosity=self._verbosity, testlogger=NoneLogger())
         groups = self._groups
         if self._args.listGroups:
             print 'Groups:'
