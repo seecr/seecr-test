@@ -49,7 +49,7 @@ class LoggingTestRunner(TextTestRunner):
 class _LoggingTextTestResult(TextTestResult):
     def startTest(self, test):
         TextTestResult.startTest(self, test)
-        self.stream.log.write(self.getDescription(test))
+        self.stream.log.write(str(test))
         self.stream.log.write(" ... ")
         self.stream.log.flush()
 
