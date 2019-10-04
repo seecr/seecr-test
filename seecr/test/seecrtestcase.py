@@ -25,16 +25,16 @@
 ## end license ##
 
 from unittest import TestCase
-from StringIO import StringIO
+from io import StringIO, BytesIO
 from functools import partial
-from itertools import chain, ifilter, izip_longest
+from itertools import chain, zip_longest
 from os import getenv, close as osClose, remove, getpid
 from os.path import join, isfile, realpath, abspath
 from shutil import rmtree
 from string import whitespace
 from sys import path as systemPath, exc_info
 from tempfile import mkdtemp, mkstemp
-from timing import T
+from .timing import T
 
 import pprint
 from difflib import unified_diff, ndiff
@@ -42,6 +42,7 @@ from difflib import unified_diff, ndiff
 from lxml.etree import tostring, parse, Comment, PI, Entity, XMLParser
 
 XPATH_IS_ONE_BASED = 1
+
 
 class SeecrTestCase(TestCase):
     def setUp(self):
@@ -123,7 +124,7 @@ class SeecrTestCase(TestCase):
 
     def assertXmlEquals(self, expected, value, expectedName='expected', valueName='result'):
         d = diffXml(expected, value, firstName=expectedName, secondName=valueName)
-        self.assertEquals('', d, d)
+        self.assertEqual('', d, d)
     assertXmlEqual = assertXmlEquals
 
     @staticmethod
@@ -149,13 +150,18 @@ class SeecrTestCase(TestCase):
 
 def diffXml(first, second, firstName='expected', secondName='result'):
     def canonical(xml):
-        if not isinstance(xml, str) and not isinstance(xml, unicode):
+        if isinstance(xml, str):
+            xml = xml.encode()
+        elif isinstance(xml, (bytes, bytearray)):
+            xml = xml
+        else:
             xml = tostring(xml, encoding='utf-8')
-        xml = parse(StringIO(xml), XMLParser(remove_blank_text=True))
-        xml = parse(StringIO(tostring(xml, pretty_print=True, encoding='utf-8')))
-        sio = StringIO()
-        xml.write_c14n(sio)
-        return sio.getvalue()
+
+        xml = parse(BytesIO(xml), XMLParser(remove_blank_text=True))
+        xml = parse(BytesIO(tostring(xml, pretty_print=True, encoding='utf-8')))
+        bio = BytesIO()
+        xml.write_c14n(bio)
+        return bio.getvalue().decode()
 
     first = canonical(first)
     second = canonical(second)
@@ -211,7 +217,7 @@ class CompareXml(object):
         except AssertionError:
             c, v, t = exc_info()
             v = c(str(v) + self._contextStr(expectedNode, resultNode))
-            raise c, v, t.tb_next
+            raise c(v).with_traceback(t.tb_next)
 
     def _contextStr(self, expectedNode, resultNode):
         if not hasattr(self, '_context'):
@@ -220,9 +226,9 @@ class CompareXml(object):
         def reparseAndFindNode(root, node):
             refind = refindLxmlNodeCallback(root, node)
             text = tostring(root.getroottree() if isRootNode(root) else root, encoding='UTF-8')  # pretty_print input if you want to have pretty output.
-            newTree = parse(StringIO(text))
+            newTree = parse(BytesIO(text))
             newNode = refind(newTree)
-            return newTree, newNode, text
+            return newTree, newNode, text.decode()
 
         def formatTextForNode(node, originalNode, label, colorCode, text):
             diffLines = []
@@ -301,18 +307,18 @@ class CompareXml(object):
         if diff:
             raise AssertionError("Missing attributes %s at location: '%s'" % (
                     ', '.join(
-                        (("'%s'" % a) for a in diff)),
+                        (("'%s'" % a) for a in sorted(diff))),
                         self.xpathToHere(expectedNode, includeCurrent=True)
                 ))
         diff = resultAttrsSet.difference(expectedAttrsSet)
         if diff:
             raise AssertionError("Unexpected attributes %s at location: '%s'" % (
                     ', '.join(
-                        (("'%s'" % a) for a in diff)),
+                        (("'%s'" % a) for a in sorted(diff))),
                         self.xpathToHere(expectedNode, includeCurrent=True)
                 ))
 
-        for attrName, expectedAttrValue in expectedAttrs.items():
+        for attrName, expectedAttrValue in list(expectedAttrs.items()):
             resultAttrValue = resultAttrs[attrName]
             if expectedAttrValue != resultAttrValue:
                 raise AssertionError("Attribute '%s' has a different value ('%s' != '%s') at location: '%s'" % (attrName, expectedAttrValue, resultAttrValue, self.xpathToHere(expectedNode, includeCurrent=True)))
@@ -328,7 +334,7 @@ class CompareXml(object):
         if len(expectedChildren) != len(resultChildren):
             tagsLandR = [
                 (elementAsRepresentation(x), elementAsRepresentation(r))
-                for x, r in izip_longest(expectedChildren, resultChildren)
+                for x, r in zip_longest(expectedChildren, resultChildren)
             ]
             tagsLandR = '\n'.join([
                 '    %s -- %s' % (x, r)
@@ -336,7 +342,7 @@ class CompareXml(object):
             ])
             path = self.xpathToHere(parent, includeCurrent=True) if parent is not None else ''
             raise AssertionError("Number of children not equal (expected -- result):\n%s\n\nAt location: '%s'" % (tagsLandR, path))
-        self._remainingContainer[:0] = zip(expectedChildren, resultChildren)
+        self._remainingContainer[:0] = list(zip(expectedChildren, resultChildren))
 
     def xpathToHere(self, node, includeCurrent=False):
         path = []
@@ -377,11 +383,11 @@ class CompareXml(object):
             else:
                 nodeIndex, othersWithsameTagCount = self._nodeIndex(
                     node=node,
-                    iterator=ifilter(
+                    iterator=filter(
                         lambda n: n.target == node.target,
                         node.getparent().iterchildren(tag=PI)))
         else:
-            if not isinstance(nodeTag, basestring):
+            if not isinstance(nodeTag, str):
                 raise TypeError("Unexpected Node-Type '%s'" % nodeTag)
 
             nodeIndex, othersWithsameTagCount = self._nodeIndex(
@@ -493,4 +499,3 @@ def safe_repr(obj, short=False):
     if not short or len(result) < _MAX_LENGTH:
         return result
     return result[:_MAX_LENGTH] + ' [truncated]...'
-

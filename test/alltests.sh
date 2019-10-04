@@ -25,15 +25,4 @@
 
 export LANG=en_US.UTF-8
 export PYTHONPATH=.:"$PYTHONPATH"
-option=$1
-if [ -f /usr/bin/python2.6 ]; then
-    pyversion="python2.6"
-fi
-if [ -f /usr/bin/python2.7 ]; then
-    pyversion="python2.7"
-fi
-if [ "${option:0:10}" == "--python2." ]; then
-    shift
-    pyversion="${option:2}"
-fi
-$pyversion _alltests.py "$@"
+python3 _alltests.py "$@"

@@ -31,10 +31,10 @@ from os import makedirs, walk, popen
 from os.path import abspath, dirname, isdir, join, splitext, basename
 from re import DOTALL, compile, sub
 from socket import socket, AF_INET, SOCK_STREAM, IPPROTO_TCP
-from StringIO import StringIO
+from io import StringIO
 from sys import getdefaultencoding
 from time import sleep
-from urllib import urlencode
+from urllib.parse import urlencode
 
 from lxml.etree import parse as parse_xml, XMLSyntaxError, HTMLParser
 from lxml.etree import HTMLParser, HTML
@@ -53,14 +53,14 @@ _entities = {
 def parseHtmlAsXml(body):
     def forceXml(body):
         newBody = body
-        for entity, replacement in _entities.items():
+        for entity, replacement in list(_entities.items()):
             newBody = newBody.replace(entity, replacement)
         newBody = _scriptTagRegex.sub('', newBody)
         return newBody
     try:
         return parse_xml(StringIO(forceXml(body)))
     except XMLSyntaxError:
-        print body
+        print(body)
         raise
 
 def getPage(port, path, arguments=None, expectedStatus="200", sessionId=None, headers=None):
@@ -96,7 +96,7 @@ def assertHttpOK(header, body, expectedStatus="200"):
         assertSubstring("HTTP/1.0 %s" % expectedStatus, header)
         assertNotSubstring("Traceback", header + "\r\n\r\n" + body)
     except AssertionError:
-        print header, body
+        print(header, body)
         raise
 
 def assertSubstring(value, s):
@@ -122,15 +122,15 @@ def createReturnValue(header, body, parse):
             try:
                 body = HTML(body, HTMLParser(recover=True))
             except:
-                print "Exception parsing:"
-                print body
+                print("Exception parsing:")
+                print(body)
                 raise
     return header, body
 
 
 def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=True, timeOutInSeconds=None, host=None, method='GET', additionalHeaders=None):
     additionalHeaders = additionalHeaders or {}
-    if type(data) is unicode:
+    if type(data) is str:
         data = data.encode(getdefaultencoding())
     sok = _socket(port, timeOutInSeconds)
     try:
@@ -148,7 +148,7 @@ def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=T
             lines.append('Host: %(host)s')
         if contentType:
             lines.append('Content-Type: %(contentType)s')
-        lines += ["%s: %s" % (k, v) for k, v in additionalHeaders.items()]
+        lines += ["%s: %s" % (k, v) for k, v in list(additionalHeaders.items())]
         lines += ['', '']
         sendBuffer = ('\r\n'.join(lines) % locals()) + (data or '')
         totalBytesSent = 0
@@ -192,7 +192,7 @@ def createPostMultipartForm(boundary, formValues):
             headers['Content-Type'] = valueDict['mimetype']
 
         strm.write('--' + boundary + '\r\n')
-        for item in headers.items():
+        for item in list(headers.items()):
             strm.write('%s: %s\r\n' % item)
         strm.write('\r\n')
         strm.write(valueDict['value'])
@@ -260,7 +260,7 @@ def openConsole():
 def findTag(tag, body, **attrs):
     xpathExpr = "//%s" % tag
     if attrs:
-        xpathExpr += "[%s]" % ' and '.join('@%s="%s"' % item for item in attrs.items())
+        xpathExpr += "[%s]" % ' and '.join('@%s="%s"' % item for item in list(attrs.items()))
 
     return htmlXPath(xpathExpr, body)
 

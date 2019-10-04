@@ -90,7 +90,7 @@ class TestResult(UnitTestResult):
         self._write("\n")
         if not self.wasSuccessful():
             output = "FAILED ("
-            failed, errored = map(len, (self.failures, self.errors))
+            failed, errored = list(map(len, (self.failures, self.errors)))
             if failed:
                 output += "failures=%d" % failed
             if errored:
@@ -194,9 +194,9 @@ class TestRunner(object):
         testResult = TestResult(verbosity=self._verbosity)
         groups = self._groups
         if self._args.listGroups:
-            print 'Groups:'
+            print('Groups:')
             for g in sorted(groups):
-                print ' -', g.name
+                print(' -', g.name)
             exit(0)
         if groupnames:
             groups = (group for group in self._groups if group.name in groupnames)
@@ -259,11 +259,11 @@ class TestLoader(UnitTestTestLoader):
 
         if type(obj) == types.ModuleType:
             return self.loadTestsFromModule(obj)
-        elif (isinstance(obj, (type, types.ClassType)) and
+        elif (isinstance(obj, type) and
               issubclass(obj, TestCase)):
             return self.loadTestsFromTestCase(obj)
         elif (type(obj) == types.UnboundMethodType and
-              isinstance(parent, (type, types.ClassType)) and
+              isinstance(parent, type) and
               issubclass(parent, TestCase)):
             return TestSuite([parent(obj.__name__)])
         elif isinstance(obj, TestSuite):
