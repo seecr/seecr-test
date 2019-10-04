@@ -132,18 +132,23 @@ class TracedCall:
         objectsRe = compile(r'|'.join([instanceRe, objectRe]))
         classesRe = compile(r'|'.join([classRe, objectOnlyRe]))
 
+        strSomething = str(something)
+
         if something == None:
             return 'None'
         elif isinstance(something, str):
             return "'%s'" % something
-        elif type(something) == int or type(something) == float:
-            return str(something)
+        elif isinstance(something, (int, float)):
+            return strSomething
+        elif isinstance(something, (bytes, bytearray)):
+            return strSomething
         elif isinstance(something, type): # a Class
             return "<class %s>" % getattr(something, ("__qualname__" if self._callTrace._verbose else "__name__"))
-        elif isinstance(type(something), type): # object (instance) of some class
+        elif isinstance(type(something), type) and (" object " in strSomething or
+                                                    " instance " in strSomething): # object (instance) of some class
             return "<%s>" % getattr(type(something), ("__qualname__" if self._callTrace._verbose else "__name__"))
         else:
-            return str(something)
+            return strSomething
 
     def __repr__(self):
         return '%s(%s)' % (self.name, ", ".join(list(map(self.represent, self.args))+['%s=%s' % (key, self.represent(value)) for key, value in list(self.kwargs.items())]))
