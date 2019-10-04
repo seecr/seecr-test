@@ -95,7 +95,7 @@ def assertHttpOK(header, body, expectedStatus="200"):
     try:
         assertSubstring("HTTP/1.0 %s" % expectedStatus, header)
         assertNotSubstring("Traceback", header + "\r\n\r\n" + body)
-    except AssertionError:
+    except AssertionError as e:
         print(header, body)
         raise
 
@@ -150,7 +150,7 @@ def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=T
             lines.append('Content-Type: %(contentType)s')
         lines += ["%s: %s" % (k, v) for k, v in list(additionalHeaders.items())]
         lines += ['', '']
-        sendBuffer = ('\r\n'.join(lines) % locals()) + (data or '')
+        sendBuffer = ('\r\n'.join(lines) % locals()).encode() + (data or b'')
         totalBytesSent = 0
         bytesSent = 0
         while totalBytesSent != len(sendBuffer):
@@ -201,9 +201,7 @@ def createPostMultipartForm(boundary, formValues):
     return strm.getvalue()
 
 def receiveFromSocket(sok):
-    response = ''
-    part = sok.recv(1024)
-    response += part
+    response = part = sok.recv(1024)
     while part != None:
         part = sok.recv(1024)
         if not part:
@@ -213,8 +211,8 @@ def receiveFromSocket(sok):
 
 def splitHttpHeaderBody(response):
     try:
-        header, body = response.split('\r\n\r\n', 1)
-    except ValueError:
+        header, body = response.split(b'\r\n\r\n', 1)
+    except ValueError as e:
         raise ValueError("%s can not be split into a header and body" % repr(response))
     else:
         return header, body
@@ -260,7 +258,7 @@ def openConsole():
 def findTag(tag, body, **attrs):
     xpathExpr = "//%s" % tag
     if attrs:
-        xpathExpr += "[%s]" % ' and '.join('@%s="%s"' % item for item in list(attrs.items()))
+        xpathExpr += "[%s]" % ' and '.join('@%s="%s"' % item for item in attrs.items())
 
     return htmlXPath(xpathExpr, body)
 
