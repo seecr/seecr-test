@@ -38,7 +38,6 @@ setup(
     packages=[
         'seecr',     # DO_NOT_DISTRIBUTE
         'seecr.test',
-        'seecr.test.selenium',
     ],
     scripts=scripts,
     url='http://www.seecr.nl',

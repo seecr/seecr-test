@@ -41,24 +41,24 @@ class PortNumberGeneratorTest(TestCase):
     def testReasonableAmountOfUniquePortNumbers(self):
         number = PortNumberGenerator.next()
 
-        self.assertEquals(int, type(number))
+        self.assertEqual(int, type(number))
 
         numbers = []
         # More than 14000 gets *very* slow or fails
         # When guaranteed uniqe numbers for that many ports are needed,
         # change the approach (say reading: cat /proc/net/tcp | awk '{print $2}' | sed -e '1d')
-        for i in xrange(14000):
+        for i in range(14000):
             numbers.append(PortNumberGenerator.next())
 
-        self.assertEquals(14000, len(numbers))
-        self.assertEquals(14000, len(set(numbers)))
-        self.assertEquals(True, all((0 <= n < 65536) for n in numbers))
+        self.assertEqual(14000, len(numbers))
+        self.assertEqual(14000, len(set(numbers)))
+        self.assertEqual(True, all((0 <= n < 65536) for n in numbers))
 
     def testFindProblemWithLockupAfterReuseQuickly(self):
         soks = []
         try:
             for i in range(10):
-                for j in xrange(950):
+                for j in range(950):
                     nr = PortNumberGenerator.next()
                     sok = socket()
                     sok.setsockopt(SOL_SOCKET, SO_LINGER, pack('ii', 1, 1))
@@ -77,13 +77,13 @@ class PortNumberGeneratorTest(TestCase):
 
     def testClaimBlockOfPortNumbers(self):
         ports = []
-        for i in xrange(20):
+        for i in range(20):
             p = PortNumberGenerator.next(blockSize=3)
             self.assertTrue(p in PortNumberGenerator._usedPorts)
             self.assertTrue((p + 1) in PortNumberGenerator._usedPorts)
             self.assertTrue((p + 2) in PortNumberGenerator._usedPorts)
             ports.append(p)
-        self.assertEquals(20, len(ports))
+        self.assertEqual(20, len(ports))
 
     def testBlockSizeMustBePositive(self):
         self.assertRaises(ValueError, lambda: PortNumberGenerator.next(blockSize=0))
@@ -145,30 +145,30 @@ class PortNumberGeneratorTest(TestCase):
         PortNumberGenerator.bind(port3)
 
         # Overlap with already bind port: port3.
-        self.assertEquals(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
-        self.assertEquals(set([port3]), set(PortNumberGenerator._bound.keys()))
+        self.assertEqual(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
+        self.assertEqual(set([port3]), set(PortNumberGenerator._bound.keys()))
         try:
             PortNumberGenerator.bind(port2, blockSize=2)
-        except RuntimeError, e:
-            self.assertEquals('Port(s) already bound', str(e))
+        except RuntimeError as e:
+            self.assertEqual('Port(s) already bound', str(e))
         else: self.fail()
 
-        self.assertEquals(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
-        self.assertEquals(set([port3]), set(PortNumberGenerator._bound.keys()))
+        self.assertEqual(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
+        self.assertEqual(set([port3]), set(PortNumberGenerator._bound.keys()))
 
         # Overlap with bound port: port3.
         PortNumberGenerator.unbind(port=port3)
         _port, close = attemptBinding(bindPort=port3)
         self.assertTrue(_port)
-        self.assertEquals(set(), set(PortNumberGenerator._bound.keys()))
+        self.assertEqual(set(), set(PortNumberGenerator._bound.keys()))
         try:
             PortNumberGenerator.bind(port2, blockSize=2)
-        except RuntimeError, e:
-            self.assertEquals('Port(s) are not free!', str(e))
+        except RuntimeError as e:
+            self.assertEqual('Port(s) are not free!', str(e))
         else: self.fail()
 
-        self.assertEquals(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
-        self.assertEquals(set(), set(PortNumberGenerator._bound.keys()))
+        self.assertEqual(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
+        self.assertEqual(set(), set(PortNumberGenerator._bound.keys()))
         close()                 # Cleanup
 
     def testUnbindPortNumberV4(self):
@@ -245,29 +245,29 @@ class PortNumberGeneratorTest(TestCase):
         _p = PortNumberGenerator.next(blockSize=2, bind=True)
         ports.extend([_p, _p + 1])
 
-        self.assertEquals(6, len(ports))
-        self.assertEquals(set(ports), PortNumberGenerator._usedPorts)
-        reservationKeys = PortNumberGenerator._bound.keys()
-        self.assertEquals(3, len(reservationKeys))
+        self.assertEqual(6, len(ports))
+        self.assertEqual(set(ports), PortNumberGenerator._usedPorts)
+        reservationKeys = list(PortNumberGenerator._bound.keys())
+        self.assertEqual(3, len(reservationKeys))
         self.assertTrue(set(reservationKeys).issubset(set(ports)))
         self.assertNotBound(bindV4(ip='127.0.0.1', port=aBoundPort, protocol='tcp', reuse=False))
 
         PortNumberGenerator.clear()
 
-        self.assertEquals(0, len(PortNumberGenerator._usedPorts))
-        reservationKeys = PortNumberGenerator._bound.keys()
-        self.assertEquals(0, len(reservationKeys))
+        self.assertEqual(0, len(PortNumberGenerator._usedPorts))
+        reservationKeys = list(PortNumberGenerator._bound.keys())
+        self.assertEqual(0, len(reservationKeys))
         self.assertBoundAndUnbind(bindV4(ip='127.0.0.1', port=aBoundPort, protocol='tcp', reuse=False))
 
     ## helpers ##
     def assertNotBound(self, bindResult):
-        self.assertEquals((None, None), bindResult)
+        self.assertEqual((None, None), bindResult)
 
     def assertBoundAndUnbind(self, bindResult):
         sok, boundPort = bindResult
         if sok is not None:
             sok.close()
-        self.assertNotEquals((None, None), bindResult)
+        self.assertNotEqual((None, None), bindResult)
 
 
 def bindV4(ip, port, protocol, reuse=False):

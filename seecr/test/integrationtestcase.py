@@ -23,7 +23,7 @@
 #
 ## end license ##
 
-from __future__ import with_statement
+
 
 from errno import ECHILD
 from os.path import join, basename
@@ -33,13 +33,13 @@ from random import choice
 from time import sleep
 from subprocess import Popen
 from signal import SIGTERM
-from urllib import urlopen
+from urllib.request import urlopen
 from string import ascii_letters
 from time import time
 
-from seecrtestcase import SeecrTestCase
+from .seecrtestcase import SeecrTestCase
 
-randomString = lambda n=4: ''.join(choice(ascii_letters) for i in xrange(n))
+randomString = lambda n=4: ''.join(choice(ascii_letters) for i in range(n))
 
 class IntegrationTestCase(SeecrTestCase):
     def __getattr__(self, name):
@@ -89,7 +89,7 @@ class IntegrationState(object):
         flagOptions = flagOptions if flagOptions else []
         for flag in flagOptions:
             args.append("--%s" % flag)
-        for k,v in kwargs.items():
+        for k,v in list(kwargs.items()):
             if not hasattr(v, 'append'):
                 v = [v]
             for x in v:
@@ -100,10 +100,10 @@ class IntegrationState(object):
                     args.append("--%s=%s" % (k, str(x)))
         self._stdoutWrite("Starting service '%s', for state '%s'\n" % (serviceName, self.stateName))
         if debugInfo:
-            print "-----StartServer-----"
-            print args
-            print "-"*21
-            print
+            print("-----StartServer-----")
+            print(args)
+            print("-"*21)
+            print()
         serverProcess = Popen(
             executable=executable,
             args=args,
@@ -137,13 +137,13 @@ class IntegrationState(object):
         except OSError:
             self._stdoutWrite("Server with servicename '%s' and pid '%s' was already stopped.\n" % (serviceName, self.pids[serviceName]))
 
-        for i in xrange(int(waitInSeconds * 200)):
+        for i in range(int(waitInSeconds * 200)):
             try:
                 result = waitpid(self.pids[serviceName], WNOHANG)
                 if result != (0, 0):
                     break
                 sleep(0.005)
-            except OSError, e:
+            except OSError as e:
                 if e.errno == ECHILD:  # ECHILD / 10 --> No child processes, means we're done.
                     break
                 raise
@@ -162,7 +162,7 @@ class IntegrationState(object):
         flagOptions = flagOptions if flagOptions else []
         for flag in flagOptions:
             args.append("--%s" % flag)
-        for k,v in kwargs.items():
+        for k,v in list(kwargs.items()):
             args.append("--%s=%s" % (k, str(v)))
         process = Popen(
             executable=executable,
@@ -195,7 +195,7 @@ class IntegrationState(object):
             return open(stdoutfile).read()
 
     def tearDown(self):
-        for serviceName in self.pids.keys():
+        for serviceName in list(self.pids.keys()):
             self._stdoutWrite("Stopping service '%s' for state '%s'\n" % (serviceName, self.stateName))
             self._stopServer(serviceName)
 

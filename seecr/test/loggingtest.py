@@ -28,7 +28,7 @@ from os import stat
 from os.path import isfile, join
 from re import compile
 from stat import ST_MTIME
-from StringIO import StringIO
+from io import StringIO
 from sys import stderr
 from time import strftime, localtime
 from unittest import TextTestRunner, TextTestResult, TestProgram

@@ -22,12 +22,12 @@
 #
 ## end license ##
 
-from __future__ import with_statement
+
 
 import sys
 from contextlib import contextmanager
 from functools import wraps
-from StringIO import StringIO
+from io import StringIO
 
 
 def _set_replaced_stream(name, replacement=None):

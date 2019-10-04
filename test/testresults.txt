@@ -1,4 +1,4 @@
-testCallTraceAsMethod (calltracetest.CallTraceTest) ... ok
+testCallTraceDunderMethodsNotSupported (calltracetest.CallTraceTest) ... ok
 testCallWithArguments (calltracetest.CallTraceTest) ... ok
 testCallWithException (calltracetest.CallTraceTest) ... ok
 testCallWithReturnValue (calltracetest.CallTraceTest) ... ok
@@ -8,7 +8,6 @@ testGetList (calltracetest.CallTraceTest) ... ok
 testIgnoreAttributes (calltracetest.CallTraceTest) ... ok
 testNonZero (calltracetest.CallTraceTest) ... ok
 testNotEqualToNone (calltracetest.CallTraceTest) ... ok
-testObservableCall (calltracetest.CallTraceTest) ... ok
 testOnlySpecifiedMethods (calltracetest.CallTraceTest) ... ok
 testRepresentRE (calltracetest.CallTraceTest) ... ok
 testReset (calltracetest.CallTraceTest) ... ok
@@ -60,6 +59,7 @@ testAssertEqualsLxmlXpathsOkWithCompexNesting (seecrtestcasetest.SeecrTestCaseTe
 testAssertEqualsLxmlsXpathToHereWithCommentNodes (seecrtestcasetest.SeecrTestCaseTest) ... ok
 testAssertEqualsLxmlsXpathToHereWithEntityNodes (seecrtestcasetest.SeecrTestCaseTest) ... ok
 testAssertEqualsLxmlsXpathToHereWithProcessingInstructions (seecrtestcasetest.SeecrTestCaseTest) ... ok
+testAssertXmlEquals (seecrtestcasetest.SeecrTestCaseTest) ... ok
 testDepthFirst (seecrtestcasetest.SeecrTestCaseTest) ... ok
 testObjectsNeedToBeLxmlNodesOrTrees (seecrtestcasetest.SeecrTestCaseTest) ... ok
 testRefindLxmlNodeCallback (seecrtestcasetest.SeecrTestCaseTest) ... ok

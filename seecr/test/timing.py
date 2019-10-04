@@ -68,6 +68,6 @@ def determineT():
     return T
 
 T = determineT()
-print 'T=%.1fs' % T
+print('T=%.1fs' % T)
 del determineT
 
