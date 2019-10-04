@@ -164,6 +164,8 @@ class CallTraceTest(TestCase):
         self.assertEqual("'aap'", c.represent('aap'))
         self.assertEqual('1', c.represent(1))
         self.assertEqual('1.1', c.represent(1.1))
+        self.assertEqual("b'bytes\\xff'", c.represent(b"bytes\xff"))
+        self.assertEqual("bytearray(b'bytes\\xff')", c.represent(bytearray(b"bytes\xff")))
         self.assertEqual('None', c.represent(None))
 
         self._verbose = True
