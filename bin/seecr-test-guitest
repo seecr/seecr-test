@@ -47,4 +47,4 @@ sleep 2
 export LANG=en_US.UTF-8
 export PYTHONPATH=.:${PYTHONPATH}
 
-python ${DIRECTORY}/_guitests.py "$@"
+python3 ${DIRECTORY}/_guitests.py "$@"

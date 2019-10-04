@@ -32,14 +32,14 @@ from struct import pack
 
 class PortNumberGenerator(object):
     _ephemeralPortLow, _ephemeralPortHigh = [int(p) for p in open('/proc/sys/net/ipv4/ip_local_port_range', 'r').read().strip().split('\t', 1)]  # low\thigh
-    _maxTries = (_ephemeralPortHigh - _ephemeralPortLow) / 2
+    _maxTries = (_ephemeralPortHigh - _ephemeralPortLow) // 2
     _usedPorts = set([])
     _bound = {}
 
     @classmethod
     def next(cls, blockSize=1, bind=False):
         blockSize = verifyAndCoerseBlockSize(blockSize)
-        for i in xrange(cls._maxTries):
+        for i in range(cls._maxTries):
             port = cls._bindAttempt(0, blockSize, bind, cls._usedPorts)
             if port:
                 return port
@@ -70,7 +70,7 @@ class PortNumberGenerator(object):
 
     @classmethod
     def clear(cls):
-        for close in cls._bound.values():
+        for close in list(cls._bound.values()):
             close()
         cls._bound.clear()
         cls._usedPorts.clear()
