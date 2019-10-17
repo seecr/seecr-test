@@ -92,7 +92,7 @@ class HTTP:
     Request_Line = ignoredCRLFs + Method + SP + Request_URI + SP + HTTP_Version + CRLF
 
     Chunk_Size = b'(?P<ChunkSize>[0-9a-fA-F]+)'
-    Chunk_Size_Line = Chunk_Size + CRLF
+    Chunk_Size_Line = Chunk_Size + CRLF  # FIXME: TS: incomplete, missing chunk-extensions (at least match & ignore).
 
     Status_Code = rb'(?P<StatusCode>[0-9]{3})'
     Reason_Phrase = rb'(?P<ReasonPhrase>[^\r\n].+)'
@@ -100,7 +100,6 @@ class HTTP:
 
     Request = Request_Line + Headers + CRLF
     Response = Status_Line + Headers + CRLF
-
 
 
 class REGEXP:
