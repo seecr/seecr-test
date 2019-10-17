@@ -41,6 +41,7 @@ testBindPortNumbersGenerated_withBlockSize_V6 (portnumbergeneratortest.PortNumbe
 testBindPortRangeNumberGiven (portnumbergeneratortest.PortNumberGeneratorTest) ... ok
 testBlockSizeMustBePositive (portnumbergeneratortest.PortNumberGeneratorTest) ... ok
 testClaimBlockOfPortNumbers (portnumbergeneratortest.PortNumberGeneratorTest) ... ok
+testClassIsIterableForConvenience (portnumbergeneratortest.PortNumberGeneratorTest) ... ok
 testClear (portnumbergeneratortest.PortNumberGeneratorTest) ... ok
 testFindProblemWithLockupAfterReuseQuickly (portnumbergeneratortest.PortNumberGeneratorTest) ... ok
 testReasonableAmountOfUniquePortNumbers (portnumbergeneratortest.PortNumberGeneratorTest) ... ok
