@@ -3,7 +3,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2012-2015 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2015, 2020 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -176,7 +176,7 @@ def postMultipartForm(port, path, formValues, parse=True, timeOutInSeconds=None,
         port,
         path,
         body,
-        contentType='multipart/form-data; boundary=' + boundary,
+        contentType='multipart/form-data; boundary="{}"'.format(boundary),
         parse=parse,
         timeOutInSeconds=timeOutInSeconds,
         **kwargs)
