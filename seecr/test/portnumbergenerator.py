@@ -45,7 +45,8 @@ class _IterableClass(type):
 
 
 class PortNumberGenerator(metaclass=_IterableClass):
-    _ephemeralPortLow, _ephemeralPortHigh = [int(p) for p in open('/proc/sys/net/ipv4/ip_local_port_range', 'r').read().strip().split('\t', 1)]  # low\thigh
+    with open('/proc/sys/net/ipv4/ip_local_port_range', 'r') as fp:
+        _ephemeralPortLow, _ephemeralPortHigh = [int(p) for p in fp.read().strip().split('\t', 1)]  # low\thigh
     _maxTries = (_ephemeralPortHigh - _ephemeralPortLow) // 2
     _usedPorts = set([])
     _bound = {}
