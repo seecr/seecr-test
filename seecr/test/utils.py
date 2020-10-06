@@ -39,7 +39,7 @@ from urllib.parse import urlencode
 from lxml.etree import parse as parse_xml, XMLSyntaxError, HTMLParser
 from lxml.etree import HTMLParser, HTML
 
-_scriptTagRegex = compile("<script[\s>].*?</script>", DOTALL)
+_scriptTagRegex = compile(r"<script[\s>].*?</script>", DOTALL)
 _entities = {
     '&nbsp;': ' ',
     '&ndash;': "&#8211;",
@@ -238,7 +238,7 @@ def sleepWheel(seconds, callback=None, interval=0.2):
     return False
 
 def ignoreLineNumbers(s):
-    return sub("line \d+,", "line [#],", s)
+    return sub('File "[^"].*",', 'File [x],', sub(r"line \d+,", "line [#],", s))
 
 def openConsole():
     from code import InteractiveConsole

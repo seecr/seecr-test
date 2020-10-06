@@ -43,7 +43,8 @@ def determineT():
     if isfile(pystonesValueFile):
         age = time() - stat(pystonesValueFile).st_mtime
         if age < 12 * 60 * 60:
-            return float(open(pystonesValueFile).read())
+            with open(pystonesValueFile) as fp:
+                return float(fp.read())
 
     temppath = []
     while len(path) > 0:
