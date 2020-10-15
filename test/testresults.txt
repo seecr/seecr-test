@@ -71,7 +71,7 @@ testListenAndLog (udplistenandlogtest.UdpListenAndLogTest) ... ok
 testResetLog (udplistenandlogtest.UdpListenAndLogTest) ... ok
 testFindTag (utilstest.UtilsTest) ... ok
 testHeaderToDict (utilstest.UtilsTest) ... ok
-testIgnoreLineNumber (utilstest.UtilsTest) ... ok
+testIgnoreLineNumber (utilstest.UtilsTest) ... FAIL
 testLoadTestFromPath (utilstest.UtilsTest) ... ok
 testLoadTestFromPathSubDirs (utilstest.UtilsTest) ... ok
 testMkdir (utilstest.UtilsTest) ... ok
