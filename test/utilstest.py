@@ -45,9 +45,9 @@ class UtilsTest(SeecrTestCase):
 Exception: xcptn\n"""
 
         expected = """Traceback (most recent call last):
-  File "../some/file.py", line [#], in aFunction
+  File [file.py], line [#], in aFunction
     for _var  in vars:
-  File "some/other/file.py", line [#], in anotherFuntion
+  File [file.py], line [#], in anotherFuntion
     raise Exception('xcptn')
 Exception: xcptn\n"""
 
@@ -134,7 +134,7 @@ Exception: xcptn\n"""
     def testLoadTestFromPathSubDirs(self):
         with open(join(self.tempdir, "sometest.py"), "w") as fp:
             fp.write(TEST_TEMPLATE)
-        
+
         with open(join(mkdir(self.tempdir, "sub"), "sometest.py"), "w") as fp:
             fp.write(TEST_TEMPLATE)
 
