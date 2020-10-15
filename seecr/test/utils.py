@@ -238,7 +238,9 @@ def sleepWheel(seconds, callback=None, interval=0.2):
     return False
 
 def ignoreLineNumbers(s):
-    return sub('File "[^"].*",', 'File [x],', sub(r"line \d+,", "line [#],", s))
+    return sub('File "([^"].*)",',
+            lambda m: 'File [{}],'.format(m.group(1).split('/')[-1]),
+            sub(r"line \d+,", "line [#],", s))
 
 def openConsole():
     from code import InteractiveConsole
