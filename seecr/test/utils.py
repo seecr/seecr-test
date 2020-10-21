@@ -290,7 +290,8 @@ def loadTestsFromPath(testRoot, _globals=None):
     pySuffix = [(suffix, mode, suffixType) for (suffix, mode, suffixType) in get_suffixes() if suffix == ".py"][0]
     for path, dirs, files in walk(testRoot):
         for filename in [join(path, filename) for filename in files if splitext(filename)[-1] == '.py']:
-            tree = parse(open(filename).read())
+            with open(filename) as f:
+                tree = parse(f.read())
 
             for each in tree.body:
                 if type(each) is ClassDef and each.bases[0].id in ['TestCase', 'SeecrTestCase']:
