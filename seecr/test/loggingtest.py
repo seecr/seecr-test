@@ -110,8 +110,9 @@ def readTestFile(*pathparts):
         return {}
     def l(testname, classname, _, status):
         return dict(testname=testname, classname=classname.replace('(', '').replace(')', ''), status=status)
-    return {'timestamp':strftime("%Y-%m-%d %H:%M:%S", localtime(stat(fullFilename)[ST_MTIME])), 'tests': [
-        l(*line.strip().split()) for line in open(fullFilename) if line.strip()]}
+    with open(fullFilename) as src:
+        return {'timestamp':strftime("%Y-%m-%d %H:%M:%S", localtime(stat(fullFilename)[ST_MTIME])), 'tests': [
+            l(*line.strip().split()) for line in src if line.strip()]}
 
 def runUnitTests(loggingFilepath=None):
     logStream = StringIO() if loggingFilepath is None else open(loggingFilepath, 'w')
