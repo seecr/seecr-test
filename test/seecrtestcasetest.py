@@ -752,6 +752,6 @@ At location: ''
 def parseString(s):
     return parse(StringIO(s))
 
-COLOR_RE = re.compile('\033\[[^m]*m')
+COLOR_RE = re.compile(r'\033\[[^m]*m')
 def stripColor(s):
     return COLOR_RE.sub('', s)
