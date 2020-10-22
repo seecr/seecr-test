@@ -37,22 +37,27 @@ class UdpListenAndLogTest(TestCase):
         port = PortNumberGenerator.next()
         ulal = UdpListenAndLog(port)
 
-        s = socket(AF_INET, SOCK_DGRAM)
-        s.sendto(b"THIS IS THE PAYLOAD", ('127.0.0.1', port))
-        sleep(.5)
+        with socket(AF_INET, SOCK_DGRAM) as s:
+            s.sendto(b"THIS IS THE PAYLOAD", ('127.0.0.1', port))
+            sleep(.5)
 
         self.assertEqual([b'THIS IS THE PAYLOAD'], ulal.log())
+        ulal.stop()
 
     def testResetLog(self):
         port = PortNumberGenerator.next()
         ulal = UdpListenAndLog(port)
 
-        socket(AF_INET, SOCK_DGRAM).sendto(b"THIS IS THE PAYLOAD", ('127.0.0.1', port))
-        sleep(.5)
+        with socket(AF_INET, SOCK_DGRAM) as s:
+            s.sendto(b"THIS IS THE PAYLOAD", ('127.0.0.1', port))
+            sleep(.5)
 
         self.assertEqual(1, len(ulal.log()))
         ulal.reset()
         self.assertEqual(0, len(ulal.log()))
-        socket(AF_INET, SOCK_DGRAM).sendto(b"THIS IS THE PAYLOAD", ('127.0.0.1', port))
-        sleep(.5)
+        with socket(AF_INET, SOCK_DGRAM) as s:
+            s.sendto(b"THIS IS THE PAYLOAD", ('127.0.0.1', port))
+            sleep(.5)
         self.assertEqual(1, len(ulal.log()))
+
+        ulal.stop()

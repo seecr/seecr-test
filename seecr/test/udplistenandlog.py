@@ -55,6 +55,7 @@ class UdpListenAndLog(object):
 
     def stop(self):
         self._stop = True
+        self._sok.close()
 
     def reset(self):
         self._semaphore.acquire()
