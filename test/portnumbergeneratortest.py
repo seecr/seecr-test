@@ -115,6 +115,7 @@ class PortNumberGeneratorTest(TestCase):
             self.assertNotBound(bindV4(ip='127.0.0.1', port=p, protocol='udp', reuse=reuse))
             self.assertNotBound(bindV4(ip='0.0.0.0', port=p, protocol='tcp', reuse=reuse))
             self.assertNotBound(bindV4(ip='0.0.0.0', port=p, protocol='udp', reuse=reuse))
+        PortNumberGenerator.unbind(p)
 
     def testBindPortNumbersGenerated_withBlockSize_V4(self):
         blockSize = 3
@@ -182,7 +183,8 @@ class PortNumberGeneratorTest(TestCase):
             PortNumberGenerator.bind(port2, blockSize=2)
         except RuntimeError as e:
             self.assertEqual('Port(s) are not free!', str(e))
-        else: self.fail()
+        else:
+            self.fail()
 
         self.assertEqual(set([port1, port2, port3]), PortNumberGenerator._usedPorts)
         self.assertEqual(set(), set(PortNumberGenerator._bound.keys()))
@@ -310,6 +312,8 @@ def bindV4(ip, port, protocol, reuse=False):
     else:
         _host, boundPort = sok.getsockname()
         return sok, boundPort
+    finally:
+        sok.close()
 
 def printDualStackSkipped():
     test_f = currentframe().f_back
@@ -345,3 +349,5 @@ if has_dual_stack():
         else:
             _host, boundPort, _flowInfo, _scopeId = sok.getsockname()
             return sok, boundPort
+        finally:
+            sok.close()

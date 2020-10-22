@@ -135,14 +135,17 @@ def attemptEphemeralBindings(bindPort, blockSize, bind, blacklistedPorts=None):
     while togo is not 0:
         # portNumberToBind > 0; but called quite often, so a quicker check.
         if portNumberToBind is not 0 and portNumberToBind in blacklistedPorts:
+            _close_all(bound)
             return None, None
 
         aPort, close = attemptBinding(bindPort=portNumberToBind)
 
         if aPort is None:
+            _close_all(bound)
             return None, None
         elif aPort in blacklistedPorts:
             close()
+            _close_all(bound)
             return None, None
 
         if bind is True:
@@ -163,6 +166,11 @@ def verifyAndCoerseBlockSize(blockSize):
         raise ValueError('blockSize smaller than 1')
     return blockSize
 
+def _close_all(bound):
+    if bound is None:
+        return
+    for close in bound.values():
+        close()
 
 #
 # Implementation for Dual-Stack or IPv4 below here.
@@ -198,17 +206,17 @@ if has_dual_stack():
         setIPv6Options(sokT)
         sokU = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)
         setIPv6Options(sokU)
+        def close():
+            sokT.close()
+            sokU.close()
 
         try:
             sokT.bind(ipv6SocketAddr(bindPort))
             _host, tcpPort, _flowInfo, _scopeId = sokT.getsockname()
             sokU.bind(ipv6SocketAddr(tcpPort))  # Identical to bindPort iff port != 0; otherwise same as ephemeral tcpPort
         except (IOError, OverflowError):  # OverflowError can occur when port > 65535
+            close()
             return None, None
-
-        def close():
-            sokT.close()
-            sokU.close()
 
         return tcpPort, close
 
@@ -253,16 +261,17 @@ else:
         sokU = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         setIPv4Options(sokU)
 
+        def close():
+            sokT.close()
+            sokU.close()
+
         try:
             sokT.bind((IPv4_WILDCARD, bindPort))
             _host, tcpPort = sokT.getsockname()
             sokU.bind((IPv4_WILDCARD, tcpPort))  # Identical to bindPort iff port != 0; otherwise same as ephemeral tcpPort
         except (IOError, OverflowError):  # OverflowError can occur when port > 65535
+            close()
             return None, None
-
-        def close():
-            sokT.close()
-            sokU.close()
 
         return tcpPort, close
 
