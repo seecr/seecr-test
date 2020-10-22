@@ -61,6 +61,7 @@ class MockServerTest(TestCase):
 
     def testHangupConnectionTimeout(self):
         expectedException = IOError
+        self.ms.socket.close()
         self.ms = MockServer(port=PortNumberGenerator.next(), hangupConnectionTimeout=0.1)
         self.ms.start()
 
