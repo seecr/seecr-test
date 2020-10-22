@@ -26,7 +26,6 @@
 import sys
 from ast import parse, ClassDef
 from functools import partial
-from imp import load_module, get_suffixes
 from os import makedirs, walk, popen
 from os.path import abspath, dirname, isdir, join, splitext, basename
 from re import DOTALL, compile, sub
@@ -35,6 +34,7 @@ from io import StringIO
 from sys import getdefaultencoding
 from time import sleep
 from urllib.parse import urlencode
+from importlib.util import module_from_spec, spec_from_file_location
 
 from lxml.etree import parse as parse_xml, XMLSyntaxError, HTMLParser
 from lxml.etree import HTMLParser, HTML
@@ -283,11 +283,11 @@ def mkdir(*args):
         makedirs(path)
     return path
 
+
 def loadTestsFromPath(testRoot, _globals=None):
     if not isdir(testRoot):
         testRoot = dirname(abspath(testRoot))
     _globals = globals() if _globals is None else _globals
-    pySuffix = [(suffix, mode, suffixType) for (suffix, mode, suffixType) in get_suffixes() if suffix == ".py"][0]
     for path, dirs, files in walk(testRoot):
         for filename in [join(path, filename) for filename in files if splitext(filename)[-1] == '.py']:
             with open(filename) as f:
@@ -296,12 +296,12 @@ def loadTestsFromPath(testRoot, _globals=None):
             for each in tree.body:
                 if type(each) is ClassDef and each.bases[0].id in ['TestCase', 'SeecrTestCase']:
                     fullFilename = join(path, filename)
-                    with open(fullFilename) as fp:
-                        mod = load_module(each.name, fp, fullFilename, pySuffix)
-                        key = each.name
-                        if key in _globals:
-                            key = "{}.{}".format(basename(path), key)
-                        _globals[key] = getattr(mod, each.name)
+                    spec = spec_from_file_location(each.name, fullFilename)
+                    module = module_from_spec(spec)
+                    key = each.name
+                    if key in _globals:
+                        key = "{}.{}".format(basename(path), key)
+                    _globals[key] = module
 
 
 def vpnIp():
