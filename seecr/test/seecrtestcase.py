@@ -90,7 +90,7 @@ class SeecrTestCase(TestCase):
         )
         compare.compare()
 
-    def assertEqualText(self, expected, result):
+    def assertEqualText(self, expected, result, msg=None):
         diff = '\n'.join(unified_diff(
                 expected.split('\n'),
                 result.split('\n'),
@@ -98,7 +98,7 @@ class SeecrTestCase(TestCase):
                 tofile='result',
                 lineterm=''
             ))
-        self.assertEqual('', diff, diff)
+        self.assertEqual('', diff, (msg + ' :\n' if msg else '') + diff)
 
     def assertDictEqual(self, d1, d2, msg=None):
         # 'borrowed' from python2.7's unittest.
