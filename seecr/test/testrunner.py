@@ -262,7 +262,7 @@ class TestLoader(UnitTestTestLoader):
         elif (isinstance(obj, type) and
               issubclass(obj, TestCase)):
             return self.loadTestsFromTestCase(obj)
-        elif (type(obj) == types.UnboundMethodType and
+        elif (type(obj) == types.FunctionType and
               isinstance(parent, type) and
               issubclass(parent, TestCase)):
             return TestSuite([parent(obj.__name__)])
