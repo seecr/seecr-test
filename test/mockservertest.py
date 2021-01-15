@@ -2,7 +2,7 @@
 #
 # "Seecr Test" provides test tools.
 #
-# Copyright (C) 2013, 2020 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2013, 2019-2021 Seecr (Seek You Too B.V.) https://seecr.nl
 #
 # This file is part of "Seecr Test"
 #
