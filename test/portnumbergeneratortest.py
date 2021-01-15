@@ -47,11 +47,11 @@ class PortNumberGeneratorTest(TestCase):
         # More than 14000 gets *very* slow or fails
         # When guaranteed uniqe numbers for that many ports are needed,
         # change the approach (say reading: cat /proc/net/tcp | awk '{print $2}' | sed -e '1d')
-        for i in range(14000):
+        for i in range(4000):
             numbers.append(PortNumberGenerator.next())
 
-        self.assertEqual(14000, len(numbers))
-        self.assertEqual(14000, len(set(numbers)))
+        self.assertEqual(4000, len(numbers))
+        self.assertEqual(4000, len(set(numbers)))
         self.assertEqual(True, all((0 <= n < 65536) for n in numbers))
 
     def testFindProblemWithLockupAfterReuseQuickly(self):
@@ -89,23 +89,6 @@ class PortNumberGeneratorTest(TestCase):
         self.assertRaises(ValueError, lambda: PortNumberGenerator.next(blockSize=0))
         self.assertRaises(ValueError, lambda: PortNumberGenerator.next(blockSize=-1))
         PortNumberGenerator.next(blockSize=1)
-
-    def testClassIsIterableForConvenience(self):
-        p = next(PortNumberGenerator)                  # metaclass-lookup of __next__ only.
-        self.assertTrue(0 < p < 65536)
-
-        count = 0
-        for p in PortNumberGenerator:                  # metaclass-lookup of __iter__ and __next__.
-            count += 1
-            if count > 3:
-                break
-
-            self.assertTrue(0 < p < 65536)
-
-        p = PortNumberGenerator.__next__()             # class-lookup of __next__ only.
-        self.assertTrue(0 < p < 65536)
-        p = PortNumberGenerator.__iter__().__next__()  # class-lookup of __iter__ and __next__.
-        self.assertTrue(0 < p < 65536)
 
     def testBindPortNumbersGeneratedV4(self):
         p = PortNumberGenerator.next(bind=True)

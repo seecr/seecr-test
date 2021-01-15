@@ -37,7 +37,8 @@ from urllib.parse import urlencode
 from importlib.util import module_from_spec, spec_from_file_location
 
 from lxml.etree import parse as parse_xml, XMLSyntaxError, HTMLParser
-from lxml.etree import HTMLParser, HTML
+from lxml.etree import HTMLParser, HTML, XML
+from json import JSONDecodeError, loads
 
 _scriptTagRegex = compile(r"<script[\s>].*?</script>", DOTALL)
 _entities = {
@@ -115,16 +116,29 @@ def _socket(port, timeOutInSeconds):
     return sok
 
 def createReturnValue(header, body, parse):
-    if parse and body.strip() != '':
-        try:
-            body = parse_xml(StringIO(body))
-        except:
+    body = body.decode() if type(body) is bytes else body
+    contentType = headerToDict(header.decode()).get('Content-Type')
+    if parse:
+        if not contentType is None:
+            if 'html' in contentType:
+                return header, HTML(bytes(body, encoding='utf-8'), HTMLParser(recover=True))
+            if 'xml' in contentType:
+                return header, XML(bytes(body, encoding='utf-8'))
+            if 'json' in contentType:
+                try:
+                    return header, loads(body)
+                except JSONDecodeError:
+                    return header, 'JSONDecodeError in: ' + body
+        elif body.strip() != '':
             try:
-                body = HTML(body, HTMLParser(recover=True))
+                body = parse_xml(StringIO(body))
             except:
-                print("Exception parsing:")
-                print(body)
-                raise
+                try:
+                    body = HTML(body, HTMLParser(recover=True))
+                except:
+                    print("Exception parsing:")
+                    print(body)
+                    raise
     return header, body
 
 

@@ -29,22 +29,7 @@ from copy import copy
 from socket import socket, getaddrinfo, error as socket_error, has_ipv6, SOL_SOCKET, SO_LINGER, SO_REUSEADDR, SOCK_STREAM, SOCK_DGRAM, IPPROTO_TCP, IPPROTO_UDP, AF_INET
 from struct import pack
 
-
-class _IterableClass(type):
-    """
-    Metaclass to make classmethod-iterable class actually iterable.
-
-    Implement classmethods __iter__ and __next__ in the target-class.
-    """
-
-    def __iter__(cls):
-        return cls.__iter__()
-
-    def __next__(cls):
-        return cls.__next__()
-
-
-class PortNumberGenerator(metaclass=_IterableClass):
+class PortNumberGenerator(object):
     with open('/proc/sys/net/ipv4/ip_local_port_range', 'r') as fp:
         _ephemeralPortLow, _ephemeralPortHigh = [int(p) for p in fp.read().strip().split('\t', 1)]  # low\thigh
     _maxTries = (_ephemeralPortHigh - _ephemeralPortLow) // 2
@@ -101,18 +86,6 @@ class PortNumberGenerator(metaclass=_IterableClass):
             cls._usedPorts.update(set(range(port, port + blockSize)))
             cls._bound.update(bound)
             return port
-
-    #
-    # For conveniance, iterable too.
-    @classmethod
-    def __iter__(cls):
-        # Works via metaclass
-        return cls
-
-    @classmethod
-    def __next__(cls):
-        # Works via metaclass
-        return cls.next()
 
 
 def attemptEphemeralBindings(bindPort, blockSize, bind, blacklistedPorts=None):
