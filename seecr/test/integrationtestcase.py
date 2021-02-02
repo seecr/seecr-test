@@ -157,42 +157,42 @@ class IntegrationState(object):
         args = executable if isinstance(executable, list) else [executable]
         executable = args[0]
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s-%s.log" % (basename(executable), processName))
-        stdouterrlog = open(stdoutfile, 'w')
-        fileno = stdouterrlog.fileno() if redirect else None
-        flagOptions = flagOptions if flagOptions else []
-        for flag in flagOptions:
-            args.append("--%s" % flag)
-        for k,v in list(kwargs.items()):
-            args.append("--%s=%s" % (k, str(v)))
-        process = Popen(
-            executable=executable,
-            args=args,
-            cwd=cwd if cwd else getenv('SEECRTEST_USR_BIN', self.binDir()),
-            stdout=fileno,
-            stderr=fileno,
-            env=env,
-        )
+        with open(stdoutfile, 'w') as stdouterrlog:
+            fileno = stdouterrlog.fileno() if redirect else None
+            flagOptions = flagOptions if flagOptions else []
+            for flag in flagOptions:
+                args.append("--%s" % flag)
+            for k,v in list(kwargs.items()):
+                args.append("--%s=%s" % (k, str(v)))
+            process = Popen(
+                executable=executable,
+                args=args,
+                cwd=cwd if cwd else getenv('SEECRTEST_USR_BIN', self.binDir()),
+                stdout=fileno,
+                stderr=fileno,
+                env=env,
+            )
 
-        self._stdoutWrite("Running '%s', for state '%s' : v" % (basename(executable), self.stateName))
-        result = 0
-        t0 = time()
-        keepRunning = True
-        while keepRunning:
-            self._stdoutWrite('r')
-            sleep(0.1)
-            result = process.poll()
-            keepRunning = result is None
-            if time() - t0 > timeoutInSeconds:
-                process.terminate()
-                exit('Executable "%s" took more than %s seconds, check "%s"' % (basename(executable), timeoutInSeconds, stdoutfile))
+            self._stdoutWrite("Running '%s', for state '%s' : v" % (basename(executable), self.stateName))
+            result = 0
+            t0 = time()
+            keepRunning = True
+            while keepRunning:
+                self._stdoutWrite('r')
+                sleep(0.1)
+                result = process.poll()
+                keepRunning = result is None
+                if time() - t0 > timeoutInSeconds:
+                    process.terminate()
+                    exit('Executable "%s" took more than %s seconds, check "%s"' % (basename(executable), timeoutInSeconds, stdoutfile))
 
-        if expectedReturnCode is not None and result != expectedReturnCode:
-            exit('Executable "%s" exited with returncode %s, check "%s"' % (basename(executable), result, stdoutfile))
-        self._stdoutWrite('oom!\n')
-        process.wait()
-        stdouterrlog.close()
+            if expectedReturnCode is not None and result != expectedReturnCode:
+                exit('Executable "%s" exited with returncode %s, check "%s"' % (basename(executable), result, stdoutfile))
+            self._stdoutWrite('oom!\n')
+            process.wait()
         if redirect:
-            return open(stdoutfile).read()
+            with open(stdoutfile) as fp:
+                return fp.read()
 
     def tearDown(self):
         for serviceName in list(self.pids.keys()):
