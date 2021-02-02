@@ -46,6 +46,8 @@ class PortNumberGenerator(object):
 
         raise RuntimeError('Not been able to get an new uniqe free port within a reasonable amount (%s) of tries.' % cls._maxTries)
 
+    nextPort = next
+
     @classmethod
     def unbind(cls, port, blockSize=1):
         blockSize = verifyAndCoerseBlockSize(blockSize)
