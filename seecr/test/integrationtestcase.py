@@ -31,7 +31,7 @@ from os import system, waitpid, kill, WNOHANG, getenv
 from sys import stdout
 from random import choice
 from time import sleep
-from subprocess import Popen
+from subprocess import Popen, TimeoutExpired
 from signal import SIGTERM
 from urllib.request import urlopen
 from string import ascii_letters
@@ -59,7 +59,8 @@ class IntegrationState(object):
         self.stateName = stateName
         self.__tests = tests
         self.fastMode = fastMode
-        self.pids = {}
+        self.processes = {}
+        self.openFiles = {}
         self.integrationTempdir = '%s-%s' % (INTEGRATION_TEMPDIR_BASE, stateName)
         if REMOTE_USERNAME:
             self.integrationTempdir += '-%s' % REMOTE_USERNAME
@@ -83,6 +84,7 @@ class IntegrationState(object):
     def _startServer(self, serviceName, executable, serviceReadyUrl, cwd=None, redirect=True, flagOptions=None, env=None, waitForStart=True, args=None, debugInfo=False, **kwargs):
         stdoutfile = join(self.integrationTempdir, "stdouterr-%s.log" % serviceName)
         stdouterrlog = open(stdoutfile, 'a')
+        self.openFiles.setdefault(serviceName, []).append(stdouterrlog)
         args = executable if isinstance(executable, list) else [executable] + (args if not args is None else [])
         executable = args[0]
         fileno = stdouterrlog.fileno() if redirect else None
@@ -112,7 +114,7 @@ class IntegrationState(object):
             stderr=fileno,
             env=env,
         )
-        self.pids[serviceName] = serverProcess.pid
+        self.processes[serviceName] = serverProcess
 
         def serviceReady():
             try:
@@ -123,7 +125,7 @@ class IntegrationState(object):
                 return True
             except IOError:
                 if serverProcess.poll() != None:
-                    del self.pids[serviceName]
+                    del self.processes[serviceName]
                     self._clearServicesReadyMethods()
                     exit('Service "%s" died, check "%s"' % (serviceName, stdoutfile))
             return False
@@ -132,25 +134,20 @@ class IntegrationState(object):
             self.waitForServicesStarted()
 
     def _stopServer(self, serviceName, waitInSeconds=20.0):
+        serviceProc = self.processes[serviceName]
         try:
-            kill(self.pids[serviceName], SIGTERM)
+            serviceProc.terminate()
         except OSError:
-            self._stdoutWrite("Server with servicename '%s' and pid '%s' was already stopped.\n" % (serviceName, self.pids[serviceName]))
+            self._stdoutWrite("Server with servicename '%s' and pid '%s' was already stopped.\n" % (serviceName, serviceProc.pid))
 
-        for i in range(int(waitInSeconds * 200)):
-            try:
-                result = waitpid(self.pids[serviceName], WNOHANG)
-                if result != (0, 0):
-                    break
-                sleep(0.005)
-            except OSError as e:
-                if e.errno == ECHILD:  # ECHILD / 10 --> No child processes, means we're done.
-                    break
-                raise
-        else:
-            self._stdoutWrite("Server with servicename '%s' and pid '%s' did not stop within %s seconds - giving up.\n" % (serviceName, self.pids[serviceName], waitInSeconds))
+        try:
+            serviceProc.wait(waitInSeconds)
+        except TimeoutExpired:
+            self._stdoutWrite("Server with servicename '%s' and pid '%s' did not stop within %s seconds - giving up.\n" % (serviceName, serviceProc.pid, waitInSeconds))
 
-        del self.pids[serviceName]
+        del self.processes[serviceName]
+        for f in self.openFiles.get(serviceName, []):
+            f.close()
 
     def _runExecutable(self, executable, processName=None, cwd=None, redirect=True, flagOptions=None, timeoutInSeconds=15, expectedReturnCode=0, env=None, **kwargs):
         processName = randomString() if processName is None else processName
@@ -195,7 +192,7 @@ class IntegrationState(object):
                 return fp.read()
 
     def tearDown(self):
-        for serviceName in list(self.pids.keys()):
+        for serviceName in list(self.processes.keys()):
             self._stdoutWrite("Stopping service '%s' for state '%s'\n" % (serviceName, self.stateName))
             self._stopServer(serviceName)
 
