@@ -27,7 +27,7 @@ from seecr.test import SeecrTestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, headerToDict, mkdir, loadTestsFromPath
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, _parseData, mkdir, loadTestsFromPath
 from lxml.etree import XMLSyntaxError
 
 from time import time
@@ -109,9 +109,12 @@ Exception: xcptn\n"""
         self.assertEqual(1, len(list(findTag("a", "<html><a/><a class='test'>text</a></html>", **{"class": "test"}))))
         self.assertEqual(1, len(list(findTag("a", "<html><a a='1' b='2'/><a a='1'/></html>", **dict(a=1, b=2)))))
 
-    def testHeaderToDict(self):
-        self.assertEqual(dict(a="1", b="2"), headerToDict("a: 1\r\nb: 2\r\n"))
-        self.assertEqual(dict(a="1:2", b="2:3"), headerToDict("a: 1:2\r\nb: 2:3\r\n"))
+    def testParseData(self):
+        data = b"HTTP/1.1 200 Ok\r\nContent-Type: whatever\r\nother-header: value\r\n\r\ndata"
+        statuscode, headers, body = _parseData(data)
+        self.assertEqual('200', statuscode)
+        self.assertEqual({'Content-Type': 'whatever', 'Other-Header': 'value'}, headers)
+        self.assertEqual(b'data', body)
 
     def testMkdir(self):
         self.assertFalse(isdir(join(self.tempdir, "mkdir")))

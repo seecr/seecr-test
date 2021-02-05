@@ -115,23 +115,23 @@ def _socket(port, timeOutInSeconds):
     sok.settimeout(5.0 if timeOutInSeconds is None else timeOutInSeconds)
     return sok
 
-def createReturnValue(header, body, parse):
-    body = body.decode() if type(body) is bytes else body
-    contentType = headerToDict(header.decode()).get('Content-Type')
+def createReturnValue(data, parse):
+    statuscode, headers, body = _parseData(data)
+    contentType = headers.get('Content-Type')
     if parse:
         if not contentType is None:
             if 'html' in contentType:
-                return header, HTML(bytes(body, encoding='utf-8'), HTMLParser(recover=True))
+                return statuscode, headers, HTML(body, HTMLParser(recover=True))
             if 'xml' in contentType:
-                return header, XML(bytes(body, encoding='utf-8'))
+                return statuscode, headers, XML(body)
             if 'json' in contentType:
                 try:
-                    return header, loads(body)
+                    return statuscode, headers, loads(body.decode())
                 except JSONDecodeError:
-                    return header, 'JSONDecodeError in: ' + body
-        elif body.strip() != '':
+                    return statuscode, headers, 'JSONDecodeError in: ' + body.decode()
+        elif body.strip() != b'':
             try:
-                body = parse_xml(StringIO(body))
+                body = XML(body)
             except:
                 try:
                     body = HTML(body, HTMLParser(recover=True))
@@ -139,7 +139,7 @@ def createReturnValue(header, body, parse):
                     print("Exception parsing:")
                     print(body)
                     raise
-    return header, body
+    return statuscode, headers, body
 
 
 def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=True, timeOutInSeconds=None, host=None, method='GET', additionalHeaders=None):
@@ -171,8 +171,7 @@ def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=T
             bytesSent = sok.send(sendBuffer[totalBytesSent:])
             totalBytesSent += bytesSent
         response = receiveFromSocket(sok)
-        header, body = splitHttpHeaderBody(response)
-        return createReturnValue(header, body, parse)
+        return createReturnValue(response, parse)
     finally:
         sok.close()
 
@@ -223,20 +222,17 @@ def receiveFromSocket(sok):
         response += part
     return response
 
-def splitHttpHeaderBody(response):
-    try:
-        header, body = response.split(b'\r\n\r\n', 1)
-    except ValueError as e:
-        raise ValueError("%s can not be split into a header and body" % repr(response))
-    else:
-        return header, body
-
-def headerToDict(header):
-   return dict(
-       tuple(s.strip() for s in line.split(':', 1))
-       for line in header.split('\r\n')
-       if ':' in line
-   )
+def _parseData(data):
+    header, body = data.split(b'\r\n\r\n', 1)
+    statusline, remainder = header.split(b'\r\n', 1)
+    statuscode = statusline.split(b' ')[1].decode().strip()
+    headers = {}
+    for line in remainder.split(b'\r\n'):
+        if b':' in line:
+            fieldname, value = [v.decode().strip() for v in line.split(b':', 1)]
+            if fieldname:
+                headers[fieldname.title()] = value
+    return statuscode, headers, body
 
 def sleepWheel(seconds, callback=None, interval=0.2):
     parts = ['\\', '|', '/', '-']
