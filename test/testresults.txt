@@ -68,6 +68,7 @@ testWSInLeafsMatter (seecrtestcasetest.SeecrTestCaseTest) ... ok
 testWhiteSpace (seecrtestcasetest.SeecrTestCaseTest) ... ok
 testListenAndLog (udplistenandlogtest.UdpListenAndLogTest) ... ok
 testResetLog (udplistenandlogtest.UdpListenAndLogTest) ... ok
+testCreateReturnValue (utilstest.UtilsTest) ... ok
 testFindTag (utilstest.UtilsTest) ... ok
 testIgnoreLineNumber (utilstest.UtilsTest) ... ok
 testLoadTestFromPath (utilstest.UtilsTest) ... ok

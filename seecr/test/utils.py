@@ -116,19 +116,19 @@ def _socket(port, timeOutInSeconds):
     return sok
 
 def createReturnValue(data, parse):
-    statuscode, headers, body = _parseData(data)
-    contentType = headers.get('Content-Type')
+    statusAndHeaders, body = _parseData(data)
+    contentType = statusAndHeaders['Headers'].get('Content-Type')
     if parse:
         if not contentType is None:
             if 'html' in contentType:
-                return statuscode, headers, HTML(body, HTMLParser(recover=True))
-            if 'xml' in contentType:
-                return statuscode, headers, XML(body)
-            if 'json' in contentType:
+                body = HTML(body, HTMLParser(recover=True))
+            elif 'xml' in contentType:
+                body = XML(body)
+            elif 'json' in contentType:
                 try:
-                    return statuscode, headers, loads(body.decode())
+                    body = loads(body.decode())
                 except JSONDecodeError:
-                    return statuscode, headers, 'JSONDecodeError in: ' + body.decode()
+                    body = 'JSONDecodeError in: ' + body.decode()
         elif body.strip() != b'':
             try:
                 body = XML(body)
@@ -139,7 +139,7 @@ def createReturnValue(data, parse):
                     print("Exception parsing:")
                     print(body)
                     raise
-    return statuscode, headers, body
+    return statusAndHeaders, body
 
 
 def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=True, timeOutInSeconds=None, host=None, method='GET', additionalHeaders=None):
@@ -232,7 +232,7 @@ def _parseData(data):
             fieldname, value = [v.decode().strip() for v in line.split(b':', 1)]
             if fieldname:
                 headers[fieldname.title()] = value
-    return statuscode, headers, body
+    return {'StatusCode': statuscode, 'Headers':headers}, body
 
 def sleepWheel(seconds, callback=None, interval=0.2):
     parts = ['\\', '|', '/', '-']

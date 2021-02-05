@@ -27,7 +27,7 @@ from seecr.test import SeecrTestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, _parseData, mkdir, loadTestsFromPath
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, _parseData, mkdir, loadTestsFromPath, createReturnValue
 from lxml.etree import XMLSyntaxError
 
 from time import time
@@ -111,10 +111,27 @@ Exception: xcptn\n"""
 
     def testParseData(self):
         data = b"HTTP/1.1 200 Ok\r\nContent-Type: whatever\r\nother-header: value\r\n\r\ndata"
-        statuscode, headers, body = _parseData(data)
-        self.assertEqual('200', statuscode)
-        self.assertEqual({'Content-Type': 'whatever', 'Other-Header': 'value'}, headers)
+        statusAndHeaders, body = _parseData(data)
+        self.assertEqual('200', statusAndHeaders["StatusCode"])
+        self.assertEqual({'Content-Type': 'whatever', 'Other-Header': 'value'}, statusAndHeaders["Headers"])
         self.assertEqual(b'data', body)
+
+    def testCreateReturnValue(self):
+        data = b"HTTP/1.1 200 Ok\r\nContent-Type: whatever\r\nother-header: value\r\n\r\ndata"
+        statusAndHeaders, body = createReturnValue(data, parse=True)
+        self.assertEqual('200', statusAndHeaders["StatusCode"])
+        self.assertEqual({'Content-Type': 'whatever', 'Other-Header': 'value'}, statusAndHeaders["Headers"])
+        self.assertEqual(b'data', body)
+
+        data = b"HTTP/1.1 200 Ok\r\nContent-Type: application/json\r\nother-header: value\r\n\r\n{\"key\": 42}"
+        statusAndHeaders, body = createReturnValue(data, parse=True)
+        self.assertEqual(dict(key=42), body)
+
+        data = b"HTTP/1.1 200 Ok\r\nother-header: value\r\n\r\n<aap>noot</aap>"
+        statusAndHeaders, body = createReturnValue(data, parse=True)
+        self.assertEqual(['noot'], body.xpath('/aap/text()'))
+        statusAndHeaders, body = createReturnValue(data, parse=False)
+        self.assertEqual(b'<aap>noot</aap>', body)
 
     def testMkdir(self):
         self.assertFalse(isdir(join(self.tempdir, "mkdir")))
