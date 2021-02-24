@@ -37,6 +37,8 @@ from urllib.request import urlopen
 from string import ascii_letters
 from time import time
 
+from urllib.error import HTTPError
+
 from .seecrtestcase import SeecrTestCase
 
 randomString = lambda n=4: ''.join(choice(ascii_letters) for i in range(n))
@@ -120,7 +122,11 @@ class IntegrationState(object):
             try:
                 sleep(0.1)
                 self._stdoutWrite('r')
-                urlopen(serviceReadyUrl).read()
+                try:
+                    u = urlopen(serviceReadyUrl)
+                except HTTPError as e:
+                    if e.code != 404:
+                        raise
                 self._stdoutWrite("\nStarted '%s'\n" % serviceName)
                 return True
             except IOError:

@@ -27,7 +27,7 @@ from seecr.test import SeecrTestCase
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, _parseData, mkdir, loadTestsFromPath, createReturnValue
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, _parseData, mkdir, loadTestsFromPath, createReturnValue, assertHttpOK
 from lxml.etree import XMLSyntaxError
 
 from time import time
@@ -116,6 +116,13 @@ Exception: xcptn\n"""
         self.assertEqual({'Content-Type': 'whatever', 'Other-Header': 'value'}, statusAndHeaders["Headers"])
         self.assertEqual(b'data', body)
 
+    def testParseDataEmptyBody(self):
+        data = b'HTTP/1.0 503 Service Temporarily Unavailable\r\n\r\n'
+        statusAndHeaders, body = _parseData(data)
+        self.assertEqual('503', statusAndHeaders["StatusCode"])
+        self.assertEqual({}, statusAndHeaders["Headers"])
+        self.assertEqual(b'', body)
+
     def testCreateReturnValue(self):
         data = b"HTTP/1.1 200 Ok\r\nContent-Type: whatever\r\nother-header: value\r\n\r\ndata"
         statusAndHeaders, body = createReturnValue(data, parse=True)
@@ -162,6 +169,30 @@ Exception: xcptn\n"""
         loadTestsFromPath(self.tempdir, _globals=g)
         self.assertEqual(2, len(g))
         self.assertEqual({'sub.SomeTest', 'SomeTest'}, set(g.keys()))
+
+    def testAssertHttpOK(self):
+        headers = {'StatusCode': '302', 'Headers': {'Location': '/form'}}
+        assertHttpOK(headers, '', expectedStatus=302)
+        headers = {'StatusCode': '302', 'Headers': {'Location': '/form'}}
+        assertHttpOK(headers, '', expectedStatus="302")
+        try:
+            headers = {'StatusCode': '200', 'Headers': {'Location': '/form'}}
+            assertHttpOK(headers, '', expectedStatus=302)
+        except AssertionError as e:
+            self.assertEqual('HTTP Status code; expected 302, got 200', str(e))
+
+        try:
+            body = 'blah blah Traceback blah blah'
+            assertHttpOK({'StatusCode': '302'}, body, expectedStatus=302)
+        except AssertionError as e:
+            self.assertEqual('Traceback found in body:\n{}'.format(body), str(e))
+
+        try:
+            body = b'blah blah Traceback blah blah'
+            assertHttpOK({'StatusCode': '302'}, body, expectedStatus=302)
+        except AssertionError as e:
+            self.assertEqual('Traceback found in body', str(e))
+
 
 TEST_TEMPLATE = """from seecr.test import SeecrTestCase
 class SomeTest(SeecrTestCase):

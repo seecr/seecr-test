@@ -68,6 +68,7 @@ testWSInLeafsMatter (seecrtestcasetest.SeecrTestCaseTest) ... ok
 testWhiteSpace (seecrtestcasetest.SeecrTestCaseTest) ... ok
 testListenAndLog (udplistenandlogtest.UdpListenAndLogTest) ... ok
 testResetLog (udplistenandlogtest.UdpListenAndLogTest) ... ok
+testAssertHttpOK (utilstest.UtilsTest) ... ok
 testCreateReturnValue (utilstest.UtilsTest) ... ok
 testFindTag (utilstest.UtilsTest) ... ok
 testIgnoreLineNumber (utilstest.UtilsTest) ... ok
@@ -75,6 +76,7 @@ testLoadTestFromPath (utilstest.UtilsTest) ... ok
 testLoadTestFromPathSubDirs (utilstest.UtilsTest) ... ok
 testMkdir (utilstest.UtilsTest) ... ok
 testParseData (utilstest.UtilsTest) ... ok
+testParseDataEmptyBody (utilstest.UtilsTest) ... ok
 testParseHtmlAsXml (utilstest.UtilsTest) ... ok
 testSleepWheelCallbackFalsy (utilstest.UtilsTest) ... ok
 testSleepWheelCallbackTruthy (utilstest.UtilsTest) ... ok

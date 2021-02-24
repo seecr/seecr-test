@@ -93,12 +93,20 @@ def postToPage(port, path, data, expectedStatus="302", sessionId=None, headers=N
     return header, body
 
 def assertHttpOK(header, body, expectedStatus="200"):
-    try:
-        assertSubstring("HTTP/1.0 %s" % expectedStatus, header)
-        assertNotSubstring("Traceback", header + "\r\n\r\n" + body)
-    except AssertionError as e:
-        print(header, body)
-        raise
+    statusCode = header['StatusCode']
+    if statusCode != str(expectedStatus):
+        print("Headers", header, "\n", "Body", body)
+        raise AssertionError("HTTP Status code; expected {}, got {}".format(expectedStatus, statusCode))
+
+    traceback = 'Traceback'
+    if type(body) is bytes:
+        traceback = traceback.encode()
+
+    if traceback in body:
+        msg = "Traceback found in body"
+        if not type(body) is bytes:
+            msg = "{}:\n{}".format(msg, body)
+        raise AssertionError(msg)
 
 def assertSubstring(value, s):
     if not value in s:
@@ -224,7 +232,7 @@ def receiveFromSocket(sok):
 
 def _parseData(data):
     header, body = data.split(b'\r\n\r\n', 1)
-    statusline, remainder = header.split(b'\r\n', 1)
+    statusline, remainder = header.split(b'\r\n', 1) if b'\r\n' in header else (header, b'')
     statuscode = statusline.split(b' ')[1].decode().strip()
     headers = {}
     for line in remainder.split(b'\r\n'):
