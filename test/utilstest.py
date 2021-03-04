@@ -23,11 +23,11 @@
 #
 ## end license ##
 
-from seecr.test import SeecrTestCase
+from seecr.test import SeecrTestCase, CallTrace
 
 from seecr.test.io import stdout_replaced
 from seecr.test.timing import T
-from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, _parseData, mkdir, loadTestsFromPath, createReturnValue, assertHttpOK
+from seecr.test.utils import ignoreLineNumbers, sleepWheel, parseHtmlAsXml, findTag, includeParentAndDeps, _parseData, mkdir, loadTestsFromPath, createReturnValue, assertHttpOK, postRequest
 from lxml.etree import XMLSyntaxError
 
 from time import time
@@ -192,6 +192,37 @@ Exception: xcptn\n"""
             assertHttpOK({'StatusCode': '302'}, body, expectedStatus=302)
         except AssertionError as e:
             self.assertEqual('Traceback found in body', str(e))
+
+    def testPostRequestWithCookie(self):
+        mockSocket = self.createMockSocket([b'HTTP/1.1 200 Ok\r\nMy-Header: this\r\n\r\ndata'])
+        headers, result = postRequest(12345,
+                '/some/path',
+                data=b'lekker, lekker',
+                cookie='gevulde-koek',
+                timeOutInSeconds=200,
+                _createSocket=mockSocket.createSocket,
+                parse=False)
+        self.assertEqual(b'data', result)
+        self.assertEqual({"StatusCode":'200', 'Headers':{"My-Header": 'this'}}, headers)
+        self.assertEqual(['createSocket', 'send', 'recv', 'recv', 'close'], mockSocket.calledMethodNames())
+        create, send = mockSocket.calledMethods[:2]
+        self.assertEqual((12345, 200), create.args)
+        self.assertEqual('''POST /some/path HTTP/1.0
+Content-Length: 14
+Content-Type: text/xml; charset="utf-8"
+Cookie: gevulde-koek
+
+lekker, lekker''', send.args[0].decode().replace('\r\n','\n'))
+
+
+    def createMockSocket(self, responses):
+        def recv(*args):
+            return responses.pop() if len(responses) else None
+        mockSocket = CallTrace(returnValues={'close':None}, methods=dict(send=lambda data: len(data), recv=recv))
+        mockSocket.returnValues['createSocket'] = mockSocket
+        mockSocket.methods['send'] = lambda data: len(data)
+        return mockSocket
+
 
 
 TEST_TEMPLATE = """from seecr.test import SeecrTestCase

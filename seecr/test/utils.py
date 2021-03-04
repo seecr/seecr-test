@@ -95,7 +95,7 @@ def postToPage(port, path, data, expectedStatus="302", sessionId=None, headers=N
 def assertHttpOK(header, body, expectedStatus="200"):
     statusCode = header['StatusCode']
     if statusCode != str(expectedStatus):
-        print("Headers", header, "\n", "Body", body)
+        # print("Headers", header, "\n", "Body", body)
         raise AssertionError("HTTP Status code; expected {}, got {}".format(expectedStatus, statusCode))
 
     traceback = 'Traceback'
@@ -150,11 +150,13 @@ def createReturnValue(data, parse):
     return statusAndHeaders, body
 
 
-def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=True, timeOutInSeconds=None, host=None, method='GET', additionalHeaders=None):
+def httpRequest(port, path, data=None, arguments=None, contentType=None, parse=True, timeOutInSeconds=None, host=None, method='GET', additionalHeaders=None, cookie=None, _createSocket=_socket):
     additionalHeaders = additionalHeaders or {}
     if type(data) is str:
         data = data.encode(getdefaultencoding())
-    sok = _socket(port, timeOutInSeconds)
+    if cookie and not 'Cookie' in additionalHeaders:
+        additionalHeaders['Cookie'] = cookie
+    sok = _createSocket(port, timeOutInSeconds)
     try:
         contentLength = len(data) if data else 0
         requestString = path

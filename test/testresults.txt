@@ -78,6 +78,7 @@ testMkdir (utilstest.UtilsTest) ... ok
 testParseData (utilstest.UtilsTest) ... ok
 testParseDataEmptyBody (utilstest.UtilsTest) ... ok
 testParseHtmlAsXml (utilstest.UtilsTest) ... ok
+testPostRequestWithCookie (utilstest.UtilsTest) ... ok
 testSleepWheelCallbackFalsy (utilstest.UtilsTest) ... ok
 testSleepWheelCallbackTruthy (utilstest.UtilsTest) ... ok
 testSleepWheelNoCallback (utilstest.UtilsTest) ... ok
