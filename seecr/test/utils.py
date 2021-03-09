@@ -59,7 +59,7 @@ def parseHtmlAsXml(body):
         newBody = _scriptTagRegex.sub('', newBody)
         return newBody
     try:
-        return parse_xml(StringIO(forceXml(body)))
+        return parse_xml(StringIO(forceXml(str(body, encoding="utf-8"))))
     except XMLSyntaxError:
         print(body)
         raise
