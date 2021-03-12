@@ -93,21 +93,21 @@ Exception: xcptn\n"""
 
     def testParseHtmlAsXml(self):
         with stdout_replaced():
-            self.assertRaises(XMLSyntaxError, parseHtmlAsXml, '<not xml>')
-        result = parseHtmlAsXml('<html><body>&lsquo;to the left &larr;&rsquo;</body></html>')
+            self.assertRaises(XMLSyntaxError, parseHtmlAsXml, b'<not xml>')
+        result = parseHtmlAsXml(b'<html><body>&lsquo;to the left &larr;&rsquo;</body></html>')
         self.assertEqual(['‘to the left <-’'], result.xpath('/html/body/text()'))
 
     def testFindTag(self):
-        self.assertEqual(1, len(list(findTag("input", "<input></input>"))))
-        self.assertEqual(1, len(list(findTag("input", "<input />"))))
-        self.assertEqual(1, len(list(findTag("input", "<input/>"))))
-        self.assertEqual(2, len(list(findTag("input", "<form><input/><input></input></form>"))))
-        self.assertEqual(2, len(list(findTag("input", "<form><input attr='value'/><input></input></form>"))))
-        self.assertEqual(2, len(list(findTag("input", "<form><input></input><input/></form>"))))
-        self.assertEqual(1, len(list(findTag("a", "<a><img/></a>"))))
-        self.assertEqual(1, len(list(findTag("a", "<a>&euro;</a>"))))
-        self.assertEqual(1, len(list(findTag("a", "<html><a/><a class='test'>text</a></html>", **{"class": "test"}))))
-        self.assertEqual(1, len(list(findTag("a", "<html><a a='1' b='2'/><a a='1'/></html>", **dict(a=1, b=2)))))
+        self.assertEqual(1, len(list(findTag("input", b"<input></input>"))))
+        self.assertEqual(1, len(list(findTag("input", b"<input />"))))
+        self.assertEqual(1, len(list(findTag("input", b"<input/>"))))
+        self.assertEqual(2, len(list(findTag("input", b"<form><input/><input></input></form>"))))
+        self.assertEqual(2, len(list(findTag("input", b"<form><input attr='value'/><input></input></form>"))))
+        self.assertEqual(2, len(list(findTag("input", b"<form><input></input><input/></form>"))))
+        self.assertEqual(1, len(list(findTag("a", b"<a><img/></a>"))))
+        self.assertEqual(1, len(list(findTag("a", b"<a>&euro;</a>"))))
+        self.assertEqual(1, len(list(findTag("a", b"<html><a/><a class='test'>text</a></html>", **{"class": "test"}))))
+        self.assertEqual(1, len(list(findTag("a", b"<html><a a='1' b='2'/><a a='1'/></html>", **dict(a=1, b=2)))))
 
     def testParseData(self):
         data = b"HTTP/1.1 200 Ok\r\nContent-Type: whatever\r\nother-header: value\r\n\r\ndata"

@@ -30,7 +30,7 @@ from os import makedirs, walk, popen
 from os.path import abspath, dirname, isdir, join, splitext, basename
 from re import DOTALL, compile, sub
 from socket import socket, AF_INET, SOCK_STREAM, IPPROTO_TCP
-from io import StringIO
+from io import StringIO, BytesIO
 from sys import getdefaultencoding
 from time import sleep
 from urllib.parse import urlencode
@@ -40,15 +40,15 @@ from lxml.etree import parse as parse_xml, XMLSyntaxError, HTMLParser
 from lxml.etree import HTMLParser, HTML, XML
 from json import JSONDecodeError, loads
 
-_scriptTagRegex = compile(r"<script[\s>].*?</script>", DOTALL)
+_scriptTagRegex = compile(b"<script[\s>].*?</script>", DOTALL)
 _entities = {
-    '&nbsp;': ' ',
-    '&ndash;': "&#8211;",
-    '&mdash;': "&#8212;",
-    '&lsquo;': "‘",
-    '&rsquo;': "’",
-    '&larr;': "&lt;-",
-    '&rarr;': "-&gt;",
+    b'&nbsp;': b' ',
+    b'&ndash;': b"&#8211;",
+    b'&mdash;': b"&#8212;",
+    b'&lsquo;': bytes("‘", encoding="utf-8"),
+    b'&rsquo;': bytes("’", encoding="utf-8"),
+    b'&larr;': b"&lt;-",
+    b'&rarr;': b"-&gt;",
 }
 
 def parseHtmlAsXml(body):
@@ -56,10 +56,10 @@ def parseHtmlAsXml(body):
         newBody = body
         for entity, replacement in list(_entities.items()):
             newBody = newBody.replace(entity, replacement)
-        newBody = _scriptTagRegex.sub('', newBody)
+        newBody = _scriptTagRegex.sub(b'', newBody)
         return newBody
     try:
-        return parse_xml(StringIO(forceXml(str(body, encoding="utf-8"))))
+        return parse_xml(BytesIO(forceXml(body)))
     except XMLSyntaxError:
         print(body)
         raise
@@ -286,7 +286,7 @@ def findTag(tag, body, **attrs):
 
 def htmlXPath(xpathExpr, body):
     try:
-        xmlNode = parse_xml(StringIO(body), parser=HTMLParser()).getroot()
+        xmlNode = parse_xml(BytesIO(body), parser=HTMLParser()).getroot()
     except XMLSyntaxError:
         print(body)
         raise
