@@ -240,8 +240,13 @@ def _parseData(data):
     for line in remainder.split(b'\r\n'):
         if b':' in line:
             fieldname, value = [v.decode().strip() for v in line.split(b':', 1)]
-            if fieldname:
-                headers[fieldname.title()] = value
+            fieldname = fieldname.title()
+            if fieldname in headers:
+                if not type(headers[fieldname]) is list:
+                    headers[fieldname] = [headers[fieldname]]
+                headers[fieldname].append(value)
+            else:
+                headers[fieldname] = [value] if fieldname == 'Set-Cookie' else value
     return {'StatusCode': statuscode, 'Headers':headers}, body
 
 def sleepWheel(seconds, callback=None, interval=0.2):
@@ -282,7 +287,7 @@ def findTag(tag, body, **attrs):
     if attrs:
         xpathExpr += "[%s]" % ' and '.join('@%s="%s"' % item for item in attrs.items())
 
-    return htmlXPath(xpathExpr, body)
+    return htmlXPath(bytes(xpathExpr, encoding="utf-8"), body)
 
 def htmlXPath(xpathExpr, body):
     try:

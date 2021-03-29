@@ -140,6 +140,17 @@ Exception: xcptn\n"""
         statusAndHeaders, body = createReturnValue(data, parse=False)
         self.assertEqual(b'<aap>noot</aap>', body)
 
+        # Make a list if header appears more than once
+        data = b"HTTP/1.1 200 Ok\r\nother-header: whatever\r\nother-header: value\r\n\r\ndata"
+        statusAndHeaders, body = createReturnValue(data, parse=True)
+        self.assertEqual({'Other-Header': ['whatever', 'value']}, statusAndHeaders["Headers"])
+
+        # Set-Cookie is always a list
+        data = b"HTTP/1.1 200 Ok\r\nSet-Cookie: whatever\r\n\r\ndata"
+        statusAndHeaders, body = createReturnValue(data, parse=True)
+        self.assertEqual({'Set-Cookie': ['whatever']}, statusAndHeaders["Headers"])
+
+
     def testMkdir(self):
         self.assertFalse(isdir(join(self.tempdir, "mkdir")))
         self.assertEqual(join(self.tempdir, "mkdir"), mkdir(self.tempdir, "mkdir"))
