@@ -149,7 +149,7 @@ class IntegrationState(object):
         try:
             serviceProc.wait(waitInSeconds)
         except TimeoutExpired:
-            self._stdoutWrite("Server with servicename '%s' and pid '%s' did not stop within %s seconds - giving up.\n" % (serviceName, serviceProc.pid, waitInSeconds))
+            self._stdoutWrite("\033[1;31mServer with servicename '%s' and pid '%s' did not stop within %s seconds - giving up.\033[0m\n" % (serviceName, serviceProc.pid, waitInSeconds))
 
         del self.processes[serviceName]
         for f in self.openFiles.get(serviceName, []):
