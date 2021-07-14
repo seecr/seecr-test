@@ -195,7 +195,7 @@ class TestRunner(object):
         groups = self._groups
         if self._args.listGroups:
             print('Groups:')
-            for g in sorted(groups):
+            for g in sorted(groups, key=lambda g: g.name):
                 print(' -', g.name)
             exit(0)
         if groupnames:
