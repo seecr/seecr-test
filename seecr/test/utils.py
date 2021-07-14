@@ -4,6 +4,7 @@
 # "Seecr Test" provides test tools.
 #
 # Copyright (C) 2012-2015, 2019-2021 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
 #
 # This file is part of "Seecr Test"
 #
@@ -40,7 +41,7 @@ from lxml.etree import parse as parse_xml, XMLSyntaxError, HTMLParser
 from lxml.etree import HTMLParser, HTML, XML
 from json import JSONDecodeError, loads
 
-_scriptTagRegex = compile(b"<script[\s>].*?</script>", DOTALL)
+_scriptTagRegex = compile(b"<script[\\s>].*?</script>", DOTALL)
 _entities = {
     b'&nbsp;': b' ',
     b'&ndash;': b"&#8211;",

@@ -3,6 +3,7 @@
 # "Seecr Test" provides test tools.
 #
 # Copyright (C) 2012, 2014-2015, 2018-2021 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
 #
 # This file is part of "Seecr Test"
 #
