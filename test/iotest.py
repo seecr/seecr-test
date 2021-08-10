@@ -140,3 +140,20 @@ class IOTest(TestCase):
             raise Exception()
         self.assertRaises(Exception, lambda: f())
         self.assertEqual(idStdout, id(sys.stdout))
+
+    def test_replace_stdout_of_children(self):
+        import multiprocessing
+
+        def child_process():
+            print("Here I am", file=sys.stdout, flush=True)
+
+        with stdout_replaced() as out:
+            ps = multiprocessing.Process(target=child_process)
+            ps.start()
+            ps.join()
+
+            self.assertEqual("Here I am\n", out.getvalue())
+
+
+
+

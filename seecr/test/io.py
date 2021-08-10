@@ -27,17 +27,43 @@
 import sys
 from contextlib import contextmanager
 from functools import wraps
-from io import StringIO
+import tempfile
+import os
+import io
+
+
+class IOCatcher(object):
+    def __init__(self):
+        self._file = tempfile.TemporaryFile(mode="w+t", buffering=1)
+
+    def __getattr__(self, name):
+        return getattr(self._file, name)
+
+    def getvalue(self):
+        self.flush()
+        self.seek(0)
+        return self.read()
+
+    def __del__(self):
+        self.close()
 
 
 def _set_replaced_stream(name, replacement=None):
-    stream = getattr(sys, name)
-    def andBackAgain():
-        setattr(sys, name, stream)
 
-    streamReplacement = StringIO() if replacement is None else replacement
-    setattr(sys, name, streamReplacement)
-    return streamReplacement, andBackAgain
+    org_stream = getattr(sys, name)
+    org_fd = org_stream.fileno()
+    org_fd_backup = os.dup(org_fd)
+
+    if replacement is None:
+        replacement = IOCatcher()
+        os.dup2(replacement.fileno(), org_fd)
+
+    def andBackAgain():
+        os.dup2(org_fd_backup, org_fd)
+        setattr(sys, name, org_stream)
+
+    setattr(sys, name, replacement)
+    return replacement, andBackAgain
 
 
 class _ContextMngrOrDecorated(object):

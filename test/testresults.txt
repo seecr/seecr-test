@@ -26,6 +26,7 @@ testStdInReplaced_withEmptyStream (iotest.IOTest) ... ok
 testStdInReplaced_withGivenStream (iotest.IOTest) ... ok
 testStdOutReplaced (iotest.IOTest) ... ok
 testStdOutReplacedNoSideEffectsOnException (iotest.IOTest) ... ok
+test_replace_stdout_of_children (iotest.IOTest) ... ok
 testFormatTestname (loggingtest.LoggingTest) ... ok
 testReadFromFile (loggingtest.LoggingTest) ... ok
 testHangupConnectionTimeout (mockservertest.MockServerTest) ... ok
