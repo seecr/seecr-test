@@ -43,6 +43,7 @@ from lxml.etree import tostring, parse, Comment, PI, Entity, XMLParser
 
 XPATH_IS_ONE_BASED = 1
 
+from signal import getsignal, signal, SIGINT
 
 class SeecrTestCase(TestCase):
     def setUp(self):
@@ -51,8 +52,14 @@ class SeecrTestCase(TestCase):
         fd, self.tempfile = mkstemp(prefix='test.%s.' % self.id())
         osClose(fd)
         self.vmsize = self._getVmSize()
+        self._originalSigIntHandler = getsignal(SIGINT)
+        def CtrlC_Handler(signal, frame):
+            self.tearDown()
+            raise KeyboardInterrupt
+        signal(SIGINT, CtrlC_Handler)
 
     def tearDown(self):
+        signal(SIGINT, self._originalSigIntHandler)
         rmtree(self.tempdir)
         remove(self.tempfile)
         TestCase.tearDown(self)
