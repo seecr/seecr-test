@@ -35,6 +35,7 @@ from string import whitespace
 from sys import path as systemPath, exc_info
 from tempfile import mkdtemp, mkstemp
 from .timing import T
+import contextlib
 
 import pprint
 from difflib import unified_diff, ndiff
@@ -53,16 +54,23 @@ class SeecrTestCase(TestCase):
         osClose(fd)
         self.vmsize = self._getVmSize()
         self._originalSigIntHandler = getsignal(SIGINT)
-        def CtrlC_Handler(signal, frame):
-            self.tearDown()
-            raise KeyboardInterrupt
-        signal(SIGINT, CtrlC_Handler)
+        signal(SIGINT, self.CtrlC_Handler)
 
     def tearDown(self):
         signal(SIGINT, self._originalSigIntHandler)
         rmtree(self.tempdir)
         remove(self.tempfile)
         TestCase.tearDown(self)
+
+    def CtrlC_Handler(self, signal, frame):
+        self.tearDown()
+        raise KeyboardInterrupt
+
+    @contextlib.contextmanager
+    def suspend_ctrl_c_trap(self):
+        signal(SIGINT, self._originalSigIntHandler)
+        yield
+        signal(SIGINT, self.CtrlC_Handler)
 
     def assertTiming(self, t0, t, t1):
         self.assertTrue(t0*T < t < t1*T, t/T)
