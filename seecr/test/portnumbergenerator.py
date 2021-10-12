@@ -107,9 +107,9 @@ def attemptEphemeralBindings(bindPort, blockSize, bind, blacklistedPorts=None):
     togo = blockSize
     bound = {}
     # togo > 0; but called quite often, so a quicker check.
-    while togo is not 0:
+    while not togo is 0:
         # portNumberToBind > 0; but called quite often, so a quicker check.
-        if portNumberToBind is not 0 and portNumberToBind in blacklistedPorts:
+        if not portNumberToBind is 0 and portNumberToBind in blacklistedPorts:
             _close_all(bound)
             return None, None
 
