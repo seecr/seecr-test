@@ -35,7 +35,7 @@ from string import whitespace
 from sys import path as systemPath, exc_info
 from tempfile import mkdtemp, mkstemp
 from .timing import T
-import contextlib
+import contextlib, pathlib
 
 import pprint
 from difflib import unified_diff, ndiff
@@ -50,6 +50,7 @@ class SeecrTestCase(TestCase):
     def setUp(self):
         TestCase.setUp(self)
         self.tempdir = mkdtemp(prefix='test.%s.' % self.id())
+        self.tmp_path = pathlib.Path(self.tempdir)
         fd, self.tempfile = mkstemp(prefix='test.%s.' % self.id())
         osClose(fd)
         self.vmsize = self._getVmSize()
