@@ -27,6 +27,8 @@ from distutils.core import setup
 from os import walk
 from os.path import join
 
+version = '$Version: 0$'[9:-1].strip()
+
 scripts = []
 for path, dirs, files in walk('bin'):
     for file in files:
@@ -34,7 +36,7 @@ for path, dirs, files in walk('bin'):
 
 setup(
     name='seecr-test',
-    version='%VERSION%',
+    version=version,
     packages=[
         'seecr',     # DO_NOT_DISTRIBUTE
         'seecr.test',
